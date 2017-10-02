@@ -6,7 +6,7 @@ import {Observer} from "rxjs/Observer";
 @Injectable()
 export class WebSocketService {
 	private subject: Subject<MessageEvent>;
-	private subjectData: Subject<number>;
+	private subjectData: Subject<any>;
 
 	// For chat box
 	public connect(url: string): Subject<MessageEvent> {
@@ -40,18 +40,18 @@ export class WebSocketService {
 	}
 
 	// For random numbers
-	public connectData(url: string): Subject<number> {
+	public connectData(url: string): Subject<any> {
 		if (!this.subjectData) {
 			this.subjectData = this.createData(url);
 		}
 		return this.subjectData;
 	}
 
-	private createData(url: string): Subject<number> {
+	private createData(url: string): Subject<any> {
 		let ws = new WebSocket(url);
 
 		let observable = Observable.create(
-			(obs: Observer<number>) => {
+			(obs: Observer<any>) => {
 				ws.onmessage = obs.next.bind(obs);
 				ws.onerror   = obs.error.bind(obs);
 				ws.onclose   = obs.complete.bind(obs);
@@ -60,7 +60,7 @@ export class WebSocketService {
 			});
 
 		let observer = {
-			next: (data: Object) => {
+			next: (data: any) => {
 				if (ws.readyState === WebSocket.OPEN) {
 					ws.send(JSON.stringify(data));
 				}

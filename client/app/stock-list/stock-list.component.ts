@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
 import {ChatService} from '../shared/services/chat.service';
+import {CommunicatorService} from '../shared/communicator/communicator.service'
 
 @Component({
 	selector: 'stock-list',
@@ -21,9 +22,16 @@ import {ChatService} from '../shared/services/chat.service';
 	`,
 })
 export class StockListComponent {
-	stocks: Array<object> = [{name: 'TCS', ltp: 2200}, {name: 'INFY', ltp: 951}]
+	stocks: any = [{name: 'TCS', ltp: 2200}, {name: 'INFY', ltp: 951}]
 
-	takethistrade(stock) {
-		console.log(stock);
+	constructor(private cs: CommunicatorService) {
+		cs.instream.subscribe(data => {
+			console.log(data)
+		})
+	}
+
+	takethistrade(stock: any) {
+		console.log(stock)
+		this.cs.sendData(stock)
 	}
 }

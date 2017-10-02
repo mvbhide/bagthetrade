@@ -6,6 +6,7 @@ import {FormsModule} from '@angular/forms';
 // services
 import {ChatService} from './shared/services/chat.service';
 import {WebSocketService} from './shared/services/websocket.service';
+import {CommunicatorService} from './shared/communicator/communicator.service'
 
 // components
 import {AppComponent} from './app.component';
@@ -23,7 +24,7 @@ import {StockListComponent} from "./stock-list/stock-list.component"
 		DataComponent,
 		StockListComponent
 	],
-	providers   : [ChatService, WebSocketService],
+	providers   : [ChatService, WebSocketService, CommunicatorService],
 	bootstrap   : [AppComponent]
 })
 export class AppModule {

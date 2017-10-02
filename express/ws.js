@@ -14,6 +14,10 @@ socketHandler.dataServer = ws.createServer(function (conn) {
 		console.log('Data connection closed.', new Date().toLocaleTimeString(), 'code: ', code);
 	});
 
+	conn.on('text', function(request) {
+		console.log('Incoming request on server', request)
+	})
+
 	conn.on('error', function (err) {
 		// only throw if something else happens than Connection Reset
 		if (err.code !== 'ECONNRESET') {
