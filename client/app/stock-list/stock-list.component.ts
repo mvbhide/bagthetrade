@@ -22,12 +22,10 @@ import {CommunicatorService} from '../shared/communicator/communicator.service'
 	`,
 })
 export class StockListComponent {
-	stocks: any = [{name: 'TCS', ltp: 2200}, {name: 'INFY', ltp: 951}]
+	stocks: any = [{"tradingsymbol": 'TCS', ltp: 2200}, {"tradingsymbol": 'INFY', ltp: 951}]
 
 	constructor(private cs: CommunicatorService) {
-		cs.instream.subscribe(data => {
-			console.log(data)
-		})
+		
 	}
 
 	takethistrade(stock: any) {

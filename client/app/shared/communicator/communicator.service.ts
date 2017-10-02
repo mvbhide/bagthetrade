@@ -25,7 +25,19 @@ export class CommunicatorService {
 			})
 
 		this.instream.subscribe(data => {
-			console.log(data)
+			// Client side Incoming data
+			// Possible values
+			/*  1. Potential trades
+				2. Currently traded ltp and bid/ asks
+				3. Trade confirmations along with child trade ids */
+			try {
+				let objData = JSON.parse(data)
+				console.log("parsed data from server ", objData)
+			} catch (e) {
+				console.log(e)
+			}
+			
+
 		})
 		
 	}
