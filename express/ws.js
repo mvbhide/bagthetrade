@@ -17,7 +17,8 @@ sPort.dataServer = ws.createServer(function (conn) {
 
 	// Request coming from the client.
 	/* Possible requests
-		1. Place order*/
+		1. Place order
+	*/
 	conn.on('text', function(request) {
 		console.log('Incoming request on server', request)
 		oms.placeOrder(JSON.parse(request));
@@ -36,9 +37,9 @@ sPort.dataServer = ws.createServer(function (conn) {
 // 4. Send the payload to client
 sPort.send = function(payload) {
 	// Only emit numbers if there are active connections
-	if (socketHandler.dataServer.connections.length > 0) {
+	if (sPort.dataServer.connections.length > 0) {
 		try {
-			socketHandler.dataServer.connections.forEach((function (conn) {
+			sPort.dataServer.connections.forEach((function (conn) {
 				conn.send(JSON.stringify(payload))
 			}));
 

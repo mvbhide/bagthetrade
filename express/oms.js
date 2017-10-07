@@ -27,7 +27,14 @@ var oms = {};
 
 oms.placeOrder = function(objOrder) {
 
-	console.log( _.extend(objOrder, objFactory.get('placeOrder')));
+	var orderParams = _.extend(objFactory.get('placeOrder'), objOrder);
+	kc.orderPlace(orderParams)
+		.then(function(res) {
+
+		})
+		.catch(function(err) {
+			console.log(err);
+		})
 }
 
 module.exports = oms
