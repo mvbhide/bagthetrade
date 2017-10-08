@@ -1,0 +1,33 @@
+/* You can add global styles to this file, and also import other style files */
+
+* {
+	margin: 0;
+	padding: 0;
+	font-size: 100%;
+	font-weight: normal;
+	font-family: "Calibri";
+}
+
+@font-face {
+	font-family: 'Hanzo';
+	url: '../fonts/Hattori_Hanzo-webfont.woff';
+}
+
+.app-container {
+	font-family: 'Hanzo';
+	padding: 10px;
+	margin: 0 auto;
+}
+.buy-colored {
+	background: #4A90C2;
+	color: #FFF;
+}
+
+.sell-colored {
+	background: #FF5C10;
+	color: #FFF;
+}
+
+hr {
+	padding: 0px 5px;
+}
