@@ -1,4 +1,8 @@
 import { Component } from '@angular/core'
+import { CommunicatorService } from '../shared/communicator/communicator.service';
+import { DataService } from '../shared/services/data-service.service';
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+
 
 @Component({
 	selector: 'order-form',
@@ -26,8 +30,8 @@ import { Component } from '@angular/core'
 							</select>
 						</div>
 						<div class="col-md-5">
-							<label for="scrip">Scrip</label>
-							<input type="text" id="tradingsymbol" [value]="tradingsymbol">
+							<label for="tradingsymbol">Scrip</label>
+							<input ngui-auto-complete [list-formatter]="scriptListFormatter" [value-formatter]="scriptValueFormatter" [source]="margins" (valueChanged)="scriptSelected($event)" type="text" />
 						</div>
 						<div class="col-md-3">
 							<label>CMP : {{ltp}}</label>
@@ -57,7 +61,7 @@ import { Component } from '@angular/core'
 				</div>
 				<hr />
 				<div class="text-right">
-					<button class="btn"  [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">{{transactionType}}</button>
+					<button class="btn" (click)="placeOrder()" [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">{{transactionType}}</button>
 				</div>
 			</form>
 		</div>
@@ -100,16 +104,51 @@ import { Component } from '@angular/core'
 })
 export class OrderFormComponent {
 	transactionType: string = 'BUY';
+	tradingsymbol: string;
 	squareoffValue: number = 1;
 	stoplossValue: number = 1;
 	price: number = 1;
 	quantity: number = 1;
+	cPort: CommunicatorService;
+	ds: DataService;
+	margins: Array<any>
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
 	}
-	constructor() {
-		
+	constructor(cPort: CommunicatorService, ds: DataService) {
+		this.cPort = cPort;
+		this.ds = ds;
+
+		this.margins = this.ds.getEquityMargins();
+		console.log(this.margins)
 	}
 
+	scriptListFormatter(data: any) {
+		return `${data.tradingsymbol}`;
+	}
+
+	scriptValueFormatter(data: any) {
+		return `${data.tradingsymbol}`;
+	}
+
+	scriptSelected($event) {
+		console.log($event)
+	}
+
+	placeOrder() {
+		let payload = {
+			tradingsymbol: this.tradingsymbol,
+			exchange: 'NSE',
+			segment: 'equity',
+			transaction_type: this.transactionType,
+			price: this.price,
+			quantity: this.quantity,
+			order_type: 'LIMIT',
+			product: 'MIS',
+			validity: 'DAY'
+		}
+
+		this.cPort.sendData(payload)
+	}
 	
 }

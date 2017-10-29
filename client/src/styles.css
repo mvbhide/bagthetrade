@@ -15,8 +15,25 @@
 
 .app-container {
 	font-family: 'Hanzo';
-	padding: 10px;
+	padding: 0% 8%;
 	margin: 0 auto;
+	min-height: 1000px;
+	background: #FFF;
+}
+
+.odd {
+	background: #A0A0A0;
+}
+
+.even {
+	background: #A6A6A6;
+}
+
+.loss {
+	color: #DF514C;
+}
+.profit {
+	color: #27AE60;
 }
 .buy-colored {
 	background: #4A90C2;
