@@ -1,12 +1,14 @@
 import { Component } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
+import { OrderService } from '../shared/services/orders/orders.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+
 
 
 @Component({
 	selector: 'order-form',
-	template: `
+	template:` 
 	<div class="order-form-container">
 		<div class="order-form-header" [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">
 			{{transactionType}} {{tradingsymbol}} {{quantity}} @ {{price}}
@@ -20,7 +22,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 					<label for="orderTypeCNC" class="radio-inline"><input type='radio' name="order-type" id="orderTypeCNC" value="CNC">CNC</label>
 				</div>
 				<hr />
-				<div class="order-scrip">
+				<div class="order-stock">
 					<div class="form-group row">
 						<div class="col-md-4">
 							<label for="exchange">exchange</label>
@@ -30,12 +32,13 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 							</select>
 						</div>
 						<div class="col-md-5">
-							<label for="tradingsymbol">Scrip</label>
-							<input ngui-auto-complete [list-formatter]="scriptListFormatter" [value-formatter]="scriptValueFormatter" [source]="margins" (valueChanged)="scriptSelected($event)" type="text" />
+							<label for="tradingsymbol">Stock </label>
+							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="margins" (valueChanged)="stockSelected($event)" type="text" />
 						</div>
 						<div class="col-md-3">
 							<label>CMP : {{ltp}}</label>
-							<label>Leverage: {{leverage}}</label>
+							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
+							<label>Required Margin: </label><span>{{marginRequired | number : '2.0-2'}}</span>
 						</div>
 					</div>
 				</div>
@@ -43,7 +46,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 				<div class="form-group row">
 					<div class="col-md-3">
 						<label for="stoplossValue"> Stop Loss</label>
-						<input class="form-control" type="text" [value]="stoplossValue" id="stoplossValue" />
+						<input class="form-control" type="text" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateRisk()" />
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
@@ -72,8 +75,9 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 			color: #000;
 		}
 		.order-form-container {
-			width: 50%;
+			width: 70%;
 			box-shadow: 2px 2px 4px 4px #DDD;
+			margin: 0 auto;
 		}
 		.order-form-header {
 			font-size: 16px;
@@ -96,43 +100,74 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 		.order-type {
 			margin: 10px 0px;
 		}
-
 		.change-transaction-type {
 			cursor: pointer;
+		}
+		.ngui-auto-complete-wrapper {
+			display: inline-block;
+			border: 1px solid red;
 		}
 	`]
 })
 export class OrderFormComponent {
 	transactionType: string = 'BUY';
 	tradingsymbol: string;
-	squareoffValue: number = 1;
-	stoplossValue: number = 1;
+	squareoffValue: number = 0;
+	stoplossValue: number = 0;
 	price: number = 1;
-	quantity: number = 1;
-	cPort: CommunicatorService;
-	ds: DataService;
+	marginRequired: number = 0;
+	quantity: number = 100;
+	riskPercentage: number = 10;
+	leverage: number = 0;
+
+	objMargin: object = {};
+
 	margins: Array<any>
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
 	}
-	constructor(cPort: CommunicatorService, ds: DataService) {
-		this.cPort = cPort;
-		this.ds = ds;
-
+	constructor(private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
 		this.margins = this.ds.getEquityMargins();
-		console.log(this.margins)
 	}
 
-	scriptListFormatter(data: any) {
+	stockListFormatter(data: any) {
 		return `${data.tradingsymbol}`;
 	}
 
-	scriptValueFormatter(data: any) {
+	stockValueFormatter(data: any) {
 		return `${data.tradingsymbol}`;
 	}
 
-	scriptSelected($event) {
-		console.log($event)
+	stockSelected($event) {
+		if(!$event.tradingsymbol) return;
+		this.os.setProspectiveStock($event.tradingsymbol);
+		this.tradingsymbol = $event.tradingsymbol;
+		console.log($event);
+
+		this.objMargin = $event;
+		this.calculateRisk();
+	}
+
+	calculateRisk() {
+		let avblMargin = this.ds.availableFunds;
+		let price = 140.5;
+		let co_lower = this.objMargin['co_lower'] / 100;
+		let co_upper = this.objMargin['co_upper'] / 100;
+
+		let trigger = price - (co_lower * price)
+		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
+let maxRisk = this.ds.availableFunds * (this.riskPercentage/100)
+let calculatedQuantity = Math.ceil(maxRisk / (price - this.stoplossValue));
+this.quantity = calculatedQuantity;
+
+		let x = Math.abs(price - trigger) * this.quantity;
+		let y = co_lower * price * this.quantity;
+
+		let margin =  x > y ? x : y
+		margin = margin + (margin * 0.2);
+		this.marginRequired = margin;
+
+		this.leverage = (price * this.quantity) / this.marginRequired;
 	}
 
 	placeOrder() {
@@ -148,7 +183,7 @@ export class OrderFormComponent {
 			validity: 'DAY'
 		}
 
-		this.cPort.sendData(payload)
+		this.cPort.sendData('placeorder', payload)
 	}
 	
 }

@@ -42,8 +42,8 @@ export class CommunicatorService {
 		
 	}
 
-	public sendData(payload: any) {
-		this.comm.next(payload);
+	public sendData(method: string, payload: any) {
+		this.comm.next(method, payload);
 	}
 
 	

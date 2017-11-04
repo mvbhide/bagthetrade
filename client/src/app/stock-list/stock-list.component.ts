@@ -29,7 +29,5 @@ export class StockListComponent {
 	}
 
 	takethistrade(stock: any) {
-		console.log(stock)
-		this.cs.sendData(stock)
 	}
 }

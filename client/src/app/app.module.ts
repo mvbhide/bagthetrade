@@ -9,6 +9,7 @@ import {ChatService} from './shared/services/chat.service';
 import {WebSocketService} from './shared/services/websocket.service';
 import {CommunicatorService} from './shared/communicator/communicator.service';
 import {DataService} from './shared/services/data-service.service';
+import {OrderService} from './shared/services/orders/orders.service';
 
 // components
 import {AppComponent} from './app.component';
@@ -32,7 +33,7 @@ import {CurrentOrdersComponent} from "./order/current-orders/current-orders.comp
 		FundSummaryComponent,
 		CurrentOrdersComponent
 	],
-	providers   : [ChatService, WebSocketService, CommunicatorService, DataService],
+	providers   : [ChatService, WebSocketService, CommunicatorService, DataService, OrderService],
 	bootstrap   : [AppComponent]
 })
 export class AppModule {
