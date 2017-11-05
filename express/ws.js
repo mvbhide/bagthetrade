@@ -20,9 +20,12 @@ sPort.dataServer = ws.createServer(function (conn) {
 		1. Place order
 	*/
 	conn.on('text', function(request) {
-		console.log('Incoming request on server', request)
-		oms.placeOrder(JSON.parse(request));
+		request = JSON.parse(request);
+		console.log('Incoming request on server', request['method'], request.payload)
+		//oms.placeOrder(JSON.parse(request));
 	})
+
+
 
 	conn.on('error', function (err) {
 		// only throw if something else happens than Connection Reset

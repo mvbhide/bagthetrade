@@ -3,6 +3,8 @@ import { CommunicatorService } from '../shared/communicator/communicator.service
 import { DataService } from '../shared/services/data-service.service';
 import { OrderService } from '../shared/services/orders/orders.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { AppConfig } from '../config/app.config';
+import { CommConfig } from '../config/comm.config';
 
 
 
@@ -38,7 +40,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 						<div class="col-md-3">
 							<label>CMP : {{ltp}}</label>
 							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-							<label>Required Margin: </label><span>{{marginRequired | number : '2.0-2'}}</span>
+							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | number : '2.0-2'}}</span>
 						</div>
 					</div>
 				</div>
@@ -46,20 +48,20 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 				<div class="form-group row">
 					<div class="col-md-3">
 						<label for="stoplossValue"> Stop Loss</label>
-						<input class="form-control" type="text" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateRisk()" />
+						<input class="form-control" [step]="os.tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateRisk()" />
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
-						<input class="form-control" type="text" id="price" [value]="price" />
+						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" />
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input class="form-control" type="text" [value]="squareoffValue" id="squareoffValue"/>
+						<input class="form-control" type="number" [value]="squareoffValue" id="squareoffValue"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="text" [value]="quantity" id="quantity" />
+						<input class="form-control" type="number" [value]="quantity" id="quantity" />
 					</div>
 				</div>
 				<hr />
@@ -117,12 +119,11 @@ export class OrderFormComponent {
 	price: number = 1;
 	marginRequired: number = 0;
 	quantity: number = 100;
-	riskPercentage: number = 10;
 	leverage: number = 0;
 
 	objMargin: object = {};
-
 	margins: Array<any>
+
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
 	}
@@ -137,11 +138,13 @@ export class OrderFormComponent {
 	stockValueFormatter(data: any) {
 		return `${data.tradingsymbol}`;
 	}
-
+ 	
 	stockSelected($event) {
 		if(!$event.tradingsymbol) return;
 		this.os.setProspectiveStock($event.tradingsymbol);
 		this.tradingsymbol = $event.tradingsymbol;
+		console.log(this.tradingsymbol)
+		this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.tradingsymbol});
 		console.log($event);
 
 		this.objMargin = $event;
@@ -150,13 +153,13 @@ export class OrderFormComponent {
 
 	calculateRisk() {
 		let avblMargin = this.ds.availableFunds;
-		let price = 140.5;
+		let price = this.price = this.objMargin['price'];
 		let co_lower = this.objMargin['co_lower'] / 100;
 		let co_upper = this.objMargin['co_upper'] / 100;
 
-		let trigger = price - (co_lower * price)
+		let trigger = parseFloat((price - (co_lower * price)).toFixed(2))
 		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
-let maxRisk = this.ds.availableFunds * (this.riskPercentage/100)
+let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
 let calculatedQuantity = Math.ceil(maxRisk / (price - this.stoplossValue));
 this.quantity = calculatedQuantity;
 
@@ -183,7 +186,7 @@ this.quantity = calculatedQuantity;
 			validity: 'DAY'
 		}
 
-		this.cPort.sendData('placeorder', payload)
+		//this.cPort.send({method : 'placeorder', payload: payload})
 	}
 	
 }

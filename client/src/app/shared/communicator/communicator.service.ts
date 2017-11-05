@@ -42,9 +42,8 @@ export class CommunicatorService {
 		
 	}
 
-	public sendData(method: string, payload: any) {
-		this.comm.next(method, payload);
+	public send(objData) {
+		this.comm.next({method: objData.method, payload:  objData.payload});
 	}
-
 	
 } // end class ChatService

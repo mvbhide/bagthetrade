@@ -148,7 +148,7 @@ export class CurrentOrdersComponent {
 			validity: 'DAY'
 		}
 
-		this.cPort.sendData('placeordere', payload)
+		//this.cPort.send('placeordere', payload)
 	}
 	
 }
