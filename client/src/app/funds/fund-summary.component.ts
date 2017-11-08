@@ -17,6 +17,11 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 	`
 })
 export class FundSummaryComponent {
-	totalFunds: number = 100000;
-	availableFunds : number = 100000;
+	totalFunds: number = 0;
+	availableFunds : number = 0;
+
+	constructor(private ds: DataService) {
+		this.totalFunds = this.ds.totalFunds;
+		this.availableFunds = this.ds.availableFunds;
+	}
 }

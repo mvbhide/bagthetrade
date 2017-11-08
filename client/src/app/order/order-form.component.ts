@@ -12,16 +12,25 @@ import { CommConfig } from '../config/comm.config';
 	selector: 'order-form',
 	template:` 
 	<div class="order-form-container">
-		<div class="order-form-header" [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">
-			{{transactionType}} {{tradingsymbol}} {{quantity}} @ {{price}}
-			<div class="change-transaction-type pull-right" (click)="toggleTransactionType();">B <i class="glyphicon glyphicon-transfer"></i> S</div>
+		<div class="order-form-header row"  [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">
+			<div class="order-details col-lg-6">
+				{{transactionType}} {{tradingsymbol}} {{quantity}} @ {{price}}
+			</div>
+			<div class="col-lg-6 change-transaction-type text-right" (click)="toggleTransactionType();">B <i class="glyphicon glyphicon-transfer"></i> S</div>
 		</div>
 		<div class='order-form' >
 			<form>
-				<div class="order-type">
-					<label for="orderTypeBO" class="radio-inline"><input type='radio' name="order-type" id="orderTypeBO" value="BO" checked>BO</label>
-					<label for="orderTypeCO" class="radio-inline"><input type='radio' name="order-type" id="orderTypeCO" value="CO">CO</label>
-					<label for="orderTypeCNC" class="radio-inline"><input type='radio' name="order-type" id="orderTypeCNC" value="CNC">CNC</label>
+				<div class="row">
+					<div class="order-type col-lg-6">
+						<input type='radio' name="order-type" id="orderTypeBO" value="BO" checked><label for="orderTypeBO" class="radio-inline">BO</label>
+						<input type='radio' name="order-type" id="orderTypeCO" value="CO"><label for="orderTypeCO" class="radio-inline">CO</label>
+						<input type='radio' name="order-type" id="orderTypeCNC" value="CNC"><label for="orderTypeCNC" class="radio-inline">CNC</label>
+					</div>
+					<div class="metadata col-lg-6">
+						<label>CMP : {{ltp}}</label>
+						<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
+						<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | number : '2.0-2'}}</span>
+					</div>
 				</div>
 				<hr />
 				<div class="order-stock">
@@ -36,11 +45,6 @@ import { CommConfig } from '../config/comm.config';
 						<div class="col-md-5">
 							<label for="tradingsymbol">Stock </label>
 							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="margins" (valueChanged)="stockSelected($event)" type="text" />
-						</div>
-						<div class="col-md-3">
-							<label>CMP : {{ltp}}</label>
-							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | number : '2.0-2'}}</span>
 						</div>
 					</div>
 				</div>
@@ -57,11 +61,11 @@ import { CommConfig } from '../config/comm.config';
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input class="form-control" type="number" [value]="squareoffValue" id="squareoffValue"/>
+						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="number" [value]="quantity" id="quantity" />
+						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity" />
 					</div>
 				</div>
 				<hr />
@@ -85,6 +89,11 @@ import { CommConfig } from '../config/comm.config';
 			font-size: 16px;
 			padding: 15px;
 			border-radius: 2px 2px 0px 0px;
+			margin:0;
+		}
+		.metadata label {
+			font-weight: normal;
+			margin-left: 5%;
 		}
 		.order-form {
 			padding: 15px;
@@ -93,14 +102,14 @@ import { CommConfig } from '../config/comm.config';
 		.order-form label {
 			color: #333;
 		}
+		.order-type label {
+			margin-right: 20px;
+		}
 		.order-form input {
 			color: #666;
 		}
 		.order-form ul li {
 			list-style: none;
-		}
-		.order-type {
-			margin: 10px 0px;
 		}
 		.change-transaction-type {
 			cursor: pointer;
@@ -116,9 +125,9 @@ export class OrderFormComponent {
 	tradingsymbol: string;
 	squareoffValue: number = 0;
 	stoplossValue: number = 0;
-	price: number = 1;
+	price: number = 0;
 	marginRequired: number = 0;
-	quantity: number = 100;
+	quantity: number = 0;
 	leverage: number = 0;
 
 	objMargin: object = {};
@@ -126,6 +135,7 @@ export class OrderFormComponent {
 
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
+		this.calculateRisk()
 	}
 	constructor(private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
 		this.margins = this.ds.getEquityMargins();
@@ -152,23 +162,41 @@ export class OrderFormComponent {
 	}
 
 	calculateRisk() {
+		//Reset all values
+		this.stoplossValue = 0;
+		this.price = 0;
+		this.squareoffValue = 0;
 		let avblMargin = this.ds.availableFunds;
 		let price = this.price = this.objMargin['price'];
 		let co_lower = this.objMargin['co_lower'] / 100;
 		let co_upper = this.objMargin['co_upper'] / 100;
-
-		let trigger = parseFloat((price - (co_lower * price)).toFixed(2))
+		let trigger = 0;
+		
+		if(this.transactionType == 'BUY') {
+			trigger = parseFloat((price - (co_lower * price)).toFixed(2))
+			this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+		} else {
+			trigger = parseFloat((price + (co_lower * price)).toFixed(2))
+			this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+		}
+		
 		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
-let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
-let calculatedQuantity = Math.ceil(maxRisk / (price - this.stoplossValue));
-this.quantity = calculatedQuantity;
+		// Adjust the values to nearest 0.05
+		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*20)/20).toFixed(2));
+		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
+
+		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
+		let calculatedQuantity = Math.ceil(maxRisk / (price - this.stoplossValue));
+		this.quantity = Math.abs(calculatedQuantity);
 
 		let x = Math.abs(price - trigger) * this.quantity;
 		let y = co_lower * price * this.quantity;
 
+
+
 		let margin =  x > y ? x : y
 		margin = margin + (margin * 0.2);
-		this.marginRequired = margin;
+		this.marginRequired = Math.abs(margin);
 
 		this.leverage = (price * this.quantity) / this.marginRequired;
 	}
@@ -180,13 +208,15 @@ this.quantity = calculatedQuantity;
 			segment: 'equity',
 			transaction_type: this.transactionType,
 			price: this.price,
+			squareoff_value: Math.abs(this.price-this.squareoffValue).toFixed(2),
+			stoploss_value: Math.abs(this.price-this.stoplossValue).toFixed(2),
 			quantity: this.quantity,
 			order_type: 'LIMIT',
 			product: 'MIS',
 			validity: 'DAY'
 		}
 
-		//this.cPort.send({method : 'placeorder', payload: payload})
+		this.cPort.send({method : 'placeorder', payload: payload})
 	}
 	
 }

@@ -21,8 +21,14 @@ sPort.dataServer = ws.createServer(function (conn) {
 	*/
 	conn.on('text', function(request) {
 		request = JSON.parse(request);
+		var method = request['method'];
 		console.log('Incoming request on server', request['method'], request.payload)
-		//oms.placeOrder(JSON.parse(request));
+
+		switch(method) {
+			case 'placeorder':
+				oms.placeOrder(request.payload);
+		}
+		
 	})
 
 
