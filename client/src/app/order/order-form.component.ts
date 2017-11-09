@@ -13,10 +13,10 @@ import { CommConfig } from '../config/comm.config';
 	template:` 
 	<div class="order-form-container">
 		<div class="order-form-header row"  [ngClass]="{'buy-colored': transactionType == 'BUY', 'sell-colored' : transactionType == 'SELL'}">
-			<div class="order-details col-lg-6">
+			<div class="order-details col-lg-10">
 				{{transactionType}} {{tradingsymbol}} {{quantity}} @ {{price}}
 			</div>
-			<div class="col-lg-6 change-transaction-type text-right" (click)="toggleTransactionType();">B <i class="glyphicon glyphicon-transfer"></i> S</div>
+			<div class="col-lg-2 change-transaction-type text-right" (click)="toggleTransactionType();">B <i class="glyphicon glyphicon-transfer"></i> S</div>
 		</div>
 		<div class='order-form' >
 			<form>
@@ -29,7 +29,7 @@ import { CommConfig } from '../config/comm.config';
 					<div class="metadata col-lg-6">
 						<label>CMP : {{ltp}}</label>
 						<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-						<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | number : '2.0-2'}}</span>
+						<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
 					</div>
 				</div>
 				<hr />
@@ -56,16 +56,16 @@ import { CommConfig } from '../config/comm.config';
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
-						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" />
+						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price"  (change)="calculateRisk()"/>
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
+						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"  (change)="calculateRisk()"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity" />
+						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity"  (change)="calculateRisk()" />
 					</div>
 				</div>
 				<hr />
@@ -133,12 +133,13 @@ export class OrderFormComponent {
 	objMargin: object = {};
 	margins: Array<any>
 
+	constructor(private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
+		this.margins = this.ds.getEquityMargins();
+	}
+
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
 		this.calculateRisk()
-	}
-	constructor(private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
-		this.margins = this.ds.getEquityMargins();
 	}
 
 	stockListFormatter(data: any) {
@@ -153,24 +154,18 @@ export class OrderFormComponent {
 		if(!$event.tradingsymbol) return;
 		this.os.setProspectiveStock($event.tradingsymbol);
 		this.tradingsymbol = $event.tradingsymbol;
-		console.log(this.tradingsymbol)
 		this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.tradingsymbol});
-		console.log($event);
 
 		this.objMargin = $event;
 		this.calculateRisk();
 	}
 
 	calculateRisk() {
-		//Reset all values
-		this.stoplossValue = 0;
-		this.price = 0;
-		this.squareoffValue = 0;
 		let avblMargin = this.ds.availableFunds;
 		let price = this.price = this.objMargin['price'];
 		let co_lower = this.objMargin['co_lower'] / 100;
 		let co_upper = this.objMargin['co_upper'] / 100;
-		let trigger = 0;
+		let trigger;
 		
 		if(this.transactionType == 'BUY') {
 			trigger = parseFloat((price - (co_lower * price)).toFixed(2))
@@ -191,8 +186,6 @@ export class OrderFormComponent {
 
 		let x = Math.abs(price - trigger) * this.quantity;
 		let y = co_lower * price * this.quantity;
-
-
 
 		let margin =  x > y ? x : y
 		margin = margin + (margin * 0.2);
