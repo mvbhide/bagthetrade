@@ -7,6 +7,8 @@ var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
+var http = require('request');
+var _ = require('lodash');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -83,6 +85,7 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		function init() {
 			// Fetch equity margins.
+
 			// You can have other api calls here.
 
 			kc.margins("equity")
@@ -97,6 +100,41 @@ router.get('/kiteauthred', function(req, res, next) {
 			}
 	}
 
+})
+
+router.get('/margins', function(req, res, next){
+	var actk = 'mh1ibtvgtlxkt1qvwtyvrsq8vwtmxyxr';
+	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+	var allmargins = [];
+	var tmpMargins = [];
+	http('https://api.kite.trade/margins/equity', function(err, response, body) {
+		tmpMargins.push(JSON.parse(body));
+		http('https://api.kite.trade/margins/commodity', function(err, response, body) {
+			tmpMargins.push(JSON.parse(body));
+			http('https://api.kite.trade/margins/futures', function(err, response, body) {
+				tmpMargins.push(JSON.parse(body));
+				allmargins = (tmpMargins[0].concat(tmpMargins[1])).concat(tmpMargins[2]);
+
+				kc.instruments("NSE")
+					.then(function(response) {
+						var merged = _.map(allmargins, function(item) {
+						    return _.assign(item, _.find(response, ['tradingsymbol', item.tradingsymbol]));
+						});
+						res.send(merged);
+					}).catch(function(err) {
+						console.log(err)
+					})
+					.finally(function(){
+						
+					});
+
+				/*res.setHeader('Content-Type', 'application/json');
+				res.send(allmargins);*/
+			})
+		});
+	});
+	
+	
 })
 
 module.exports = router;
