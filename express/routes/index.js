@@ -7,7 +7,8 @@ var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
-var http = require('request');
+var request = require('request');
+var Promise = require('promise');
 var _ = require('lodash');
 
 /* GET home page. */
@@ -107,34 +108,31 @@ router.get('/margins', function(req, res, next){
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 	var allmargins = [];
 	var tmpMargins = [];
-	http('https://api.kite.trade/margins/equity', function(err, response, body) {
-		tmpMargins.push(JSON.parse(body));
-		http('https://api.kite.trade/margins/commodity', function(err, response, body) {
-			tmpMargins.push(JSON.parse(body));
-			http('https://api.kite.trade/margins/futures', function(err, response, body) {
-				tmpMargins.push(JSON.parse(body));
-				allmargins = (tmpMargins[0].concat(tmpMargins[1])).concat(tmpMargins[2]);
+	function requestAsync(url) {
+    	return new Promise(function(resolve, reject) {
+	        request(url, function(err, res, body) {
+	            if (err) { return reject(err); }
+	            return resolve([JSON.parse(body)]);
+	        });
+	    });
+	}
 
-				kc.instruments("NSE")
-					.then(function(response) {
-						var merged = _.map(allmargins, function(item) {
-						    return _.assign(item, _.find(response, ['tradingsymbol', item.tradingsymbol]));
-						});
-						res.send(merged);
-					}).catch(function(err) {
-						console.log(err)
-					})
-					.finally(function(){
-						
-					});
-
-				/*res.setHeader('Content-Type', 'application/json');
-				res.send(allmargins);*/
-			})
+	Promise.all([
+		requestAsync('https://api.kite.trade/margins/equity'),
+		requestAsync('https://api.kite.trade/margins/commodity'),
+		requestAsync('https://api.kite.trade/margins/futures'),
+		kc.instruments().then(function(instruments){
+			return instruments;
+		})
+	]).then(function(alldata) {
+		var margins = _.concat(alldata[0][0], alldata[1][0], alldata[2][0]);
+		var mergedList = _.map(margins, function(item){
+		    return _.extend(item, _.find(alldata[3], { tradingsymbol: item.tradingsymbol }));
 		});
-	});
-	
-	
+		res.send(mergedList);
+	}).catch(function(err){
+		res.send("Error:" + err);
+	})
 })
 
 module.exports = router;

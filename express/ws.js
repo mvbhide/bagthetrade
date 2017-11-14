@@ -57,12 +57,12 @@ if(!sPort.dataServer) {
 }
 
 // 4. Send the payload to client
-sPort.send = function(payload) {
+sPort.send = function(method, payload) {
 	// Only emit numbers if there are active connections
 	if (sPort.dataServer.connections.length > 0) {
 		try {
 			sPort.dataServer.connections.forEach((function (conn) {
-				conn.send(JSON.stringify(payload))
+				conn.send({method: method, data: JSON.stringify(payload)})
 			}));
 
 		} catch(e) {

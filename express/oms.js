@@ -22,13 +22,6 @@ oms.placeOrder = function(objOrder) {
 	})
 	.catch(function(err) {
 		console.log(err)
-		var res = {
-			"status": "success",
-			"data": {
-				"order_id": "151220000000000"
-			}
-		}
-		return res.data.order_id;
 	})
 }
 
