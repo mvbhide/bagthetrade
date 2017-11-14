@@ -5,6 +5,7 @@ import { OrderService } from '../shared/services/orders/orders.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { AppConfig } from '../config/app.config';
 import { CommConfig } from '../config/comm.config';
+import { KiteTicker } from 'kiteconnect'
 
 
 
