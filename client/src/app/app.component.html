@@ -1,6 +1,14 @@
-<h1 class="text-center"></h1>
-<fund-summary></fund-summary>
-
-<order-form></order-form>
+<div class="header">
+	<nav>
+		<ul>
+			<li class="active"><a routerLink="/dashboard" routerLinkActive="active">Dashboard</a></li>
+			<li><a routerLink="/position" routerLinkActive="active">Positions</a></li>
+			<li><a routerLink="/portfolio" routerLinkActive="active">Portfolio</a></li>
+		</ul>
+	</nav>
+</div>
+<div class="content">
+	<router-outlet></router-outlet>
+</div>
 
 

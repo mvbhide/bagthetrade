@@ -23,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({secret: "Shh, its a secret!"}));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/dist/',express.static(path.join(__dirname, 'views/dist/')));
 
 app.use('/', index);
 app.use('/users', users);

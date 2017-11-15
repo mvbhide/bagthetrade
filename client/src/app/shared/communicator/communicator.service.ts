@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {Subject} from 'rxjs/Subject';
 import {WebSocketService} from '../services/websocket.service';
 import {DataService} from '../services/data-service.service';
+import {AuthService} from '../services/auth-service.service';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/filter';
 
@@ -19,13 +20,14 @@ export class CommunicatorService {
 	private comm: any;
 	
 	public instream: Subject<any> = new Subject<any>();
-	constructor(private wsService: WebSocketService, private ds: DataService) {
+	constructor(private wsService: WebSocketService, private ds: DataService, private as: AuthService) {
 		this.comm = wsService.connectData(DATA_URL)
 		this.instream = this.comm.map((response: any): any => {
 				return response.data;
 			})
 
 		this.instream.subscribe(message => {
+			console.log(message);
 			// Client side Incoming data
 			// Possible values
 			/*  1. Potential trades
@@ -36,6 +38,10 @@ export class CommunicatorService {
 				switch(method) {
 					case "setMarginData":
 						ds.setMarginData(message.data);
+						break;
+
+					case "user-authentication-results":
+						as.authentication(message.data);
 						break;
 
 				}

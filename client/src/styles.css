@@ -5,20 +5,20 @@
 	padding: 0;
 	font-size: 100%;
 	font-weight: normal;
-	font-family: "Calibri";
+	
 }
 
 @font-face {
 	font-family: 'Hanzo';
-	url: '../fonts/Hattori_Hanzo-webfont.woff';
+	url: './assets/fonts/Hattori_Hanzo-webfont.woff';
 }
 
 .app-container {
-	font-family: 'Hanzo';
-	padding: 0% 8%;
+	font-family: 'Quattrocento Sans', sans-serif;
 	margin: 0 auto;
 	min-height: 1000px;
 	background: #FFF;
+	letter-spacing: 1.2px;
 }
 
 .odd {

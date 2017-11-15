@@ -1,8 +1,9 @@
 var express = require('express');
 var checksum = require('checksum');
+var mysql = require('mysql');
 var sha = require('sha256');
 var router = express.Router();
-var ws = require('../ws');
+
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
@@ -13,7 +14,7 @@ var _ = require('lodash');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-	ws.send({name: 'Milind'});
+
 	res.render('index', { title: 'Express' });
 });
 
@@ -75,7 +76,6 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.requestAccessToken(requestToken, config.API_SECRET)
 			.then(function(response) {
-				console.log(response);
 				req.session.kc = kc;
 				req.session.access_token = response.data.access_token;
 				init();
@@ -133,6 +133,10 @@ router.get('/margins', function(req, res, next){
 	}).catch(function(err){
 		res.send("Error:" + err);
 	})
+})
+
+router.get('/dist', function(req, res, next) {
+	res.render('angular');
 })
 
 module.exports = router;
