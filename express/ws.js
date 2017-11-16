@@ -4,7 +4,7 @@
 var ws = require('nodejs-websocket');
 var oms = require('./oms');
 var config = require('./config');
-var mysql = require('mysql');
+var db = require('./db');
 var sPort = {}; // Communication object used by the server
 // 3. Server for emitting random data.
 // Is this best practice? Starting new server on another port, or can
@@ -43,34 +43,16 @@ if(!sPort.dataServer) {
 
 				case "authenticate":
 					var objUserCred = request.payload;
-					var db = mysql.createConnection({
-						host: config.DB.host,
-						user: config.DB.username,
-						password: '',
-						database: config.DB.database
+					db.authenticateUser(objUserCred.e, objUserCred.p)
+					.then(function(res) {
+						if(res && res.success) {
+							sPort.send('user-authentication-results', res);
+						}	
 					})
-
-					db.connect(function(err){
-						if(err) {
-							console.log(err);
-							return;
-						}
-						var query = "SELECT * FROM `user` WHERE email='" + objUserCred.e +"' AND password='" + objUserCred.p + "'";
-						db.query(query, function(err, results) {
-							if(results && results.length == 1) {
-								var objResults = {
-									"success": true
-								}
-
-								// If the user is authenticated, start pre market data churning
-							} else {
-								var objResults = {
-									"success": false
-								}
-							}
-							sPort.send('user-authentication-results', objResults);
-						})
+					.catch(function(res) {
+						sPort.send('user-authentication-results', res);
 					})
+				break;
 
 			}
 			

@@ -41,6 +41,7 @@ export class CommunicatorService {
 						break;
 
 					case "user-authentication-results":
+					console.log(message)
 						as.authentication(message.data);
 						break;
 

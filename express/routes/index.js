@@ -1,6 +1,6 @@
 var express = require('express');
 var checksum = require('checksum');
-var mysql = require('mysql');
+var db = require('../db');
 var sha = require('sha256');
 var router = express.Router();
 
@@ -31,7 +31,7 @@ router.post('/orderhook', function(req, res, next){
 })
 
 router.get('/orders', function(req, res, next) {
-	var actk = 'mh1ibtvgtlxkt1qvwtyvrsq8vwtmxyxr';
+	var actk = 'cdmcv03rz1if4fjav0jw4plsazemqf4v';
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 	
 	kc.orders()
@@ -76,8 +76,9 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.requestAccessToken(requestToken, config.API_SECRET)
 			.then(function(response) {
+				console.log(response);
 				req.session.kc = kc;
-				req.session.access_token = response.data.access_token;
+				db.setAccessToken(response.data.access_token);
 				init();
 			})
 			.catch(function(err) {
@@ -135,8 +136,12 @@ router.get('/margins', function(req, res, next){
 	})
 })
 
-router.get('/dist', function(req, res, next) {
-	res.render('angular');
+router.get('/test', function(req, res, next) {
+	var actk = 'cdmcv03rz1if4fjav0jw4plsazemqf4v';
+	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+
+	kc.invalidateToken(actk);
+	res.send('ok');
 })
 
 module.exports = router;
