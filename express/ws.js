@@ -69,7 +69,6 @@ if(!sPort.dataServer) {
 	}).listen(3006, function () {
 		console.log('Random number server running on localhost:3006');
 	});
-
 }
 
 // 4. Send the payload to client

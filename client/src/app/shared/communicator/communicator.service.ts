@@ -28,6 +28,7 @@ export class CommunicatorService {
 
 		this.instream.subscribe(message => {
 			console.log(message);
+			message = JSON.parse(message);
 			// Client side Incoming data
 			// Possible values
 			/*  1. Potential trades
@@ -35,14 +36,18 @@ export class CommunicatorService {
 				3. Trade confirmations along with child trade ids */
 			try {
 				let method = message.method;
+
 				switch(method) {
 					case "setMarginData":
 						ds.setMarginData(message.data);
 						break;
 
 					case "user-authentication-results":
-					console.log(message)
 						as.authentication(message.data);
+						break;
+
+					case "set-available-margin":
+						ds.setAvailableFunds(message.data);
 						break;
 
 				}

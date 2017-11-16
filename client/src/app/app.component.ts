@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import {DataService} from './shared/services/data-service.service';
 
 @Component({
 	moduleId   : module.id,
@@ -37,7 +38,17 @@ import {Component} from '@angular/core';
 		.content {
 			margin-top: 100px;
 		}
+		.overlay {
+		    position: fixed;
+		    height: 100%;
+		    width: 100%;
+		    background: #000;
+		    top: 0;
+		    opacity: 0.6;
+		    z-index: 1;
+		}
 	`]
 })
 export class AppComponent {
+	constructor(private ds: DataService){}
 }

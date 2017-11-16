@@ -3,7 +3,7 @@ var checksum = require('checksum');
 var db = require('../db');
 var sha = require('sha256');
 var router = express.Router();
-
+var sPort = require('../ws')
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
@@ -76,7 +76,6 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.requestAccessToken(requestToken, config.API_SECRET)
 			.then(function(response) {
-				console.log(response);
 				req.session.kc = kc;
 				db.setAccessToken(response.data.access_token);
 				init();
@@ -92,9 +91,10 @@ router.get('/kiteauthred', function(req, res, next) {
 
 			kc.margins("equity")
 				.then(function(response) {
-					console.log(response)
+					sPort.send('set-available-margin', response.data.net);
 				}).catch(function(err) {
 					console.log(err)
+					sPort.send('set-available-margin', 20000);
 				})
 				.finally(function(){
 					res.status(200).end();
@@ -137,11 +137,8 @@ router.get('/margins', function(req, res, next){
 })
 
 router.get('/test', function(req, res, next) {
-	var actk = 'cdmcv03rz1if4fjav0jw4plsazemqf4v';
-	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
-
-	kc.invalidateToken(actk);
-	res.send('ok');
+	sPort.send('set-available-margin', 20000)
+	res.send('Ok')
 })
 
 module.exports = router;

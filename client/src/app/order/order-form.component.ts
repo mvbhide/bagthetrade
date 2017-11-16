@@ -82,8 +82,6 @@ import { KiteTicker } from 'kiteconnect'
 			color: #000;
 		}
 		.order-form-container {
-			width: 70%;
-			box-shadow: 2px 2px 4px 4px #DDD;
 			margin: 0 auto;
 		}
 		.order-form-header {
