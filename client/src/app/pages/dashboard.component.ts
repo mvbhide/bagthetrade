@@ -11,6 +11,7 @@ import {DataService} from '../shared/services/data-service.service'
 				<fund-summary></fund-summary>
 			</div>
 			<div class="order-form-dialog" *ngIf="showOrderForm">
+				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>
 			</div>
 		</div>
@@ -29,6 +30,21 @@ import {DataService} from '../shared/services/data-service.service'
 			background: #FFF;
 			z-index: 5;
 		}
+		.close-order-form-dialog::after:hover {
+			opacity: 0.6;
+		}
+		.close-order-form-dialog::after {
+			content: 'X';
+			padding: 2px 6px;
+			border: 1px solid #FFF;
+			border-radius: 50%;
+			background: #263238;
+			color: #FFF;
+			position: absolute;
+			right: -7px;
+			top: -12px;
+			cursor: pointer;
+		}
 	`]
 })
 export class DashboardComponent {
@@ -36,5 +52,10 @@ export class DashboardComponent {
 
 	constructor(private ds: DataService){
 		this.ds.showOverlay = true;		
+	}
+
+	closeOrderForm() {
+		this.showOrderForm = false;
+		this.ds.showOverlay = false;
 	}
 }

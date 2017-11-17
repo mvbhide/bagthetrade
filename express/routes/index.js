@@ -89,6 +89,14 @@ router.get('/kiteauthred', function(req, res, next) {
 
 			// You can have other api calls here.
 
+			// Set a repeat function to poll orders every 15 seconds
+			var pollOrders = setInterval(function() {
+				kc.orders()
+				.then(function(response) {
+					sPort('refresh-orders', response.data)
+				})
+			}, 15000);
+
 			kc.margins("equity")
 				.then(function(response) {
 					sPort.send('set-available-margin', response.data.net);
