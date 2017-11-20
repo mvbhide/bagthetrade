@@ -48,9 +48,19 @@ router.get('/ticker', function(req, res, next) {
 		ticker.connect();
 		ticker.on("connect", function() {
 			console.log("ticker connected");
-			ticker.subscribe([53471495]);
+			ticker.setMode(ticker.modeFull, [53480711]);
+			let sold = false;
 			ticker.on("tick", function(ticks) {
-				console.log(ticks);
+				let ltp = ticks[0].LastTradedPrice;
+				console.log(ltp);
+				if(ltp == 3678 && sold == false) {
+					console.log("Sold here");
+					sold = true;
+				}
+
+				if(ltp == 3670 && sold == true) {
+					console.log('Bought here');
+				}
 
 			})
 		})
@@ -61,9 +71,7 @@ router.get('/ticker', function(req, res, next) {
 		
 		
 		setTimeout(function(){
-			ticker.setMode(ticker.modeFull,[53471495]);
 			setTimeout(function() {
-				ticker.unsubscribe([53471495]);
 				res.send('OK')
 			}, 2000)
 		}, 3000)
@@ -191,6 +199,16 @@ var db = require('../db');
 				})
 			})
 		})
+	})
+})
+
+router.get('/tickertest', function(req, res, next) {
+	var actk = '947qxd2i8q8rw0cr3qiwm1423hxoovrr';
+	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+
+	kc.instruments('MCX')
+	.then(function(ins) {
+		res.send(ins);
 	})
 })
 
