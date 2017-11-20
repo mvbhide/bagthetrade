@@ -31,7 +31,7 @@ router.post('/orderhook', function(req, res, next){
 })
 
 router.get('/orders', function(req, res, next) {
-	var actk = 'cdmcv03rz1if4fjav0jw4plsazemqf4v';
+	var actk = 'd8v2ma1ei2ic0hqlks5wgemxxe7b8zu0';
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 	
 	kc.orders()
@@ -76,8 +76,9 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.requestAccessToken(requestToken, config.API_SECRET)
 			.then(function(response) {
+				console.log(response)
 				req.session.kc = kc;
-				db.setAccessToken(response.data.access_token);
+				db.setAccessToken(config.API_KEY, response.data.access_token);
 				init();
 			})
 			.catch(function(err) {
@@ -90,12 +91,12 @@ router.get('/kiteauthred', function(req, res, next) {
 			// You can have other api calls here.
 
 			// Set a repeat function to poll orders every 15 seconds
-			var pollOrders = setInterval(function() {
+			/*var pollOrders = setInterval(function() {
 				kc.orders()
 				.then(function(response) {
 					sPort('refresh-orders', response.data)
 				})
-			}, 15000);
+			}, 15000);*/
 
 			kc.margins("equity")
 				.then(function(response) {
@@ -113,7 +114,7 @@ router.get('/kiteauthred', function(req, res, next) {
 })
 
 router.get('/margins', function(req, res, next){
-	var actk = 'mh1ibtvgtlxkt1qvwtyvrsq8vwtmxyxr';
+	var actk = '947qxd2i8q8rw0cr3qiwm1423hxoovrr';
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 	var allmargins = [];
 	var tmpMargins = [];
@@ -127,17 +128,20 @@ router.get('/margins', function(req, res, next){
 	}
 
 	Promise.all([
-		requestAsync('https://api.kite.trade/margins/equity'),
-		requestAsync('https://api.kite.trade/margins/commodity'),
-		requestAsync('https://api.kite.trade/margins/futures'),
+		//requestAsync('https://api.kite.trade/margins/equity'),
+		//requestAsync('https://api.kite.trade/margins/commodity'),
+		//requestAsync('https://api.kite.trade/margins/futures'),
 		kc.instruments().then(function(instruments){
 			return instruments;
 		})
 	]).then(function(alldata) {
 		var margins = _.concat(alldata[0][0], alldata[1][0], alldata[2][0]);
-		var mergedList = _.map(margins, function(item){
-		    return _.extend(item, _.find(alldata[3], { tradingsymbol: item.tradingsymbol }));
-		});
+
+		var mergedList = _.map(alldata[3], function(item){
+			if(item && item.tradingsymbol) {
+		    	return _.extend(item, _.find(margins, {"tradingsymbol": item.tradingsymbol.substr(item.tradingsymbol.length-8) }));
+		    }
+		})
 		res.send(mergedList);
 	}).catch(function(err){
 		res.send("Error:" + err);
@@ -145,8 +149,49 @@ router.get('/margins', function(req, res, next){
 })
 
 router.get('/test', function(req, res, next) {
-	sPort.send('set-available-margin', 20000)
-	res.send('Ok')
+	var actk = '947qxd2i8q8rw0cr3qiwm1423hxoovrr';
+	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+
+	function requestAsync(url) {
+    	return new Promise(function(resolve, reject) {
+	        request(url, function(err, res, body) {
+	            if (err) { return reject(err); }
+	            return resolve([JSON.parse(body)]);
+	        });
+	    });
+	}
+
+	//clear the current table contents
+	db.clearInstrumentsTable()
+	.then(function(res){
+		// Fetch the instruments
+		kc.instruments('MCX')
+		.then(function(instruments) {
+			console.log("Fetched the instruments. Count: ", instruments.length);
+			var db = require('../db');
+			db.setInstruments(instruments)
+			.then(function(res) {
+				console.log("Written the instruments to database");
+				Promise.all([
+					//requestAsync('https://api.kite.trade/margins/equity'),
+					requestAsync('https://api.kite.trade/margins/commodity'),
+					//requestAsync('https://api.kite.trade/margins/futures'),
+				]).then(function(alldata) {
+					var margins = alldata[0][0];
+					console.log("fetched all the margins. Count: ", margins.length);
+var db = require('../db');
+					db.updateInstrumentsWithMargins(margins)
+					.then(function(res) {
+						console.log("Marings updated")
+						res.send("DONE");
+					})
+					
+				}).catch(function(err){
+					res.send("Error:" + err);
+				})
+			})
+		})
+	})
 })
 
 module.exports = router;

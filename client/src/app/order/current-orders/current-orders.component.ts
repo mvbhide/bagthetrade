@@ -55,7 +55,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 })
 export class CurrentOrdersComponent {
 	orders: Array<object>;
-	constructor(cPort: CommunicatorService, ds: DataService) {
+	constructor(private cPort: CommunicatorService, private ds: DataService) {
 		this.cPort = cPort;
 		this.ds = ds;
 	}
