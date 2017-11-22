@@ -126,22 +126,29 @@ router.get('/margins', function(req, res, next){
 	        });
 	    });
 	}
-
+	console.log('Start: ',new Date().getTime())
 	Promise.all([
 		//requestAsync('https://api.kite.trade/margins/equity'),
 		//requestAsync('https://api.kite.trade/margins/commodity'),
-		//requestAsync('https://api.kite.trade/margins/futures'),
-		kc.instruments().then(function(instruments){
+		requestAsync('https://api.kite.trade/margins/futures'),
+		kc.instruments('NFO').then(function(instruments){
 			return instruments;
-		})
+		}),
+		/*kc.instruments('NFO').then(function(instruments){
+			return instruments;
+		}),
+		kc.instruments('MCX').then(function(instruments){
+			return instruments;
+		})*/
 	]).then(function(alldata) {
-		var margins = _.concat(alldata[0][0], alldata[1][0], alldata[2][0]);
-
-		var mergedList = _.map(alldata[3], function(item){
+		res.send(alldata); return;
+		//var margins = _.concat(alldata[0], alldata[1], alldata[2]);
+		var mergedList = _.map(alldata[0][0], function(item){
 			if(item && item.tradingsymbol) {
-		    	return _.extend(item, _.find(margins, {"tradingsymbol": item.tradingsymbol.substr(item.tradingsymbol.length-8) }));
+		    	return _.extend(item, _.find(alldata[1], {tradingsymbol: item.tradingsymbol}));
 		    }
 		})
+		console.log('Done: ',new Date().getTime())
 		res.send(mergedList);
 	}).catch(function(err){
 		res.send("Error:" + err);
