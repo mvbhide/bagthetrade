@@ -136,24 +136,24 @@ router.get('/margins', function(req, res, next){
 	}
 	console.log('Start: ',new Date().getTime())
 	Promise.all([
-		//requestAsync('https://api.kite.trade/margins/equity'),
+		requestAsync('https://api.kite.trade/margins/equity'),
 		//requestAsync('https://api.kite.trade/margins/commodity'),
 		requestAsync('https://api.kite.trade/margins/futures'),
+		kc.instruments('NSE').then(function(instruments){
+			return instruments;
+		}),
 		kc.instruments('NFO').then(function(instruments){
 			return instruments;
-		}),
-		/*kc.instruments('NFO').then(function(instruments){
-			return instruments;
-		}),
+		}),/*
 		kc.instruments('MCX').then(function(instruments){
 			return instruments;
 		})*/
 	]).then(function(alldata) {
-		res.send(alldata); return;
-		//var margins = _.concat(alldata[0], alldata[1], alldata[2]);
-		var mergedList = _.map(alldata[0][0], function(item){
+		var margins = _.concat(alldata[0][0], alldata[1][0])
+		var instruments = _.concat(alldata[2], alldata[3]);
+		var mergedList = _.map(margins, function(item){
 			if(item && item.tradingsymbol) {
-		    	return _.extend(item, _.find(alldata[1], {tradingsymbol: item.tradingsymbol}));
+		    	return _.extend(item, _.find(instruments, {tradingsymbol: item.tradingsymbol}));
 		    }
 		})
 		console.log('Done: ',new Date().getTime())
@@ -194,7 +194,7 @@ router.get('/test', function(req, res, next) {
 				]).then(function(alldata) {
 					var margins = alldata[0][0];
 					console.log("fetched all the margins. Count: ", margins.length);
-var db = require('../db');
+
 					db.updateInstrumentsWithMargins(margins)
 					.then(function(res) {
 						console.log("Marings updated")
@@ -217,6 +217,53 @@ router.get('/tickertest', function(req, res, next) {
 	.then(function(ins) {
 		res.send(ins);
 	})
+})
+
+router.get('/dbtest', function(req, res, next){
+var margins = [{
+	margin: 0,
+	co_lower: 4,
+	mis_multiplier: 11,
+	tradingsymbol: "ZEEL",
+	co_upper: 4.5,
+	nrml_margin: 0,
+	mis_margin: 9,
+	instrument_token: "975873",
+	exchange_token: "3812",
+	name: "ZEE ENTERTAINMENT ENT",
+	last_price: "0.0",
+	expiry: "",
+	strike: "0.0",
+	tick_size: "0.05",
+	lot_size: "1",
+	instrument_type: "EQ",
+	segment: "NSE",
+	exchange: "NSE"
+	},
+	{
+	margin: 12.51,
+	co_lower: 1.5,
+	mis_multiplier: 0,
+	tradingsymbol: "ACC17NOVFUT",
+	co_upper: 3.76,
+	nrml_margin: 85414,
+	mis_margin: 34165.6,
+	instrument_token: "13725954",
+	exchange_token: "53617",
+	name: "",
+	last_price: "1707.1",
+	expiry: "2017-11-30",
+	strike: "-0.01",
+	tick_size: "0.05",
+	lot_size: "400",
+	instrument_type: "FUT",
+	segment: "NFO-FUT",
+	exchange: "NFO"
+}]
+
+
+db.testMargins(margins).then(function(result) {res.send('Response: ' + result);}).catch(function(err) {console.log(err);res.send('Error: ' + err)})
+
 })
 
 module.exports = router;

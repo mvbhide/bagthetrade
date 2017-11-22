@@ -140,4 +140,26 @@ var conn = connect();
 	})	
 }
 
+
+db.testMargins = function(objMargins) {
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		var columnList = "(" + Object.keys(objMargins[0]).join(',') + ")";
+		var arrValues = [];
+		_.map(objMargins, function(margin) {
+			arrValues.push("(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")");
+		})
+		var query = "INSERT INTO instruments " + columnList + " VALUES " + arrValues.join(',')
+		
+		conn.query(query,{}, function(err, res){
+			if(err != null) {
+				reject(err);
+			} else {
+				resolve(res);
+			}
+			
+		})
+	})		
+}
+
 module.exports = db;
