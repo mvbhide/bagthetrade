@@ -146,19 +146,19 @@ db.testMargins = function(objMargins) {
 		var conn = connect();
 		var columnList = "(" + Object.keys(objMargins[0]).join(',') + ")";
 		var arrValues = [];
+var count = 0;
 		_.map(objMargins, function(margin) {
-			arrValues.push("(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")");
+			let txtValues = '';
+			txtValues = "(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")";
+			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues;		
+			conn.query(query,{}, function(err, res){
+				if(err != null) {
+					reject(query);
+				} 
+			})
 		})
-		var query = "INSERT INTO instruments " + columnList + " VALUES " + arrValues.join(',')
+		resolve(true)
 		
-		conn.query(query,{}, function(err, res){
-			if(err != null) {
-				reject(err);
-			} else {
-				resolve(res);
-			}
-			
-		})
 	})		
 }
 

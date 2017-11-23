@@ -134,32 +134,65 @@ router.get('/margins', function(req, res, next){
 	        });
 	    });
 	}
+	var startTime = new Date();
 	console.log('Start: ',new Date().getTime())
-	Promise.all([
-		requestAsync('https://api.kite.trade/margins/equity'),
-		//requestAsync('https://api.kite.trade/margins/commodity'),
-		requestAsync('https://api.kite.trade/margins/futures'),
-		kc.instruments('NSE').then(function(instruments){
-			return instruments;
-		}),
-		kc.instruments('NFO').then(function(instruments){
-			return instruments;
-		}),/*
-		kc.instruments('MCX').then(function(instruments){
-			return instruments;
-		})*/
-	]).then(function(alldata) {
-		var margins = _.concat(alldata[0][0], alldata[1][0])
-		var instruments = _.concat(alldata[2], alldata[3]);
-		var mergedList = _.map(margins, function(item){
-			if(item && item.tradingsymbol) {
-		    	return _.extend(item, _.find(instruments, {tradingsymbol: item.tradingsymbol}));
-		    }
+	//clear the current table contents
+	db.clearInstrumentsTable()
+	.then(function(tableClearedResponse){
+		console.log("Instruments table cleared");
+		// Fetch the instruments
+		Promise.all([
+			requestAsync('https://api.kite.trade/margins/equity'),
+			requestAsync('https://api.kite.trade/margins/futures'),
+			requestAsync('https://api.kite.trade/margins/commodity'),
+			kc.instruments('NSE').then(function(instruments){
+				return instruments;
+			}),
+			kc.instruments('NFO').then(function(instruments){
+				return instruments;
+			}),
+			kc.instruments('MCX').then(function(instruments){
+				return instruments;
+			})
+		]).then(function(alldata) {
+			console.log("Margins fetched");
+
+			// Merge equity and futures margin data
+			var margins = _.concat(alldata[0][0], alldata[1][0])
+			var instruments = _.concat(alldata[3], alldata[4]);
+			var mergedList = _.map(margins, function(item){
+				if(item && item.tradingsymbol) {
+			    	return _.extend(item, _.find(instruments, {tradingsymbol: item.tradingsymbol}));
+			    }
+			})
+
+			// Merge commodity margin data
+			var commMargins = alldata[2][0];
+			var commodity = alldata[5];
+
+			var mergedCommodityMargins = _.map(commodity, function(item){
+				if(item && item.tradingsymbol) {
+					let ts = item.tradingsymbol;
+			    	return _.extend(item, _.find(commMargins, {tradingsymbol: _.replace(ts, ts.substr(-8), "")}));
+			    }
+			})
+			
+			var filteredCommodityMargins = _.filter(mergedCommodityMargins, 'co_lower');
+
+			// merge both margin data
+			var finalMargins = _.concat(mergedList, filteredCommodityMargins);
+			var db_margins = _.map(finalMargins, function(margin) {
+				return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])
+			})
+			console.log(db_margins.length + " Objects sanitized");
+			
+			db.testMargins(db_margins)
+				.then(function(result) {res.send('Response: ' + result);})
+				.catch(function(err) {res.send('Error: ' + err)})
+				.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})
+		}).catch(function(err){
+			res.send("Error:" + err);
 		})
-		console.log('Done: ',new Date().getTime())
-		res.send(mergedList);
-	}).catch(function(err){
-		res.send("Error:" + err);
 	})
 })
 
@@ -213,9 +246,34 @@ router.get('/tickertest', function(req, res, next) {
 	var actk = '947qxd2i8q8rw0cr3qiwm1423hxoovrr';
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 
-	kc.instruments('MCX')
-	.then(function(ins) {
-		res.send(ins);
+	function requestAsync(url) {
+    	return new Promise(function(resolve, reject) {
+	        request(url, function(err, res, body) {
+	            if (err) { return reject(err); }
+	            return resolve([JSON.parse(body)]);
+	        });
+	    });
+	}
+
+	Promise.all([
+		requestAsync('https://api.kite.trade/margins/commodity'),
+		kc.instruments('MCX').then(function(instruments){
+			return instruments;
+		})
+	]).then(function(alldata) {
+		var margins = alldata[0][0];
+		var commodity = alldata[1];
+
+		var merged = _.map(commodity, function(item){
+			if(item && item.tradingsymbol) {
+				let ts = item.tradingsymbol;
+		    	return _.extend(item, _.find(margins, {tradingsymbol: _.replace(ts, ts.substr(-8), "")}));
+		    }
+		})
+
+		var filteredCommodityMargins = _.filter(merged, 'co_lower');
+
+		res.send(filteredCommodityMargins)
 	})
 })
 
@@ -261,8 +319,11 @@ var margins = [{
 	exchange: "NFO"
 }]
 
-
-db.testMargins(margins).then(function(result) {res.send('Response: ' + result);}).catch(function(err) {console.log(err);res.send('Error: ' + err)})
+var db_margins = _.map(margins, function(margin) {
+	return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])
+})
+console.log(db_margins);
+db.testMargins(db_margins).then(function(result) {res.send('Response: ' + result);}).catch(function(err) {console.log(err);res.send('Error: ' + err)})
 
 })
 
