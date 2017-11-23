@@ -144,13 +144,14 @@ var conn = connect();
 db.testMargins = function(objMargins) {
 	return new Promise(function(resolve, reject) {
 		var conn = connect();
-		var columnList = "(" + Object.keys(objMargins[0]).join(',') + ")";
-		var arrValues = [];
+		
+		
 var count = 0;
 		_.map(objMargins, function(margin) {
 			let txtValues = '';
+			let columnList = "(" + Object.keys(margin).join(',') + ")";
 			txtValues = "(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")";
-			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues;		
+			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues;
 			conn.query(query,{}, function(err, res){
 				if(err != null) {
 					reject(query);

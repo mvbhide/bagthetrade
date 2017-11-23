@@ -187,7 +187,7 @@ router.get('/margins', function(req, res, next){
 			console.log(db_margins.length + " Objects sanitized");
 			
 			db.testMargins(db_margins)
-				.then(function(result) {res.send('Response: ' + result);})
+				.then(function(result) {res.send("Done");})
 				.catch(function(err) {res.send('Error: ' + err)})
 				.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})
 		}).catch(function(err){
