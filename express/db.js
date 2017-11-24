@@ -140,6 +140,23 @@ var conn = connect();
 	})	
 }
 
+db.lookupstocks = function(q) {
+	return new Promise(function(resolve, reject) {
+
+		var conn = connect();
+			
+		var	query = "SELECT * FROM instruments WHERE tradingsymbol like '" + q + "%' LIMIT 30";
+		console.log(query);
+		conn.query(query, {}, function(err, results) {
+			if(err == null) {
+				resolve(results)
+			} else {
+				reject(err)
+			}
+			
+		});
+	})
+}
 
 db.testMargins = function(objMargins) {
 	return new Promise(function(resolve, reject) {

@@ -121,6 +121,14 @@ router.get('/kiteauthred', function(req, res, next) {
 
 })
 
+router.get('/lookupstock', function(req, res, next) {
+	var q = req.query.q;
+	db.lookupstocks(q)
+	.then(function(response) {
+		res.json(response)
+	})
+})
+
 router.get('/margins', function(req, res, next){
 	var actk = '947qxd2i8q8rw0cr3qiwm1423hxoovrr';
 	var kc = new KiteConnect(config.API_KEY, {access_token: actk});

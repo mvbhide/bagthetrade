@@ -2,6 +2,7 @@
 import {NgModule}      from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
+import {HttpModule} from '@angular/http';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {RouterModule, Routes} from '@angular/router';
 
@@ -38,7 +39,7 @@ const appRoutes: Routes = [
 @NgModule({
 	imports     : [
 		RouterModule.forRoot(appRoutes),
-		BrowserModule, FormsModule, NguiAutoCompleteModule
+		BrowserModule, FormsModule, HttpModule, NguiAutoCompleteModule
 	],
 	declarations: [
 		AppComponent,

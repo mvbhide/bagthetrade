@@ -7,6 +7,10 @@ import { AppConfig } from '../config/app.config';
 import { CommConfig } from '../config/comm.config';
 import { KiteTicker } from 'kiteconnect'
 
+import { Observable } from 'rxjs/Observable';
+import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import 'rxjs/add/observable/of';
+
 
 
 @Component({
@@ -45,7 +49,7 @@ import { KiteTicker } from 'kiteconnect'
 						</div>
 						<div class="col-md-5">
 							<label for="tradingsymbol">Stock </label>
-							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="margins" (valueChanged)="stockSelected($event)" type="text" />
+							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" />
 						</div>
 					</div>
 				</div>
@@ -132,8 +136,22 @@ export class OrderFormComponent {
 	objMargin: object = {};
 	margins: Array<any>
 
-	constructor(private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
+	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
 		this.margins = this.ds.getEquityMargins();
+	}
+
+	observableSource = (keyword: any): Observable<any[]> => {
+		let url: string = 'http://localhost:8080/lookupstock?q='+keyword
+		if (keyword) {
+			return this.http.get(url)
+			.map(res => {
+
+				let json = res.json();
+				return json;
+			})
+		} else {
+			return Observable.of([]);
+		}
 	}
 
 	toggleTransactionType() {
@@ -142,7 +160,18 @@ export class OrderFormComponent {
 	}
 
 	stockListFormatter(data: any) {
-		return `${data.tradingsymbol}`;
+		if(data.segment == 'MCX') {
+			return `<div class="auto-list-item-wrapper">
+						<div class="auto-tradingsymbol">${data.tradingsymbol}${data.expiry}</div>
+						<div class="auto-stock-name">${data.name}</div>
+					</div>`
+		} else {
+			return `<div class="auto-list-item-wrapper">
+						<div class="auto-tradingsymbol">${data.tradingsymbol}</div>
+						<div class="auto-stock-name">${data.name}</div>
+					</div>`
+		}
+		
 	}
 
 	stockValueFormatter(data: any) {
