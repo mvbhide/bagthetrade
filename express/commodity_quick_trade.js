@@ -2,13 +2,13 @@ var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var config = require('./config')
 
-var actk = 's66hur9zoarytli8uclcwba4ijpn0v2b';
+var actk = 'yraq5icbqmiyarnff6hlr7rx94kmux2p';
 var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 
 var transaction_type = 'BUY';
-var stop_loss = '3680';
-var price = '3686';
-var target = '3700'
+var stop_loss = '3782';
+var price = '3796';
+var target = '3814'
 
 var order_id = '';
 let payload = {
@@ -17,7 +17,7 @@ let payload = {
 	segment: 'commodity',
 	transaction_type: transaction_type,
 	trigger_price: stop_loss,
-	quantity: '4',
+	quantity: '3',
 	order_type: 'MARKET',
 	product: 'MIS',
 	validity: 'DAY'
@@ -31,12 +31,11 @@ ticker.on("connect", function() {
 	var order_executed = false;
 	ticker.setMode(ticker.modeFull, [53480711]);
 	ticker.on("tick", function(ticks) {
-		console.log(ticks); return;
 		let ltp = ticks[0].LastTradedPrice;
 		let topAsk = ticks[0].Depth.buy[0].Price;
 		let topBid = ticks[0].Depth.sell[0].Price;
 		
-		//console.log(topAsk + "     " + topBid);
+		console.log(topAsk + "     " + topBid);
 
 		if(topBid == price && order_executed == false) {
 			kc.orderPlace(payload, 'co')
@@ -49,7 +48,6 @@ ticker.on("connect", function() {
 						return order.parent_order_id == res.data.order_id;
 					})
 					if(cover_order) {
-						console.log(cover_order);
 						order_id = cover_order[0].order_id;
 						console.log(order_id);
 					}

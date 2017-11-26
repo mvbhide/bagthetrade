@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
 import {FundSummaryComponent} from '../funds/fund-summary.component'
+import {CurrentOrdersComponent} from '../order/current-orders/current-orders.component'
 import {OrderFormComponent} from '../order/order-form.component'
 import {DataService} from '../shared/services/data-service.service'
 
@@ -9,6 +10,9 @@ import {DataService} from '../shared/services/data-service.service'
 		<div class="page-container">
 			<div class="fund-summary-component">
 				<fund-summary></fund-summary>
+			</div>
+			<div class="current-orders-component">
+				<current-orders></current-orders>
 			</div>
 			<div class="order-form-dialog" *ngIf="showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>

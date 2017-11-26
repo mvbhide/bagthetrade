@@ -49,7 +49,7 @@ import 'rxjs/add/observable/of';
 						</div>
 						<div class="col-md-5">
 							<label for="tradingsymbol">Stock </label>
-							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" />
+							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 						</div>
 					</div>
 				</div>
@@ -61,16 +61,16 @@ import 'rxjs/add/observable/of';
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
-						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price"  (change)="calculateRisk()"/>
+						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" />
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"  (change)="calculateRisk()"/>
+						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue" />
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity"  (change)="calculateRisk()" />
+						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity" />
 					</div>
 				</div>
 				<hr />
@@ -121,6 +121,19 @@ import 'rxjs/add/observable/of';
 			display: inline-block;
 			border: 1px solid red;
 		}
+
+		.auto-list-item-wrapper {
+			padding: 2px;
+		}
+		.auto-stock-name {
+			font-size: 8px;
+			color: #CCC;
+		}
+
+		.input-auto-complete {
+			width: 100%;
+			display: inline-block;
+		}
 	`]
 })
 export class OrderFormComponent {
@@ -134,9 +147,9 @@ export class OrderFormComponent {
 	leverage: number = 0;
 
 	objMargin: object = {};
-	margins: Array<any>
+	margins: Array<any>;
 
-	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService) {
+	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer) {
 		this.margins = this.ds.getEquityMargins();
 	}
 
@@ -160,29 +173,43 @@ export class OrderFormComponent {
 	}
 
 	stockListFormatter(data: any) {
+		var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+		var dt = new Date(data.expiry);
+		var txtExpiry = "" + (dt.getFullYear()-2000) + months[dt.getMonth()] + "FUT"
 		if(data.segment == 'MCX') {
-			return `<div class="auto-list-item-wrapper">
-						<div class="auto-tradingsymbol">${data.tradingsymbol}${data.expiry}</div>
-						<div class="auto-stock-name">${data.name}</div>
+			var snippet =  `<div class="auto-list-item-wrapper">
+						<div class="auto-tradingsymbol">${data.tradingsymbol}${txtExpiry}</div>
+						<div class="auto-stock-name" style="font-size:5px; color: #CCC;">${data.name}</div>
 					</div>`
 		} else {
-			return `<div class="auto-list-item-wrapper">
+			var snippet =  `<div class="auto-list-item-wrapper">
 						<div class="auto-tradingsymbol">${data.tradingsymbol}</div>
-						<div class="auto-stock-name">${data.name}</div>
+						<div class="auto-stock-name" style="font-size:8px; color: #CCC;">${data.name}</div>
 					</div>`
 		}
+
+		return snippet;
 		
 	}
 
 	stockValueFormatter(data: any) {
-		return `${data.tradingsymbol}`;
+
+		if(data.segment == 'MCX') {
+			var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+			var dt = new Date(data.expiry);
+			var txtExpiry = "" + (dt.getFullYear()-2000) + months[dt.getMonth()] + "FUT";
+			return `${data.tradingsymbol}${txtExpiry}`;
+		} else {
+			return `${data.tradingsymbol}`;
+		}
 	}
  	
 	stockSelected($event) {
+
 		if(!$event.tradingsymbol) return;
 		this.os.setProspectiveStock($event.tradingsymbol);
 		this.tradingsymbol = $event.tradingsymbol;
-		this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.tradingsymbol});
+		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
 
 		this.objMargin = $event;
 		this.calculateRisk();
@@ -190,7 +217,8 @@ export class OrderFormComponent {
 
 	calculateRisk() {
 		let avblMargin = this.ds.availableFunds;
-		let price = this.price = this.objMargin['price'];
+		let price = this.price = 3750;
+		let lotSize = this.objMargin['lot_size']
 		let co_lower = this.objMargin['co_lower'] / 100;
 		let co_upper = this.objMargin['co_upper'] / 100;
 		let trigger;

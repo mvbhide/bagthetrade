@@ -15,6 +15,9 @@ import {DataService} from './shared/services/data-service.service';
 import {OrderService} from './shared/services/orders/orders.service';
 import {AuthService} from './shared/services/auth-service.service';
 
+//Pipes
+import {KeysPipe}  from './shared/pipes/key-pipe.pipe';
+
 // Page level components
 import {DashboardComponent} from './pages/dashboard.component';
 import {LoginComponent} from './pages/login.component';
@@ -48,6 +51,7 @@ const appRoutes: Routes = [
 		PageNotFoundComponent,
 		ChatComponent,
 		CreateMessage,
+		KeysPipe,
 		DataComponent,
 		StockListComponent,
 		OrderFormComponent,
