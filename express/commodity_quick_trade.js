@@ -5,14 +5,16 @@ var config = require('./config')
 var actk = 'yraq5icbqmiyarnff6hlr7rx94kmux2p';
 var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 
+var tradingsymbol = 'NATURALGAS17DECFUT';
 var transaction_type = 'BUY';
 var stop_loss = '3782';
 var price = '3796';
-var target = '3814'
+var target = '3814';
+var order_executed = false;
 
 var order_id = '';
 let payload = {
-	tradingsymbol: 'CRUDEOILM17DECFUT',
+	tradingsymbol: tradingsymbol,
 	exchange: 'MCX',
 	segment: 'commodity',
 	transaction_type: transaction_type,
@@ -28,16 +30,31 @@ ticker.connect();
 
 ticker.on("connect", function() {
 	console.log("ticker connected");
-	var order_executed = false;
-	ticker.setMode(ticker.modeFull, [53480711]);
+	
+	ticker.setMode(ticker.modeFull, [53512967]);
 	ticker.on("tick", function(ticks) {
 		let ltp = ticks[0].LastTradedPrice;
 		let topAsk = ticks[0].Depth.buy[0].Price;
 		let topBid = ticks[0].Depth.sell[0].Price;
 		
 		console.log(topAsk + "     " + topBid);
+		if(transaction_type == 'BUY') {
+			if(topBid <= price && order_executed == false) {
+				placeorder();
+			}
+			if(topAsk >= target && order_executed == true && order_id != '') {
+				exitorder();	
+			}
+		} else if(transaction_type == 'SELL') {
+			if(topAsk >= price && order_executed == false) {
+				placeorder();
+			}
+			if(topBid <= target && order_executed == true && order_id != '') {
+				exitorder();	
+			}
+		}
 
-		if(topBid == price && order_executed == false) {
+		function placeorder() {
 			kc.orderPlace(payload, 'co')
 			.then(function(res) {
 				console.log('Order Executed');
@@ -54,9 +71,10 @@ ticker.on("connect", function() {
 				})
 
 				order_executed = true;
-			})	
+			})
 		}
-		if(topAsk >= target && order_executed == true && order_id != '') {
+
+		function exitorder() {
 			console.log(order_id);
 			kc.orderCancel(order_id, 'co')
 			.then(function(res) {
@@ -64,7 +82,7 @@ ticker.on("connect", function() {
 				console.log(res);
 				console.log('Done');
 				ticker.disconnect();
-			})
+			})	
 		}
 	})
 })
