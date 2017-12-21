@@ -9,16 +9,57 @@ import _ from 'lodash';
 	template: `
 	<div class="order-list-container">
 		<div class="order-list">
+			
 			<div *ngFor="let pOrders of clubbedOrders.primaryOrders">
 				<div *ngIf="pOrders.stopLossOrders.length>0" class="panel panel-primary">
-					<div class="panel-heading">{{pOrders.transaction_type}} {{pOrders.quantity}} {{pOrders.tradingsymbol}} @ {{pOrders.price}} | Approximate Margin Used : {{pOrders.approx_margin_used | currency : 'INR' : true : '4.2-2'}} </div>
+					<div class="panel-heading">{{pOrders.transaction_type}} <strong>{{pOrders.quantity}}</strong> {{pOrders.tradingsymbol}} @ <strong>{{pOrders.price}}</strong> | Approximate Margin Used : {{pOrders.approx_margin_used | currency : 'INR' : true : '4.2-2'}} | Approximate Brokerage & taxes {{pOrders.broTax | number : '1.0-0'}} </div>
 					<div class="panel-body">
-						<div class="profit-direction"></div>
-						<div class="col-lg-6">{{pOrders.stopLossOrders[0].trigger_price}}</div>
-						<div class="col-lg-6">{{pOrders.targetOrders[0].price}}</div>
+						<div class="text-center pnl-main col-lg-12">
+							<div class="pnl-block">
+								<label class="pnl-label">Profit/Loss at LTP</label>
+								<label class="pnl-value"  [ngClass]="{'profit' : pOrders.pnl >= 0 , 'loss' : pOrders.pnl < 0}">{{pOrders.pnl | currency : 'INR' : true : '1.2-2'}} ({{(pOrders.pnl / ds.totalFunds) | percent}} of your funds)</label>
+							</div>
+						</div>
+						<div class="col-lg-2">
+							<div class="leg-order">Stoploss: {{pOrders.stopLossOrders[0].trigger_price}}</div>
+							<div class="leg-order">Target: {{pOrders.targetOrders[0].price}}</div>
+						</div>
+						<div class="left-price col-lg-4">
+							<label>Left price {{pOrders.topAsk}}</label>
+							<div class="pnl-block">
+								<label class="pnl-label">Profit / Loss at Left price</label>
+								<label class="pnl-value"  [ngClass]="{'profit' : pOrders.pnl >= 0 , 'loss' : pOrders.pnl < 0}">{{((pOrders.price - pOrders.topAsk) * pOrders.quantity | currency : 'INR' : true : '1.2-2')}} ({{((pOrders.price - pOrders.topAsk) * pOrders.quantity) / ds.totalFunds | percent}} of your funds)</label>
+							</div>
+							<div class="action-buttons">
+								<div *ngIf="pOrders.transaction_type == 'SOLD'">
+									<button (click)="moveTarget(pOrders)" class="btn btn-primary">Move target here</button>
+								</div>
+								<div *ngIf="pOrders.transaction_type == 'BOUGHT'">
+									<button class="btn btn-primary">Move SL to breakeven</button>
+									<button class="btn btn-primary">Move SL to % profit</button>
+								</div>
+							</div>
+						</div>
+						<div class="left-price col-lg-4">
+							<label>Right price {{pOrders.topBid}}</label>
+							<div class="pnl-block">
+								<label class="pnl-label">Profit/Loss at Right price</label>
+								<label class="pnl-value"  [ngClass]="{'profit' : pOrders.pnl >= 0 , 'loss' : pOrders.pnl < 0}">{{((pOrders.price - pOrders.topBid) * pOrders.quantity | currency : 'INR' : true : '1.2-2')}} ({{((pOrders.price - pOrders.topBid) * pOrders.quantity) / ds.totalFunds | percent}} of your funds)</label>
+							</div>
+							<div class="action-buttons">
+								<div *ngIf="pOrders.transaction_type == 'SOLD'">
+									<button class="btn btn-primary">Move SL to breakeven</button>
+									<button class="btn btn-primary">Move SL to % profit</button>
+								</div>
+								<div *ngIf="pOrders.transaction_type == 'BOUGHT'">
+									<button class="btn btn-primary">Move target here</button>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
+			
 		</div>
 		<div class='order-list' >
 			<a data-toggle="collapse" href="#individual-orders">Show Individual Orders</a>
@@ -76,10 +117,27 @@ import _ from 'lodash';
 		.change-transaction-type {
 			cursor: pointer;
 		}
+		.panel-heading {
+			font-size: 16px;
+		}
+		.pnl-main {
+			border-bottom: 1px solid #AAA; 
+			padding: 15px;
+		}
+
+		.pnl-block .pnl-label {
+			font-size: 12px;
+			color: #333;
+			font-weight: normal;
+		}
+
+		.pnl-block .pnl-value {
+			font-size: 20px;
+		}
 	`]
 })
 export class CurrentOrdersComponent implements OnInit {
-	clubbedOrders: object;
+	clubbedOrders: Array<object> = [];
 	constructor(private cPort: CommunicatorService, private ds: DataService) {
 		this.cPort = cPort;
 		this.ds = ds;
@@ -90,10 +148,52 @@ export class CurrentOrdersComponent implements OnInit {
 		let twoLevelGroupedOrders = _.map(groupedOrders, function(stock) { return _.groupBy(stock, function(orders) { return orders.parent_order_id })});
 		
 		this.clubOrders();
+		this.ds.ticksUpdated.subscribe(ticks => {
+			if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
+			for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
+				let tickdata = ticks.ticks;
+				for(let j=0; j<tickdata.length;j++) {
+					if(this.clubbedOrders['primaryOrders'][i]['instrument_token'] == tickdata[j]['Token']) {
+						this.clubbedOrders['primaryOrders'][i]['ltp'] = tickdata[j]['LastTradedPrice'];
+						this.clubbedOrders['primaryOrders'][i]['pnl'] = (this.clubbedOrders['primaryOrders'][i]['price'] - tickdata[j]['LastTradedPrice'])*this.clubbedOrders['primaryOrders'][i]['quantity'];
+						if(tickdata[j]['mode'] == 'full') {
+							this.clubbedOrders['primaryOrders'][i]['topAsk'] = tickdata[j]['Depth'].buy[0].Price;
+							this.clubbedOrders['primaryOrders'][i]['topBid'] = tickdata[j]['Depth'].sell[0].Price;
+						}
+					}	
+				}
+				
+			}	
+		})
+
+		this.ds.ordersUpdated.subscribe(orders=> {
+			this.orders = orders.data;
+			this.clubOrders();
+		})
+	}
+
+	moveTarget(order) {
+		let targetOrders = order.targetOrders;
+		let price = order.topAsk;
+		targetOrders.map(order => {this.placeOrder(order, price)});
+	}
+
+	placeOrder(order, price) {
+		let payload = {
+			order_id: order.order_id,
+			parent_order_id: order.parent_order_id,
+			tradingsymbol: order.tradingsymbol,
+			exchange: order.exchange,
+			quantity: order.quantity,
+			price: price,
+		}
+
+		this.cPort.send({method : 'placeorder', payload: payload})
 	}
 
 	clubOrders() {
 		let orders = this.orders;
+		if(orders.length == 0) return;
 		let clubbedOrders = [];
 		
 		clubbedOrders['primaryOrders'] = [];
@@ -114,10 +214,24 @@ export class CurrentOrdersComponent implements OnInit {
 
 		for(let i=0; i<clubbedOrders['primaryOrders'].length; i++) {
 			if((clubbedOrders['primaryOrders'][i]['variety'] == 'bo' || clubbedOrders['primaryOrders'][i]['variety'] == 'co') && clubbedOrders['primaryOrders'][i]['status'] != 'REJECTED') {
-				clubbedOrders['primaryOrders'][i].targetOrders = [];
-				clubbedOrders['primaryOrders'][i].stopLossOrders = [];
-				clubbedOrders['primaryOrders'][i].completedOrders = [];
-				clubbedOrders['primaryOrders'][i].cancelledOrders = [];
+				let o = clubbedOrders['primaryOrders'][i];
+				let brokerage = Math.min((o.price * o.quantity) * 0.01, 20)*2;
+				let turnover = o.price * o.quantity * 2;
+				let transactionCharges = turnover * 0.000021;
+				let transactionTax = (o.price * o.quantity) * 0.0001;
+				let gst = (brokerage + transactionCharges) * 0.18;
+				let stampDuty = turnover * 0.00002;
+				let sebiCharges = turnover * 0.0000015;
+
+				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;
+				o.targetOrders = [];
+				o.stopLossOrders = [];
+				o.completedOrders = [];
+				o.cancelledOrders = [];
+				o.ltp = 157;
+				o.topAsk = 156.95;
+				o.topBid = 157.05;
+				o['pnl'] = (o['price'] - o.ltp)*o['quantity'];
 			}
 
 			for(let j=0; j<orders.length; j++) {
@@ -142,6 +256,7 @@ export class CurrentOrdersComponent implements OnInit {
 		this.clubbedOrders = clubbedOrders;
 		console.log(clubbedOrders);
 	}
+	// orders: Array<object> = [];
 
 	orders: Array<object> = [{
 		"average_price": 92.15,
@@ -1008,5 +1123,4 @@ export class CurrentOrdersComponent implements OnInit {
 		"validity": "DAY",
 		"variety": "bo"
 	}]
-	
 }

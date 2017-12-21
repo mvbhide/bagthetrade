@@ -2,15 +2,17 @@ var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var config = require('./config')
 
-var actk = 'yraq5icbqmiyarnff6hlr7rx94kmux2p';
+var actk = '92nycxdt4hxdo74bv9djk8sgsorbxqyc';
 var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 
 var tradingsymbol = 'NATURALGAS17DECFUT';
 var transaction_type = 'BUY';
-var stop_loss = '3782';
-var price = '3796';
-var target = '3814';
-var order_executed = false;
+
+var stop_loss = '3715';
+var price = '3732';
+var target = '3335'
+var tradingsymbol = 'CRUDEOIL17DECFUT'
+
 
 var order_id = '';
 let payload = {
@@ -19,19 +21,21 @@ let payload = {
 	segment: 'commodity',
 	transaction_type: transaction_type,
 	trigger_price: stop_loss,
-	quantity: '3',
+	quantity: '1',
 	order_type: 'MARKET',
 	product: 'MIS',
 	validity: 'DAY'
 }
-
+var order_executed = false;
 var ticker = new KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
 ticker.connect();
 
 ticker.on("connect", function() {
 	console.log("ticker connected");
 	
+
 	ticker.setMode(ticker.modeFull, [53512967]);
+
 	ticker.on("tick", function(ticks) {
 		let ltp = ticks[0].LastTradedPrice;
 		let topAsk = ticks[0].Depth.buy[0].Price;
@@ -51,6 +55,22 @@ ticker.on("connect", function() {
 			}
 			if(topBid <= target && order_executed == true && order_id != '') {
 				exitorder();	
+			}
+		}
+
+		if(transaction_type == 'BUY') {
+			if(topBid <= price && order_executed == false) {
+				placeorder()
+			}
+			if(topAsk >= target && order_executed == true && order_id != '') {
+				exitorder();
+			}
+		} else if(transaction_type == 'SELL') {
+			if(topAsk >= price && order_executed == false) {
+				placeorder()
+			}
+			if(topBid <= target && order_executed == true && order_id != '') {
+				exitorder();
 			}
 		}
 

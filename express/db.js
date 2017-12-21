@@ -44,29 +44,46 @@ db.authenticateUser = function(e,p) {
 	})
 }
 
-db.setAccessToken = function(api_key, at) {
-	console.log(api_key, at)
-	conn.connect(function(err){
-		if(err) {
-			console.log(err);
-			return;
-		}
-		var query = "UPDATE user SET access_token = '" + at + "' WHERE api_key='" + api_key + "'";
+db.getAccessToken = function(api_key) {
+	console.log(api_key)
+	return new Promise(function(resolve, reject) {
+		console.log("here")
+		var conn = connect();
+		console.log("connection", conn)
+		
+		var query = "SELECT access_token from user WHERE `api_key`='" + api_key + "'";
 		console.log(query);
-		conn.query(query, {}, function(err, results) {
-			if(err == null) {
-				var objResults = {
-					"success": true
-				}
+		conn.query(query,{}, function(err, results) {
+			console.log(results)
+			if(results && results.length == 1) {
+				objResults.success = true;
+				objResults.data = results[0];
+				resolve(objResults);
 			} else {
-				var objResults = {
-					"success": false,
-					data : err
-				}
+				objResults.success = false;
+				objResults.data = err;
+				reject(objResults)
 			}
-				
-			return(objResults)
 		})
+	})
+}
+
+db.setAccessToken = function(api_key, at) {
+	var conn = connect();
+	var query = "UPDATE user SET access_token = '" + at + "' WHERE api_key='" + api_key + "'";
+	console.log(query);
+	conn.query(query, {}, function(err, results) {
+		if(err == null) {
+			var objResults = {
+				"success": true
+			}
+		} else {
+			var objResults = {
+				"success": false,
+				data : err
+			}
+		}		
+		return(objResults)
 	})
 } 
 

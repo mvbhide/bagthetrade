@@ -14,7 +14,6 @@ var _ = require('lodash');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-
 	res.render('index', { title: 'Express' });
 });
 
@@ -31,16 +30,43 @@ router.post('/orderhook', function(req, res, next){
 })
 
 router.get('/orders', function(req, res, next) {
-	var actk = 'd8v2ma1ei2ic0hqlks5wgemxxe7b8zu0';
-	var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+	db.getAccessToken(config.API_KEY)
+	.then(function(response) {
+		var actk = response.data.access_token;
+		console.log(actk);
+		var kc = new KiteConnect(config.API_KEY, {access_token: actk});
 	
-	kc.orders()
+		kc.orders()
+		.then(function(response) {
+			console.log(response.status)
+			sPort.send('update-orders', response.data);
+			res.send(response);
+		})
+		.catch(function(err) {
+			res.send(err.response);
+		})	
+	})
+	.catch(function(e) {
+		console.log(e)
+	})
+	
+})
+
+
+router.get('/instruments', function(req, res, next) {
+	db.getAccessToken(config.API_KEY)
+	.then(function(response) {
+		var actk = response.access_token;
+		var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+	
+		kc.instruments('NSE')
 		.then(function(response) {
 			res.send(response);
 		})
 		.catch(function(err) {
 			res.send(err.response);
 		})
+	})
 })
 
 router.get('/ticker', function(req, res, next) {
@@ -48,10 +74,10 @@ router.get('/ticker', function(req, res, next) {
 		ticker.connect();
 		ticker.on("connect", function() {
 			console.log("ticker connected");
-			ticker.setMode(ticker.modeFull, [53480711]);
+			ticker.setMode(ticker.modeFull, [160001]);
 			let sold = false;
 			ticker.on("tick", function(ticks) {
-				let ltp = ticks[0].LastTradedPrice;
+				/*let ltp = ticks[0].LastTradedPrice;
 				console.log(ltp);
 				if(ltp == 3678 && sold == false) {
 					console.log("Sold here");
@@ -61,6 +87,8 @@ router.get('/ticker', function(req, res, next) {
 				if(ltp == 3670 && sold == true) {
 					console.log('Bought here');
 				}
+				*/
+				sPort.send('ticks', ticks)
 
 			})
 		})
@@ -126,6 +154,25 @@ router.get('/lookupstock', function(req, res, next) {
 	db.lookupstocks(q)
 	.then(function(response) {
 		res.json(response)
+	})
+})
+
+router.get('/getquote', function(req, res, next) {
+	var q = req.query.tradingsymbol;
+	var e = req.query.exchange;
+
+	db.getAccessToken(config.API_KEY)
+	.then(function(response) {
+		console.log(response.data)
+		var actk = response.data.access_token;
+		var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+		kc.quote(e,q)
+		.then(function(response) {
+			res.send(response);
+		})
+		.catch(function(e) {
+			res.json(e);
+		})
 	})
 })
 
@@ -265,7 +312,7 @@ router.get('/tickertest', function(req, res, next) {
 
 	Promise.all([
 		requestAsync('https://api.kite.trade/margins/commodity'),
-		kc.instruments('MCX').then(function(instruments){
+		kc.instruments('NSE').then(function(instruments){
 			return instruments;
 		})
 	]).then(function(alldata) {

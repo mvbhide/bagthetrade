@@ -27,7 +27,7 @@ export class CommunicatorService {
 			})
 
 		this.instream.subscribe(message => {
-			console.log(message);
+			//console.log(message);
 			message = JSON.parse(message);
 			// Client side Incoming data
 			// Possible values
@@ -38,6 +38,9 @@ export class CommunicatorService {
 				let method = message.method;
 
 				switch(method) {
+					case "ticks":
+						ds.updateTicks(message.data);
+						break;
 					case "setMarginData":
 						ds.setMarginData(message.data);
 						break;
@@ -49,7 +52,9 @@ export class CommunicatorService {
 					case "set-available-margin":
 						ds.setAvailableFunds(message.data);
 						break;
-
+					case "update-orders":
+						ds.setCurrentOrders(message.data);
+						break;
 				}
 				
 			} catch (e) {

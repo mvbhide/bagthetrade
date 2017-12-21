@@ -184,7 +184,7 @@ export class OrderFormComponent {
 		} else {
 			var snippet =  `<div class="auto-list-item-wrapper">
 						<div class="auto-tradingsymbol">${data.tradingsymbol}</div>
-						<div class="auto-stock-name" style="font-size:8px; color: #CCC;">${data.name}</div>
+						<div class="auto-stock-name">${data.name}</div>
 					</div>`
 		}
 
@@ -207,17 +207,29 @@ export class OrderFormComponent {
 	stockSelected($event) {
 
 		if(!$event.tradingsymbol) return;
+
 		this.os.setProspectiveStock($event.tradingsymbol);
 		this.tradingsymbol = $event.tradingsymbol;
+		this.objMargin = $event;
+
+		// Extract the exchange from the segment
+		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
+		let exchange = $event.segment.split("-")[0];
+		this.http.get('http://localhost:8080/getquote?tradingsymbol=' + this.tradingsymbol +"&exchange=" + exchange)
+		.subscribe(res => {
+			var quote = res.json();
+			console.log(quote)
+			this.price = quote.data.last_price;
+			this.calculateRisk();
+		})
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
 
-		this.objMargin = $event;
-		this.calculateRisk();
+
 	}
 
 	calculateRisk() {
 		let avblMargin = this.ds.availableFunds;
-		let price = this.price = 3750;
+		let price = this.price;
 		let lotSize = this.objMargin['lot_size']
 		let co_lower = this.objMargin['co_lower'] / 100;
 		let co_upper = this.objMargin['co_upper'] / 100;

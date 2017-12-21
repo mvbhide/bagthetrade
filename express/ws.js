@@ -73,6 +73,7 @@ if(!sPort.dataServer) {
 
 // 4. Send the payload to client
 sPort.send = function(method, payload) {
+	console.log(method)
 	// Only emit numbers if there are active connections
 	if (sPort.dataServer.connections.length > 0) {
 		try {
