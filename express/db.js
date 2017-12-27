@@ -175,12 +175,12 @@ db.lookupstocks = function(q) {
 	})
 }
 
-db.testMargins = function(objMargins) {
+db.insertMargins = function(objMargins) {
 	return new Promise(function(resolve, reject) {
 		var conn = connect();
 		
 		
-var count = 0;
+		var count = 0;
 		_.map(objMargins, function(margin) {
 			let txtValues = '';
 			let columnList = "(" + Object.keys(margin).join(',') + ")";

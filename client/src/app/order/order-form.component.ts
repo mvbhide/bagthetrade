@@ -215,13 +215,15 @@ export class OrderFormComponent {
 		// Extract the exchange from the segment
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
 		let exchange = $event.segment.split("-")[0];
-		this.http.get('http://localhost:8080/getquote?tradingsymbol=' + this.tradingsymbol +"&exchange=" + exchange)
+		/*this.http.get('http://localhost:8080/getquote?tradingsymbol=' + this.tradingsymbol +"&exchange=" + exchange)
 		.subscribe(res => {
 			var quote = res.json();
 			console.log(quote)
-			this.price = 830;
+			
 			this.calculateRisk();
-		})
+		})*/
+		this.price = 2300;
+		this.calculateRisk();
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
 
 
@@ -236,17 +238,16 @@ export class OrderFormComponent {
 		let trigger;
 		
 		if(this.transactionType == 'BUY') {
-			trigger = parseFloat((price - (co_lower * price)).toFixed(2))
-			this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+			trigger = parseFloat((price - ((co_lower/4) * price)).toFixed(2))
+			//this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		} else {
-			trigger = parseFloat((price + (co_lower * price)).toFixed(2))
-			this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+			trigger = parseFloat((price + ((co_lower/4) * price)).toFixed(2))
+			//this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		}
 		
 		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
 		// Adjust the values to nearest 0.05
 		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*20)/20).toFixed(2));
-		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
 
 		this.calculateQuantity()
 	}
@@ -255,6 +256,17 @@ export class OrderFormComponent {
 		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
 		let calculatedQuantity = Math.ceil(maxRisk / (this.price - this.stoplossValue));
 		this.quantity = Math.abs(calculatedQuantity);
+
+		let targetDistance = ((this.ds.availableFunds * (AppConfig.TARGET_PERCENTAGE / 100))/this.quantity);
+
+		if(this.transactionType == 'BUY') {
+			this.squareoffValue = this.price + targetDistance;
+		} else {
+			this.squareoffValue = this.price - targetDistance;
+		}
+
+		// Adjust the values to nearest 0.05
+		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
 
 		let co_lower = this.objMargin['co_lower'] / 100;
 

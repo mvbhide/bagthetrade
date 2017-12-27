@@ -382,4 +382,78 @@ db.testMargins(db_margins).then(function(result) {res.send('Response: ' + result
 
 })
 
+
+router.get('/employees', function(req, res, next) {
+	var employees = [
+		{
+			"id": 1,
+			"name" : "Ian Malcolm",
+			"salary" : 50000,
+			"hoursWorked" : 6
+		},
+		{
+			"id": 2,
+			"name" : "Catherine Hall",
+			"salary" : 54000,
+			"hoursWorked" : 7
+		},
+		{
+			"id": 3,
+			"name" : "Rose Dawson",
+			"salary" : 50000,
+			"hoursWorked" : 3
+		},
+		{
+			"id": 4,
+			"name" : "Ben Lucas",
+			"salary" : 30000,
+			"hoursWorked" : 8
+		},
+		{
+			"id": 5,
+			"name" : "Sanjay Masrani",
+			"salary" : 80000,
+			"hoursWorked" : 9
+		},
+		{
+			"id": 6,
+			"name" : "Alan Grant",
+			"salary" : 70000,
+			"hoursWorked" : 8
+		},
+		{
+			"id": 7,
+			"name" : "John Hammond",
+			"salary" : 60000,
+			"hoursWorked" : 4
+		},
+		{
+			"id": 8,
+			"name" : "Ellie Sattler",
+			"salary" : 60000,
+			"hoursWorked" : 6
+		},
+		{
+			"id": 9,
+			"name" : "Ray Arnold",
+			"salary" : 55000,
+			"hoursWorked" : 9
+		},
+		{
+			"id": 10,
+			"name" : "Henry Wu",
+			"salary" : 80000,
+			"hoursWorked" : 3
+		},
+		{
+			"id": 11,
+			"name" : "Dennis Nedry",
+			"salary" : 40000,
+			"hoursWorked" : 2
+		}
+	]
+
+	res.json(employees);
+})
+
 module.exports = router;
