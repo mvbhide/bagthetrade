@@ -57,16 +57,16 @@ import 'rxjs/add/observable/of';
 				<div class="form-group row">
 					<div class="col-md-3">
 						<label for="stoplossValue"> Stop Loss</label>
-						<input class="form-control" [step]="os.tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateRisk()" />
+						<input class="form-control" [step]="os.tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
-						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" />
+						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()"/>
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue" />
+						<input [step]="os.tickSize" class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
@@ -219,7 +219,7 @@ export class OrderFormComponent {
 		.subscribe(res => {
 			var quote = res.json();
 			console.log(quote)
-			this.price = quote.data.last_price;
+			this.price = 830;
 			this.calculateRisk();
 		})
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
@@ -248,18 +248,24 @@ export class OrderFormComponent {
 		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*20)/20).toFixed(2));
 		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
 
+		this.calculateQuantity()
+	}
+
+	calculateQuantity() {
 		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
-		let calculatedQuantity = Math.ceil(maxRisk / (price - this.stoplossValue));
+		let calculatedQuantity = Math.ceil(maxRisk / (this.price - this.stoplossValue));
 		this.quantity = Math.abs(calculatedQuantity);
 
-		let x = Math.abs(price - trigger) * this.quantity;
-		let y = co_lower * price * this.quantity;
+		let co_lower = this.objMargin['co_lower'] / 100;
+
+		let x = Math.abs(this.price - this.stoplossValue) * this.quantity;
+		let y = co_lower * this.price * this.quantity;
 
 		let margin =  x > y ? x : y
 		margin = margin + (margin * 0.2);
 		this.marginRequired = Math.abs(margin);
 
-		this.leverage = (price * this.quantity) / this.marginRequired;
+		this.leverage = (this.price * this.quantity) / this.marginRequired;
 	}
 
 	placeOrder() {
