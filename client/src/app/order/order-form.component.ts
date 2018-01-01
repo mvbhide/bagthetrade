@@ -139,6 +139,7 @@ import 'rxjs/add/observable/of';
 export class OrderFormComponent {
 	transactionType: string = 'BUY';
 	tradingsymbol: string;
+	instrumentToken: string;
 	squareoffValue: number = 0;
 	stoplossValue: number = 0;
 	price: number = 0;
@@ -205,12 +206,12 @@ export class OrderFormComponent {
 	}
  	
 	stockSelected($event) {
-
 		if(!$event.tradingsymbol) return;
 
 		this.os.setProspectiveStock($event.tradingsymbol);
 		this.tradingsymbol = $event.tradingsymbol;
 		this.objMargin = $event;
+		this.instrumentToken = $event.instrument_token;
 
 		// Extract the exchange from the segment
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
@@ -222,7 +223,7 @@ export class OrderFormComponent {
 			
 			this.calculateRisk();
 		})*/
-		this.price = 2300;
+		this.price = 26;
 		this.calculateRisk();
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
 
@@ -283,6 +284,7 @@ export class OrderFormComponent {
 	placeOrder() {
 		let payload = {
 			tradingsymbol: this.tradingsymbol,
+			instrument_token: this.instrumentToken,
 			exchange: 'NSE',
 			segment: 'equity',
 			transaction_type: this.transactionType,

@@ -45,16 +45,12 @@ db.authenticateUser = function(e,p) {
 }
 
 db.getAccessToken = function(api_key) {
-	console.log(api_key)
 	return new Promise(function(resolve, reject) {
-		console.log("here")
 		var conn = connect();
 		console.log("connection", conn)
 		
 		var query = "SELECT access_token from user WHERE `api_key`='" + api_key + "'";
-		console.log(query);
 		conn.query(query,{}, function(err, results) {
-			console.log(results)
 			if(results && results.length == 1) {
 				objResults.success = true;
 				objResults.data = results[0];
@@ -85,14 +81,35 @@ db.setAccessToken = function(api_key, at) {
 		}		
 		return(objResults)
 	})
-} 
+}
+
+db.getInstrumentToken = function(tradingsymbol) {
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		console.log("connection", conn)
+		
+		var query = "SELECT instrument_token from instruments WHERE `tradingsymbol`='" + tradingsymbol + "'";
+		conn.query(query,{}, function(err, results) {
+			if(results && results.length == 1) {
+				objResults.success = true;
+				objResults.data = results[0];
+				resolve(objResults);
+			} else {
+				objResults.success = false;
+				objResults.data = err;
+				reject(objResults)
+			}
+		})
+	})
+}
+
 
 db.setInstrumentData = function(objInstrument) {
-		var query = "INSERT INTO instruments (tradingsymbol, instrument_token, tick_size, instrument_type, segment, lot_size, strike, expiry ) VALUES ('" + objInstrument.tradingsymbol + "', " + objInstrument.instrument_token + ", " + objInstrument.tick_size + ", '" + objInstrument.instrument_type + "', '" + objInstrument.segment + "', " + objInstrument.lot_size + ", " + objInstrument.strike + ", '" + objInstrument.expiry + "')";
-		conn.query(query, objInstrument, function(err, results) {
-			console.log(err, results);
-			return(results);
-		})
+	var query = "INSERT INTO instruments (tradingsymbol, instrument_token, tick_size, instrument_type, segment, lot_size, strike, expiry ) VALUES ('" + objInstrument.tradingsymbol + "', " + objInstrument.instrument_token + ", " + objInstrument.tick_size + ", '" + objInstrument.instrument_type + "', '" + objInstrument.segment + "', " + objInstrument.lot_size + ", " + objInstrument.strike + ", '" + objInstrument.expiry + "')";
+	conn.query(query, objInstrument, function(err, results) {
+		console.log(err, results);
+		return(results);
+	})
 }
 
 db.setInstruments = function(objInstruments) {
