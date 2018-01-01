@@ -29,9 +29,12 @@ import {CreateMessage} from './create-message/create-message.component';
 import {ChatComponent} from './chat/chat.component';
 import {DataComponent} from "./random-data/data.component";
 import {StockListComponent} from "./stock-list/stock-list.component"
+import {MarketwatchComponent} from "./marketwatch/marketwatch.component"
 import {OrderFormComponent} from "./order/order-form.component";
 import {FundSummaryComponent} from "./funds/fund-summary.component";
 import {CurrentOrdersComponent} from "./order/current-orders/current-orders.component";
+
+import * as ticker from "./ticker";
 
 const appRoutes: Routes = [
 	{ path: 'dashboard', 	component: DashboardComponent },
@@ -53,10 +56,12 @@ const appRoutes: Routes = [
 		CreateMessage,
 		KeysPipe,
 		DataComponent,
+		MarketwatchComponent,
 		StockListComponent,
 		OrderFormComponent,
 		FundSummaryComponent,
-		CurrentOrdersComponent
+		CurrentOrdersComponent,
+		ticker
 	],
 	providers   : [ChatService, WebSocketService,AuthService, CommunicatorService, DataService, OrderService, AuthService],
 	bootstrap   : [AppComponent]

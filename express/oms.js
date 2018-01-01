@@ -34,5 +34,3 @@ oms.placeOrder = function(objOrder) {
 }
 
 module.exports = oms
-
-var ticker = require('./ticker');

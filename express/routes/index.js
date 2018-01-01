@@ -6,7 +6,7 @@ var router = express.Router();
 var sPort = require('../ws');
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
-var ticker = require('../ticker');
+
 var objFactory = require('../object-factory/fp');
 var request = require('request');
 var Promise = require('promise');

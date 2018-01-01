@@ -5,7 +5,7 @@ var ws = require('nodejs-websocket');
 var oms = require('./oms');
 var db = require('./db');
 var sPort = {}; // Communication object used by the server
-var ticker = require('./ticker')
+
 // 3. Server for emitting random data.
 // Is this best practice? Starting new server on another port, or can
 // the original server (on 3005) listen to different URL for example and
@@ -40,8 +40,6 @@ if(!sPort.dataServer) {
 
 			switch(method) {
 				case 'placeorder':
-					ticker.subscribe(request.payload.instrument_token);
-					return;
 					oms.placeOrder(request.payload)
 					.then(function(order_id) {
 						console.log(order_id);
