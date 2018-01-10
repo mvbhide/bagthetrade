@@ -14,6 +14,7 @@ import {CommunicatorService} from './shared/communicator/communicator.service';
 import {DataService} from './shared/services/data-service.service';
 import {OrderService} from './shared/services/orders/orders.service';
 import {AuthService} from './shared/services/auth-service.service';
+import {TickerService} from './shared/services/ticker-service.service';
 
 //Pipes
 import {KeysPipe}  from './shared/pipes/key-pipe.pipe';
@@ -29,12 +30,9 @@ import {CreateMessage} from './create-message/create-message.component';
 import {ChatComponent} from './chat/chat.component';
 import {DataComponent} from "./random-data/data.component";
 import {StockListComponent} from "./stock-list/stock-list.component"
-import {MarketwatchComponent} from "./marketwatch/marketwatch.component"
 import {OrderFormComponent} from "./order/order-form.component";
 import {FundSummaryComponent} from "./funds/fund-summary.component";
 import {CurrentOrdersComponent} from "./order/current-orders/current-orders.component";
-
-import * as ticker from "./ticker";
 
 const appRoutes: Routes = [
 	{ path: 'dashboard', 	component: DashboardComponent },
@@ -56,14 +54,12 @@ const appRoutes: Routes = [
 		CreateMessage,
 		KeysPipe,
 		DataComponent,
-		MarketwatchComponent,
 		StockListComponent,
 		OrderFormComponent,
 		FundSummaryComponent,
 		CurrentOrdersComponent,
-		ticker
 	],
-	providers   : [ChatService, WebSocketService,AuthService, CommunicatorService, DataService, OrderService, AuthService],
+	providers   : [ChatService, WebSocketService,AuthService, CommunicatorService, DataService, OrderService, AuthService, TickerService],
 	bootstrap   : [AppComponent]
 })
 export class AppModule {

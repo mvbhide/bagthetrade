@@ -70,7 +70,7 @@ import 'rxjs/add/observable/of';
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="number" name="quantity" [(ngModel)]="quantity" id="quantity" />
+						<input class="form-control" type="number" [step]="lotSize" name="quantity" [(ngModel)]="quantity" id="quantity" />
 					</div>
 				</div>
 				<hr />
@@ -143,6 +143,7 @@ export class OrderFormComponent {
 	squareoffValue: number = 0;
 	stoplossValue: number = 0;
 	price: number = 0;
+	lotSize: number = 1;
 	marginRequired: number = 0;
 	quantity: number = 0;
 	leverage: number = 0;
@@ -212,6 +213,7 @@ export class OrderFormComponent {
 		this.tradingsymbol = $event.tradingsymbol;
 		this.objMargin = $event;
 		this.instrumentToken = $event.instrument_token;
+		this.lotSize = $event.lot_size;
 
 		// Extract the exchange from the segment
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
@@ -223,7 +225,7 @@ export class OrderFormComponent {
 			
 			this.calculateRisk();
 		})*/
-		this.price = 26;
+		this.price = 115;
 		this.calculateRisk();
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
 
@@ -239,10 +241,10 @@ export class OrderFormComponent {
 		let trigger;
 		
 		if(this.transactionType == 'BUY') {
-			trigger = parseFloat((price - ((co_lower/4) * price)).toFixed(2))
+			trigger = parseFloat((price - ((co_lower/5) * price)).toFixed(2))
 			//this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		} else {
-			trigger = parseFloat((price + ((co_lower/4) * price)).toFixed(2))
+			trigger = parseFloat((price + ((co_lower/5) * price)).toFixed(2))
 			//this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		}
 		
@@ -255,8 +257,12 @@ export class OrderFormComponent {
 
 	calculateQuantity() {
 		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
-		let calculatedQuantity = Math.ceil(maxRisk / (this.price - this.stoplossValue));
+		let quantityThreshold = Math.ceil(maxRisk / (this.price - this.stoplossValue))
+		console.log(quantityThreshold)
+		console.log(this.lotSize)
+		let calculatedQuantity = quantityThreshold - (quantityThreshold % this.lotSize);
 		this.quantity = Math.abs(calculatedQuantity);
+		console.log(this.quantity)
 
 		let targetDistance = ((this.ds.availableFunds * (AppConfig.TARGET_PERCENTAGE / 100))/this.quantity);
 

@@ -1,6 +1,5 @@
 import {Component} from '@angular/core';
 import {FundSummaryComponent} from '../funds/fund-summary.component'
-import {MarketwatchComponent} from '../marketwatch/marketwatch.component'
 import {CurrentOrdersComponent} from '../order/current-orders/current-orders.component'
 import {OrderFormComponent} from '../order/order-form.component'
 import {DataService} from '../shared/services/data-service.service'
@@ -12,9 +11,7 @@ import {DataService} from '../shared/services/data-service.service'
 			<div class="fund-summary-component">
 				<fund-summary></fund-summary>
 			</div>
-			<div class="market-watch">
-				<marketwatch></marketwatch>
-			</div>
+
 			<div class="current-orders-component">
 				<current-orders></current-orders>
 			</div>
