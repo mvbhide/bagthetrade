@@ -1,11 +1,11 @@
 import { Component } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
+import { TickerService } from '../shared/services/ticker-service.service';
 import { OrderService } from '../shared/services/orders/orders.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { AppConfig } from '../config/app.config';
 import { CommConfig } from '../config/comm.config';
-import { KiteTicker } from 'kiteconnect'
 
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
@@ -151,7 +151,7 @@ export class OrderFormComponent {
 	objMargin: object = {};
 	margins: Array<any>;
 
-	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer) {
+	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer, private ticker: TickerService) {
 		this.margins = this.ds.getEquityMargins();
 	}
 
@@ -213,6 +213,7 @@ export class OrderFormComponent {
 		this.tradingsymbol = $event.tradingsymbol;
 		this.objMargin = $event;
 		this.instrumentToken = $event.instrument_token;
+		this.ticker.subscribe([this.instrumentToken]);
 		this.lotSize = $event.lot_size;
 
 		// Extract the exchange from the segment
@@ -228,8 +229,6 @@ export class OrderFormComponent {
 		this.price = 115;
 		this.calculateRisk();
 		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
-
-
 	}
 
 	calculateRisk() {

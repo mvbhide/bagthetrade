@@ -6,7 +6,7 @@ import {AuthService} from '../services/auth-service.service';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/filter';
 
-const DATA_URL = 'wss://ws.zerodha.com/?api_key=kitefront&user_id=RP6292&public_token=CRziYdlg1RMSe7v1056ADrVDN5valGiL&uid=1514801325941&user-agent=kite3-web&version=1.0.5';
+const DATA_URL = 'ws://localhost:3006/';
 
 export interface api_call {
 	url: string,

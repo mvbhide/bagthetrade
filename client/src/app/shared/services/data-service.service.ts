@@ -39,7 +39,15 @@ export class DataService {
 
 	updateTicks(ticks) {
 		this.currentTicks = ticks;
+		// TODO: 
+		// When subscribed to multiple instruments, every tick doesn't have 
+		// information for all instruments. Loop through the instruments and
+		// update the latest info
 		this.ticksUpdated.emit({ticks: ticks});
+	}
+
+	getQuote(instrumentToken) {
+
 	}
 
 
