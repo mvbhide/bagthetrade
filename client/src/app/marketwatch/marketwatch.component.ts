@@ -25,6 +25,10 @@ import { Http, Response, Headers, RequestOptions } from '@angular/http';
 	</div>
 	
 	`,
+
+	styles: [`
+		
+	`]
 })
 export class MarketwatchComponent {
 	stocks: any = []

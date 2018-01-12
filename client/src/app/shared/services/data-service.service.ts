@@ -12,6 +12,7 @@ export class DataService {
 	showOverlay: boolean = false;
 	currentTicks: Array<object> = [];
 	currentOrders: Array<object>;
+	marketData: Array<any>;
 
 	getEquityMargins() {
 		return this.marginData;
@@ -39,15 +40,18 @@ export class DataService {
 
 	updateTicks(ticks) {
 		this.currentTicks = ticks;
-		// TODO: 
-		// When subscribed to multiple instruments, every tick doesn't have 
-		// information for all instruments. Loop through the instruments and
-		// update the latest info
+		for(let i=0; i < ticks.length; i++) {
+			this.marketData[ticks[i].Token] = ticks[i];
+		}
 		this.ticksUpdated.emit({ticks: ticks});
 	}
 
 	getQuote(instrumentToken) {
-
+		let quote:any;
+		let insData = this.marketData[instrumentToken];
+		quote.ltp = insData.LastTradedPrice;
+		quote.topBid = insData.Depth.sell.length > 0 ? insData.Depth.sell[0].Price : 0;
+		quote.topAsk = insData.Depth.buy.length > 0 ? insData.Depth.buy[0].Price : 0;
 	}
 
 

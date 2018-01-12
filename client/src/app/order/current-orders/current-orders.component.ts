@@ -256,9 +256,9 @@ export class CurrentOrdersComponent implements OnInit {
 		this.clubbedOrders = clubbedOrders;
 		console.log(clubbedOrders);
 	}
-	// orders: Array<object> = [];
+	orders: Array<object> = [];
 
-	orders: Array<object> = [{
+	/*orders: Array<object> = [{
 		"average_price": 92.15,
 		"cancelled_quantity": 0,
 		"disclosed_quantity": 0,
@@ -1122,5 +1122,5 @@ export class CurrentOrdersComponent implements OnInit {
 		"trigger_price": 116.3,
 		"validity": "DAY",
 		"variety": "bo"
-	}]
+	}]*/
 }
