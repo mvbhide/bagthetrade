@@ -164,7 +164,7 @@ export class TickerService {
 				return;
 			}
 
-			this.triggerDisconnect();
+			self.triggerDisconnect();
 		};
 	};
 
