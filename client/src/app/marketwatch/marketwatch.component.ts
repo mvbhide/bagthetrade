@@ -5,6 +5,7 @@ import { CommunicatorService} from '../shared/communicator/communicator.service'
 import { TickerService } from '../shared/services/ticker-service.service'
 import { DataService } from '../shared/services/data-service.service'
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import _ from 'lodash';
 
 @Component({
 	selector: 'marketwatch',
@@ -33,7 +34,7 @@ import { Http, Response, Headers, RequestOptions } from '@angular/http';
 					<td>{{stock.topBid}}</td>
 					<td><a class="btn btn-default" (click)="takethistrade(stock)">Take this trade</a></td>
 					<td>
-						<button type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
+						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
 					</td>
 				</tr>
 			</tbody>
@@ -152,6 +153,28 @@ export class MarketwatchComponent implements OnInit{
 			ltp: 0,
 			topAsk: 0,
 			topBid: 0
+		});
+
+		this.http.get('http://localhost:8080/marketwatch/add/' + $event.instrument_token)
+		.subscribe(res => {
+			let json = res.json();
+			console.log(json)
 		})
+	}
+
+	removeFromMarketwatch(instrument_token) {
+		this.ticker.unsubscribe([instrument_token]);
+
+		_.remove(this.stocks, function(stock) {
+			return stock.instrument_token == instrument_token
+		})
+
+		this.http.get('http://localhost:8080/marketwatch/remove/' + instrument_token)
+		.subscribe(res => {
+			let json = res.json();
+			console.log(json)
+		})
+
+
 	}
 }

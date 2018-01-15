@@ -214,4 +214,32 @@ db.insertMargins = function(objMargins) {
 	})		
 }
 
+db.addToMarketwatch = function(token) {
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		
+		var query = "INSERT INTO marketwatch (user_id, instrument_token) VALUES (1, " + token + ")";
+		conn.query(query,{}, function(err, res){
+			if(err != null) {
+				reject(query);
+			} 
+		})
+		resolve(true)
+	})			
+}
+
+db.removeFromMarketwatch = function(token) {
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		
+		var query = "DELETE from marketwatch WHERE user_id=1 AND instrument_token=" + token;
+		conn.query(query,{}, function(err, res){
+			if(err != null) {
+				reject(query);
+			} 
+		})
+		resolve(true)
+	})			
+}
+
 module.exports = db;
