@@ -6,7 +6,7 @@ var router = express.Router();
 var sPort = require('../ws');
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
-
+var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
 var request = require('request');
 var Promise = require('promise');
@@ -16,6 +16,73 @@ var _ = require('lodash');
 router.get('/', function(req, res, next) {
 	res.render('index', { title: 'Express' });
 });
+
+router.get('/ticker', function(req, res, next) {
+	var marketData = [];
+	var tckr = KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
+	console.log("ticker : ", tckr)
+	
+	tckr.on('connect', function(){
+		console.log('ticker connected')
+		var tokens  = tckr.subscribe([53644807,53645063,53687047,53484039,53505543,53517319,53646855,53490439,53703687,53686791,53516551,53656839,53516807,53645319,53508103,53687303,53455111,53649927]);
+	})
+	
+	//var tokens = tckr.subscribe([11949058,11949314,11949570,11950082,11950594,11951362,11951618,11951874,11952130,11952386,11952642,11952898,11953154,11953410,11953666,11955714,11956994,11957250,11946498,11957506,11959042,11960834,11961090,11961346,11962114,11962370,11962626,11962882,11966466,11966722,11967490,11970562,11971330,11971586,11973378,11973634,11975170,11977218,11977474,11977730,11977986,11978242,11979266,11980802,11983106,11984130,11984386,11985922,11992322,11992578,11993602,11994370,11995650,11995906,11996418,11996674,11996930,11997186,11997442,11997698,11998978,11999234,11999490,12000514,12002050,12002562,12003074,12003330,12003586,12003842,12004354,12004610,12006146,12006914,12010498,12011010,12011266,12011522,12012290,12012546,12012802,12014850,12015618,12015874,12016130,12017410,12017666,12018946,12019202,12022274,12022530,12022786,12023298,12023554,12024066,12024322,12024834,12026882,12028162,12029186,12029442,12029698,12030466,12031490,12031746,12032002,12034050,12034562,12037378,12037634,12037890,12038658,12040194,12040450,12040706,12041218,12041474,12041730,12044802,12045314,12046082,12046338,12046594,12048130,12048386,12048642,12051202,12051458,12052994,12053250,12053506,12053762,12055042,12056834,12057090,12058114,12058370,12058626,12058882,12061954,12062466,12062722,12065026,12065282,12065794,12066818,12067074,12067842,12068098,12069122,12069378,12069634,12070146,12071426,12071938,12072194,12072450,12072706])
+
+	var min = new Date().getSeconds();
+	var candleData = []
+
+	tckr.on("tick", function(ticks) {
+		var currentMinute = new Date().getSeconds();
+		var startOfCandle = true;
+		if(currentMinute % 10 == 0) {
+			min = currentMinute;
+			startOfCandle = true;
+			console.log(candleData);
+			// TODO write data to db
+		} else {
+			if(startOfCandle) {
+				for(let i=0; i < ticks.length; i++) {
+					candleData[ticks[i].Token] = {
+						o: ticks[i].LastTradedPrice,
+						h: ticks[i].LastTradedPrice,
+						l: ticks[i].LastTradedPrice,
+						c: ticks[i].LastTradedPrice,
+					}
+				}
+				startOfCandle = false;
+			} else {
+				for(let i=0; i < ticks.length; i++) {
+					candleData[ticks[i].Token] = {
+						h: ticks[i].LastTradedPrice > candleData[ticks[i].Token].h ? ticks[i].LastTradedPrice : candleData[ticks[i]].Token.h,
+						l: ticks[i].LastTradedPrice < candleData[ticks[i].Token].l ? ticks[i].LastTradedPrice : candleData[ticks[i]].Token.l,
+						c: ticks[i].LastTradedPrice,
+					}
+				}
+			}
+			
+		}
+	})
+
+	setTimeout(function() {
+		tckr.disconnect();
+	},10000)
+
+	res.send("Done")
+})
+
+router.get('/timetest', function(req, res, next) {
+	var timer = setInterval(function() {
+		var d = new Date().getTime();
+		if(d%1000 == 0) {
+			console.log('Minute started', d);
+		}
+	}, 1)
+
+	setTimeout(function() {clearInterval(timer)}, 100000);
+
+	res.send("Done");
+})
 
 router.post('/orderhook', function(req, res, next){
 	var objOrder;
@@ -31,11 +98,11 @@ router.post('/orderhook', function(req, res, next){
 })
 
 router.get('/kiteauthred', function(req, res, next) {
-	if(req.params) {
-		var requestToken = req.query.request_token;
+	//if(req.params) {
+		//var requestToken = req.query.request_token;
 		var kc = new KiteConnect(config.API_KEY);
 
-		kc.requestAccessToken(requestToken, config.API_SECRET)
+		/*kc.requestAccessToken(requestToken, config.API_SECRET)
 		.then(function(response) {
 			console.log(response)
 			req.session.kc = kc;
@@ -44,14 +111,14 @@ router.get('/kiteauthred', function(req, res, next) {
 		})
 		.catch(function(err) {
 			console.log("Error", err);
-		})
-
+		})*/
+init();
 		function init() {
 			// Fetch equity margins.
 			fetchMargins();
 
 			// Fetch funds
-			kc.margins("equity")
+			/*kc.margins("equity")
 			.then(function(response) {
 				sPort.send('set-available-margin', response.data.net);
 			}).catch(function(err) {
@@ -60,9 +127,9 @@ router.get('/kiteauthred', function(req, res, next) {
 			})
 			.finally(function(){
 				res.status(200).end();
-			});
+			});*/
 		}
-	}
+	//}
 })
 
 router.get('/lookupstock', function(req, res, next) {
@@ -95,7 +162,7 @@ router.get('/getquote', function(req, res, next) {
 function fetchMargins() {
 	db.getAccessToken(config.API_KEY)
 	.then(function(response){
-		var kc = new KiteConnect(config.API_KEY, {access_token: actk});
+		var kc = new KiteConnect(config.API_KEY, {access_token: response.data});
 		var allmargins = [];
 		var tmpMargins = [];
 		var startTime = new Date();
@@ -150,7 +217,7 @@ function fetchMargins() {
 				})
 				console.log(db_margins.length + " Objects sanitized");
 				
-				db.testMargins(db_margins)
+				db.setInstruments(db_margins)
 					.then(function(result) {res.send("Done");})
 					.catch(function(err) {res.send('Error: ' + err)})
 					.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})
@@ -158,6 +225,9 @@ function fetchMargins() {
 				res.send("Error:" + err);
 			})
 		})
+	})
+	.catch(function(err) { 
+		console.log("Getting access token failed: ",err);
 	})
 }
 
