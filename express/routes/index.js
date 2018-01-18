@@ -19,8 +19,9 @@ router.get('/', function(req, res, next) {
 
 router.get('/ticker', function(req, res, next) {
 	var marketData = [];
-	var tckr = KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
-	console.log("ticker : ", tckr)
+	var counter = 0;;
+	var tckr = new KiteTicker('kitefront', 'RP6292', 'Xchpq1gdGiJzvwOHYQ6BmT27oYLV6Fbj&uid=1516269541059','wss://ws.zerodha.com/');
+	tckr.connect();
 	
 	tckr.on('connect', function(){
 		console.log('ticker connected')
@@ -31,44 +32,57 @@ router.get('/ticker', function(req, res, next) {
 
 	var min = new Date().getSeconds();
 	var candleData = []
-
+	var candleAlreadyStarted = false;
 	tckr.on("tick", function(ticks) {
+		if(ticks.length == 0) return;
 		var currentMinute = new Date().getSeconds();
-		var startOfCandle = true;
-		if(currentMinute % 10 == 0) {
+		
+		if(currentMinute % 10 == 0 && !candleAlreadyStarted) {
 			min = currentMinute;
-			startOfCandle = true;
-			console.log(candleData);
-			// TODO write data to db
-		} else {
-			if(startOfCandle) {
-				for(let i=0; i < ticks.length; i++) {
-					candleData[ticks[i].Token] = {
-						o: ticks[i].LastTradedPrice,
-						h: ticks[i].LastTradedPrice,
-						l: ticks[i].LastTradedPrice,
-						c: ticks[i].LastTradedPrice,
-					}
-				}
-				startOfCandle = false;
-			} else {
-				for(let i=0; i < ticks.length; i++) {
-					candleData[ticks[i].Token] = {
-						h: ticks[i].LastTradedPrice > candleData[ticks[i].Token].h ? ticks[i].LastTradedPrice : candleData[ticks[i]].Token.h,
-						l: ticks[i].LastTradedPrice < candleData[ticks[i].Token].l ? ticks[i].LastTradedPrice : candleData[ticks[i]].Token.l,
-						c: ticks[i].LastTradedPrice,
-					}
+			candleAlreadyStarted = true;
+			if(candleData.length > 0) {
+				/*db.createCandleData(candleData)
+				.then(function(response) {
+					console.log(response);
+				})*/
+			}
+			console.log("new candles");
+			candleData = [];
+			for(let i=0; i < ticks.length; i++) {
+				candleData["'" + ticks[i].Token + "'"] = {
+					o: parseFloat(ticks[i].LastTradedPrice),
+					h: parseFloat(ticks[i].LastTradedPrice),
+					l: parseFloat(ticks[i].LastTradedPrice),
+					c: parseFloat(ticks[i].LastTradedPrice),
+					volume: 0,
 				}
 			}
-			
+		} else {
+			candleAlreadyStarted = false;
+			for(let i=0; i < ticks.length; i++) {
+				if(!candleData["'" + ticks[i].Token + "'"]) {
+					candleData["'" + ticks[i].Token + "'"] = {}
+				}
+				let prevVolume = parseInt(candleData["'" + ticks[i].Token + "'"].volume);
+				let currVolume = prevVolume == 'NaN' ? 0 : prevVolume;
+				candleData["'" + ticks[i].Token + "'"] = {
+					o: candleData["'" + ticks[i].Token + "'"].o,
+					h: parseFloat(ticks[i].LastTradedPrice) > candleData["'" + ticks[i].Token + "'"].h ? parseFloat(ticks[i].LastTradedPrice) : candleData["'" + ticks[i].Token + "'"].h,
+					l: parseFloat(ticks[i].LastTradedPrice) < candleData["'" + ticks[i].Token + "'"].l ? parseFloat(ticks[i].LastTradedPrice) : candleData["'" + ticks[i].Token + "'"].l,
+					c: parseFloat(ticks[i].LastTradedPrice),
+					volume: parseInt(currVolume) + parseInt(ticks[i].LastTradedVolume)
+				}
+			}
 		}
+		console.log(candleData)
 	})
 
 	setTimeout(function() {
 		tckr.disconnect();
-	},10000)
+		res.send("Done")
+	},30000)
 
-	res.send("Done")
+
 })
 
 router.get('/timetest', function(req, res, next) {

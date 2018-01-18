@@ -192,10 +192,30 @@ db.lookupstocks = function(q) {
 	})
 }
 
+db.createCandleData = function(arrCandles) {
+	return new Promise(function(resolve, reject) {
+		console.log(arrCandles);
+		resolve(true);
+		/*var conn = connect();
+		var count = 0;
+		_.mapValues(arrCandles, function(candle) {
+			let txtValues = '';
+			let columnList = "(instrument_token, timestamp, o, h, l, c, volume)";
+			txtValues = "(" + candle.Token + "," + candle.o +  "," + candle.h +  "," + candle.l + "," + candle.c + "," + candle.volume + ")";
+			var query = "INSERT INTO candles " + columnList + " VALUES " + txtValues;
+			conn.query(query,{}, function(err, res){
+				if(err != null) {
+					reject(query);
+				} 
+			})
+		})
+		resolve(true)*/
+	})
+}
+
 db.insertMargins = function(objMargins) {
 	return new Promise(function(resolve, reject) {
 		var conn = connect();
-		
 		
 		var count = 0;
 		_.map(objMargins, function(margin) {
