@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { Component, Input } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
 import { TickerService } from '../shared/services/ticker-service.service';
@@ -26,19 +26,18 @@ import 'rxjs/add/observable/of';
 		<div class='order-form' >
 			<form>
 				<div class="row">
-					<div class="order-type col-lg-6">
+					<div class="order-type col-lg-4">
 						<input type='radio' name="order-type" id="orderTypeBO" value="BO" checked><label for="orderTypeBO" class="radio-inline">BO</label>
 						<input type='radio' name="order-type" id="orderTypeCO" value="CO"><label for="orderTypeCO" class="radio-inline">CO</label>
 						<input type='radio' name="order-type" id="orderTypeCNC" value="CNC"><label for="orderTypeCNC" class="radio-inline">CNC</label>
 					</div>
-					<div class="metadata col-lg-6">
-						<label>CMP : {{ltp}}</label>
+					<div class="metadata col-lg-8">
 						<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
 						<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
 					</div>
 				</div>
 				<hr />
-				<div class="order-stock">
+				<!-- <div class="order-stock">
 					<div class="form-group row">
 						<div class="col-md-4">
 							<label for="exchange">exchange</label>
@@ -52,7 +51,7 @@ import 'rxjs/add/observable/of';
 							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 						</div>
 					</div>
-				</div>
+				</div> -->
 				<hr />
 				<div class="form-group row">
 					<div class="col-md-3">
@@ -147,12 +146,25 @@ export class OrderFormComponent {
 	marginRequired: number = 0;
 	quantity: number = 0;
 	leverage: number = 0;
+	coUpper: number = 1;
+	coLower: number = 1
 
 	objMargin: object = {};
 	margins: Array<any>;
 
 	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer, private ticker: TickerService) {
 		this.margins = this.ds.getEquityMargins();
+		this.transactionType = this.ds.orderFormOptions.transactionType;
+		this.tradingsymbol = this.ds.orderFormOptions.tradingsymbol;
+		this.tradingsymbol = this.ds.orderFormOptions.tradingsymbol;
+		this.price = this.ds.orderFormOptions.price;
+		this.lotSize = this.ds.orderFormOptions.lotSize;
+		this.coLower = this.ds.orderFormOptions.coLower;
+		this.coUpper = this.ds.orderFormOptions.coUpper;
+	}
+
+	ngOnInit() {
+		this.calculateRisk();
 	}
 
 	observableSource = (keyword: any): Observable<any[]> => {
@@ -234,16 +246,15 @@ export class OrderFormComponent {
 	calculateRisk() {
 		let avblMargin = this.ds.availableFunds;
 		let price = this.price;
-		let lotSize = this.objMargin['lot_size']
-		let co_lower = this.objMargin['co_lower'] / 100;
-		let co_upper = this.objMargin['co_upper'] / 100;
+		let co_lower = this.coLower / 100;
+		let co_upper = this.coUpper / 100;
 		let trigger;
-		
+
 		if(this.transactionType == 'BUY') {
-			trigger = parseFloat((price - ((co_lower/5) * price)).toFixed(2))
+			trigger = parseFloat((price - ((co_lower) * price)).toFixed(2))
 			//this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		} else {
-			trigger = parseFloat((price + ((co_lower/5) * price)).toFixed(2))
+			trigger = parseFloat((price + ((co_lower) * price)).toFixed(2))
 			//this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		}
 		
@@ -257,11 +268,9 @@ export class OrderFormComponent {
 	calculateQuantity() {
 		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
 		let quantityThreshold = Math.ceil(maxRisk / (this.price - this.stoplossValue))
-		console.log(quantityThreshold)
-		console.log(this.lotSize)
+
 		let calculatedQuantity = quantityThreshold - (quantityThreshold % this.lotSize);
 		this.quantity = Math.abs(calculatedQuantity);
-		console.log(this.quantity)
 
 		let targetDistance = ((this.ds.availableFunds * (AppConfig.TARGET_PERCENTAGE / 100))/this.quantity);
 
@@ -274,13 +283,14 @@ export class OrderFormComponent {
 		// Adjust the values to nearest 0.05
 		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
 
-		let co_lower = this.objMargin['co_lower'] / 100;
+		let co_lower = this.coLower / 100;
 
 		let x = Math.abs(this.price - this.stoplossValue) * this.quantity;
 		let y = co_lower * this.price * this.quantity;
 
 		let margin =  x > y ? x : y
 		margin = margin + (margin * 0.2);
+		console.log(margin)
 		this.marginRequired = Math.abs(margin);
 
 		this.leverage = (this.price * this.quantity) / this.marginRequired;

@@ -59,7 +59,6 @@ router.get('/ticker', function(req, res, next) {
 					l: parseFloat(ticks[i].LastTradedPrice),
 					c: parseFloat(ticks[i].LastTradedPrice),
 					volume: 0
-					totalVolume: 
 				}
 			}
 		} else {
@@ -195,12 +194,15 @@ function fetchMargins() {
 				requestAsync('https://api.kite.trade/margins/futures'),
 				requestAsync('https://api.kite.trade/margins/commodity'),
 				kc.instruments('NSE').then(function(instruments){
+					console.log("NSE fetched")
 					return instruments;
 				}),
 				kc.instruments('NFO').then(function(instruments){
+					console.log("NFO fetched")
 					return instruments;
 				}),
 				kc.instruments('MCX').then(function(instruments){
+					console.log("MCX fetched")
 					return instruments;
 				})
 			]).then(function(alldata) {
@@ -233,9 +235,10 @@ function fetchMargins() {
 				var db_margins = _.map(finalMargins, function(margin) {
 					return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])
 				})
+
 				console.log(db_margins.length + " Objects sanitized");
-				
-				db.setInstruments(db_margins)
+				console.log(db_margins[0], db_margins[1], db_margins[2], db_margins[3])
+				db.insertMargins(db_margins)
 					.then(function(result) {res.send("Done");})
 					.catch(function(err) {res.send('Error: ' + err)})
 					.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})

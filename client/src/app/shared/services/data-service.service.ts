@@ -10,9 +10,20 @@ export class DataService {
 	ticksUpdated: EventEmitter<any> = new EventEmitter();
 	ordersUpdated: EventEmitter<any> = new EventEmitter();
 	showOverlay: boolean = false;
+	showOrderForm: boolean = false;
 	currentTicks: Array<object> = [];
 	currentOrders: Array<object>;
 	marketData: Array<any> = [];
+
+
+	orderFormOptions: any = {
+		transactionType: 'BUY',
+		tradingsymbol: '',
+		instrumentToken: '',
+		lotSize: 1,
+		coUpper: 1,
+		coLower: 1
+	}
 
 	getEquityMargins() {
 		return this.marginData;

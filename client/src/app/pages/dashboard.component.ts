@@ -18,7 +18,7 @@ import {DataService} from '../shared/services/data-service.service'
 			<div class="current-orders-component">
 				<current-orders></current-orders>
 			</div>
-			<div class="order-form-dialog" *ngIf="showOrderForm">
+			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>
 			</div>
@@ -56,14 +56,14 @@ import {DataService} from '../shared/services/data-service.service'
 	`]
 })
 export class DashboardComponent {
-	showOrderForm: boolean = false;
 
 	constructor(private ds: DataService){
-		this.ds.showOverlay = false;		
+		this.ds.showOverlay = false;
+		this.ds.showOrderForm = false;
 	}
 
 	closeOrderForm() {
-		this.showOrderForm = false;
+		this.ds.showOrderForm = false;
 		this.ds.showOverlay = false;
 	}
 }

@@ -3,6 +3,18 @@ var router = express.Router();
 var db = require('../db');
 
 
+router.get('/get', function(req, res, next) {
+	console.log("reached here")
+	var userId = 1;
+	db.fetchMarketwatch(userId)
+	.then(function(response) {
+		res.send(response)
+	})
+	.catch(function(error) {
+		res.json(error);
+	})
+});
+
 router.get('/add/:token', function(req, res, next) {
 	var token = req.params.token;
 	db.addToMarketwatch(token)
