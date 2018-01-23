@@ -1,8 +1,8 @@
+import { TickerService } from '../shared/services/ticker-service.service'
 import { Component, OnInit} from '@angular/core';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Observable } from 'rxjs/Observable';
 import { CommunicatorService} from '../shared/communicator/communicator.service'
-import { TickerService } from '../shared/services/ticker-service.service'
 import { DataService } from '../shared/services/data-service.service'
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import _ from 'lodash';
@@ -13,35 +13,45 @@ import _ from 'lodash';
 	<div class="marketwatch">
 		<div>
 			<label for="tradingsymbol">Stock </label>
-			<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
+			<input placeholder="Add to watchlist" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 		</div>
-		<table class="table table-hover tbl-watchlist" [ngClass]="{'hide-watchlist' : stocks.length < 1}">
-			<thead>
-				<tr>
-					<th>Stock</th>
-					<th>LTP</th>
-					<th>Top Ask</th>
-					<th>Top Bid</th>
-					<th>Take trade</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr *ngFor="let stock of stocks">
-					<td>{{stock.name}}</td>
-					<td>{{stock.ltp}}</td>
-					<td>{{stock.topAsk}}</td>
-					<td>{{stock.topBid}}</td>
-					<td>
-						<a class="btn buy-colored" (click)="buyThis(stock)">BUY</a>
-						<a class="btn sell-colored" (click)="sellThis(stock)">SELL</a>
-					</td>
-					<td>
-						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+
+		<a *ngFor="let stock of stocks" class="div-watchlist" data-toggle="collapse" href="#{{stock.instrument_token}}">
+			<div class="row">
+				<div class='stock-name col-xs-5'>{{stock.tradingsymbol}}</div>
+				<div class='ltp col-xs-5 text-right'>{{stock.ltp}}</div>
+				<div class='col-xs-1'>
+					<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class='segment col-xs-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
+				<div class='segment col-xs-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
+				<div class='ltp col-lg-6'>
+					
+				</div>
+			</div>
+			<div class="stock-details collapse" id="{{stock.instrument_token}}">
+				<div class="row">
+					<div class="col-xs-11 text-right">
+						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
+						<button (click)="sellThis(stock)" class="btn sell-colored">S</button>
+					</div>
+				</div>
+				<div class="row" *ngIf="stock.Depth">
+					<div class="" *ngFor="let key of depthRange">
+						<span class="">{{stock.Depth.buy[key].Price}}</span>
+						<span class="">{{stock.Depth.buy[key].Quantity}}</span>
+						<span class="">{{stock.Depth.buy[key].Total}}</span>
+						<span class="">{{stock.Depth.sell[key].Price}}</span>
+						<span class="">{{stock.Depth.sell[key].Quantity}}</span>
+						<span class="">{{stock.Depth.sell[key].Total}}</span>
+					</div>
+				</div>
+
+			</div>
+		</a>
+
 	</div>
 	
 	`,
@@ -56,10 +66,17 @@ import _ from 'lodash';
 			display: none;
 		}
 
-		.tbl-watchlist {
+		.div-watchlist {
 			margin-top: 30px;
 		}
-
+		.segment {
+			font-size: 10px;
+		}
+		.stock-details {
+			background: #F5F5F5;
+			padding: 8px 0px;
+			border-top: 1px solid #DDD;
+		}
 		.auto-list-item-wrapper {
 			padding: 2px;
 		}
@@ -71,11 +88,13 @@ import _ from 'lodash';
 		.input-auto-complete {
 			width: 100%;
 			display: inline-block;
+			padding: 2px;
 		}
 	`]
 })
 export class MarketwatchComponent implements OnInit{
-	stocks: any = []
+	stocks: any = [];
+	depthRange: Array<number> = _.range(4);
 
 	constructor(private cs: CommunicatorService, private http: Http, private ds: DataService, private ticker: TickerService) {
 	}
@@ -83,17 +102,21 @@ export class MarketwatchComponent implements OnInit{
 	ngOnInit(): void {
 		this.ds.ticksUpdated.subscribe(ticks => {
 			this.stocks.map(stock => {
-				let quote = this.ds.getQuote(stock.instrument_token);
+				let quote = this.ds.getFullQuote(stock.instrument_token);
+				console.log(quote)
 				stock.ltp = quote.ltp;
-				stock.topBid = quote.topBid;
-				stock.topAsk = quote.topAsk;
+				stock.Depth = quote.Depth;
 			})
 		});
 
+		let self = this;
 		this.http.get('http://localhost:8080/marketwatch/get')
-			.subscribe(results => {
-				console.log(results);
+		.subscribe(results => {
+			let watchlist = (results.json())
+			_.map(watchlist, function(item) {
+				self.stockSelected(item, false);
 			})
+		})
 	}
 	
 
@@ -108,15 +131,22 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.orderFormOptions.coLower = stock.coLower
 		this.ds.showOverlay = true;
 		this.ds.showOrderForm = true;
-
 	}
 
 	sellThis(stock) {
-
+		this.ds.orderFormOptions.transactionType = 'SELL',
+		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
+		this.ds.orderFormOptions.instrumentToken = stock.instrumentToken
+		this.ds.orderFormOptions.price = stock.ltp
+		this.ds.orderFormOptions.lotSize = stock.lotSize
+		this.ds.orderFormOptions.coUpper = stock.coUpper
+		this.ds.orderFormOptions.coLower = stock.coLower
+		this.ds.showOverlay = true;
+		this.ds.showOrderForm = true;
 	}
 
 	observableSource = (keyword: any): Observable<any[]> => {
-		let url: string = 'http://localhost:8080/lookupstock?q='+keyword
+		let url: string = 'http://localhost:8080/stocks/lookup?q='+keyword
 		if (keyword) {
 			return this.http.get(url)
 			.map(res => {
@@ -161,30 +191,21 @@ export class MarketwatchComponent implements OnInit{
 		}
 	}
 
-	stockSelected($event) {
+	stockSelected($event, persist = true) {
 		if(!$event.tradingsymbol) return;
-console.log($event)
+
 		this.ticker.subscribe([$event.instrument_token]);
 
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
 		let exchange = $event.segment.split("-")[0];
 		
-		this.stocks.push({
-			instrument_token: $event.instrument_token,
-			name: $event.tradingsymbol,
-			ltp: 0,
-			topAsk: 0,
-			topBid: 0,
-			lotSize: $event.lot_size,
-			coLower: $event.co_lower,
-			coUpper: $event.co_upper
-		});
-
-		this.http.get('http://localhost:8080/marketwatch/add/' + $event.instrument_token)
-		.subscribe(res => {
-			let json = res.json();
-			console.log(json)
-		})
+		this.stocks.push($event);
+		if(persist == true) {
+			this.http.get('http://localhost:8080/marketwatch/add/' + $event.instrument_token)
+			.subscribe(res => {
+				let json = res.json();
+			})
+		}
 	}
 
 	removeFromMarketwatch(instrument_token) {
@@ -199,7 +220,5 @@ console.log($event)
 			let json = res.json();
 			console.log(json)
 		})
-
-
 	}
 }

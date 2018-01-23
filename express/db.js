@@ -192,6 +192,30 @@ db.lookupstocks = function(q) {
 	})
 }
 
+db.getStocksByInstrumentToken = function(arrTokens) {
+	if(typeof arrTokens != 'array') {
+		arrTokens = [arrTokens];
+	}
+
+	return new Promise(function(resolve, reject) {
+
+		var conn = connect();
+			
+		var	query = "SELECT * FROM instruments WHERE instrument_token IN ('" + arrTokens.join() + ")";
+
+		conn.query(query, {}, function(err, results) {
+			if(err == null) {
+				resolve(results)
+			} else {
+				reject(err)
+			}
+			
+		});
+	})
+
+
+}
+
 db.createCandleData = function(arrCandles) {
 	return new Promise(function(resolve, reject) {
 		console.log(arrCandles);
@@ -238,7 +262,7 @@ db.fetchMarketwatch = function(user_id) {
 	return new Promise(function(resolve, reject) {
 		var conn = connect();
 		
-		var query = "SELECT * FROM marketwatch WHERE user_id = " + user_id;
+		var query = "SELECT * FROM marketwatch m JOIN instruments i WHERE m.instrument_token=i.instrument_token AND m.user_id = " + user_id;
 		conn.query(query,{}, function(err, res){
 			if(err != null) {
 				reject(query);

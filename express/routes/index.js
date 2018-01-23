@@ -149,14 +149,6 @@ init();
 	//}
 })
 
-router.get('/lookupstock', function(req, res, next) {
-	var q = req.query.q;
-	db.lookupstocks(q)
-	.then(function(response) {
-		res.json(response)
-	})
-})
-
 router.get('/getquote', function(req, res, next) {
 	var q = req.query.tradingsymbol;
 	var e = req.query.exchange;

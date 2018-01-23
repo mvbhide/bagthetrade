@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
 import {DataService} from './shared/services/data-service.service';
+import {TickerService} from './shared/services/ticker-service.service';
 
 @Component({
 	moduleId   : module.id,
@@ -50,5 +51,5 @@ import {DataService} from './shared/services/data-service.service';
 	`]
 })
 export class AppComponent {
-	constructor(private ds: DataService){}
+	constructor(private ds: DataService, private ts: TickerService){}
 }

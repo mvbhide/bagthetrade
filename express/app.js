@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 
 var index = require('./routes/index');
+var stocks = require('./routes/stocks');
 var marketwatch = require('./routes/marketwatch');
 var users = require('./routes/users');
 
@@ -46,6 +47,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/dist/',express.static(path.join(__dirname, 'views/dist/')));
 
 app.use('/', index);
+app.use('/stocks', stocks);
 app.use('/marketwatch', marketwatch);
 app.use('/users', users);
 

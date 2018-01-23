@@ -69,6 +69,17 @@ export class DataService {
 		
 	}
 
+	getFullQuote(instrumentToken) {
+		let quote:any = {};
+		let insData = this.marketData[instrumentToken];
+		if(insData) {
+			quote.ltp = insData.LastTradedPrice;
+			quote.Depth = insData.Depth;
+			return quote;
+		}
+		
+	}
+
 
 
 } // end class ChatService

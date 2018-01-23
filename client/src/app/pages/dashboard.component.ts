@@ -9,15 +9,15 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
-			<div class="fund-summary-component">
+			<!-- <div class="fund-summary-component">
 				<fund-summary></fund-summary>
-			</div>
+			</div> -->
 			<div class="marketwatch-component">
 				<marketwatch></marketwatch>
 			</div>
-			<div class="current-orders-component">
+			<!-- <div class="current-orders-component">
 				<current-orders></current-orders>
-			</div>
+			</div> -->
 			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>
@@ -26,7 +26,7 @@ import {DataService} from '../shared/services/data-service.service'
 	`,
 	styles: [`
 		.page-container {
-			width: 80%;
+			width: 96%;
 			margin: 0 auto;
 		}
 		.order-form-dialog {
