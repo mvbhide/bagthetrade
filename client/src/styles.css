@@ -45,6 +45,13 @@
 	color: #FFF;
 }
 
+.buy-text {
+    color: #4A90C2;
+}
+.sell-text {
+    color: #FF5C10; 
+}
+
 hr {
 	padding: 0px 5px;
 }

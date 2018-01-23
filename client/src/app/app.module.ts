@@ -5,6 +5,7 @@ import {FormsModule} from '@angular/forms';
 import {HttpModule} from '@angular/http';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {RouterModule, Routes} from '@angular/router';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 
 // services
@@ -44,7 +45,7 @@ const appRoutes: Routes = [
 @NgModule({
 	imports     : [
 		RouterModule.forRoot(appRoutes),
-		BrowserModule, FormsModule, HttpModule, NguiAutoCompleteModule
+		BrowserModule,BrowserAnimationsModule, FormsModule, HttpModule, NguiAutoCompleteModule
 	],
 	declarations: [
 		AppComponent,

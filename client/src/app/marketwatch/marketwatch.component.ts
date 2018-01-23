@@ -1,5 +1,5 @@
 import { TickerService } from '../shared/services/ticker-service.service'
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit, trigger, state, animate, transition, style} from '@angular/core';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Observable } from 'rxjs/Observable';
 import { CommunicatorService} from '../shared/communicator/communicator.service'
@@ -16,22 +16,24 @@ import _ from 'lodash';
 			<input placeholder="Add to watchlist" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 		</div>
 
-		<a *ngFor="let stock of stocks" class="div-watchlist" data-toggle="collapse" href="#{{stock.instrument_token}}">
-			<div class="row">
-				<div class='stock-name col-xs-5'>{{stock.tradingsymbol}}</div>
-				<div class='ltp col-xs-5 text-right'>{{stock.ltp}}</div>
-				<div class='col-xs-1'>
-					<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
+		<div *ngFor="let stock of stocks" class="div-watchlist">
+			<div class="stock-realtime-info" (click)="showHideDepth(stock)">
+				<div class="row">
+					<div class='stock-name col-xs-5'>{{stock.tradingsymbol}}</div>
+					<div class='ltp col-xs-5 text-right'>{{stock.ltp}}</div>
+					<div class='col-xs-1'>
+						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
+					</div>
+				</div>
+				<div class="row">
+					<div class='segment col-xs-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
+					<div class='segment col-xs-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
+					<div class='ltp col-lg-6'>
+						
+					</div>
 				</div>
 			</div>
-			<div class="row">
-				<div class='segment col-xs-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
-				<div class='segment col-xs-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
-				<div class='ltp col-lg-6'>
-					
-				</div>
-			</div>
-			<div class="stock-details collapse" id="{{stock.instrument_token}}">
+			<div class="stock-details" id="{{stock.instrument_token}}" [@toggleState]="stock.toggleDepth">
 				<div class="row">
 					<div class="col-xs-11 text-right">
 						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
@@ -40,17 +42,21 @@ import _ from 'lodash';
 				</div>
 				<div class="row" *ngIf="stock.Depth">
 					<div class="" *ngFor="let key of depthRange">
-						<span class="">{{stock.Depth.buy[key].Price}}</span>
-						<span class="">{{stock.Depth.buy[key].Quantity}}</span>
-						<span class="">{{stock.Depth.buy[key].Total}}</span>
-						<span class="">{{stock.Depth.sell[key].Price}}</span>
-						<span class="">{{stock.Depth.sell[key].Quantity}}</span>
-						<span class="">{{stock.Depth.sell[key].Total}}</span>
+						<div class="buy-depth col-xs-6">
+							<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
+							<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
+							<span class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</span>
+						</div>
+						<div class="sell-depth col-xs-6">
+							<span class="sell-text">{{stock.Depth.sell[key].Price}}</span>
+							<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
+							<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
+						</div>
 					</div>
 				</div>
 
 			</div>
-		</a>
+		</div>
 
 	</div>
 	
@@ -77,6 +83,12 @@ import _ from 'lodash';
 			padding: 8px 0px;
 			border-top: 1px solid #DDD;
 		}
+
+		.depth-total {
+			opacity: 0.8;
+			color: #AAA;
+			font-size: 10px;
+		}
 		.auto-list-item-wrapper {
 			padding: 2px;
 		}
@@ -90,7 +102,15 @@ import _ from 'lodash';
 			display: inline-block;
 			padding: 2px;
 		}
-	`]
+	`],
+	animations: [
+		trigger('toggleState', [
+			state('true' , style({height: '100%', display: 'block'  })),
+			state('false', style({ maxHeight: 0, padding: 0, display: 'none' })),
+			// transition
+			transition('* => *', animate('300ms')),
+		])
+	]
 })
 export class MarketwatchComponent implements OnInit{
 	stocks: any = [];
@@ -119,6 +139,13 @@ export class MarketwatchComponent implements OnInit{
 		})
 	}
 	
+	showHideDepth(stock) {
+		if(!stock.toggleDepth ) {
+			stock.toggleDepth = true;
+		} else {
+			stock.toggleDepth = !stock.toggleDepth;
+		}
+	}
 
 	buyThis(stock) {
 		console.log(stock)
