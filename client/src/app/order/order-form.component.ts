@@ -56,20 +56,20 @@ import 'rxjs/add/observable/of';
 				<div class="form-group row">
 					<div class="col-md-3">
 						<label for="stoplossValue"> Stop Loss</label>
-						<input class="form-control" [step]="os.tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
+						<input class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
 					</div>
 					<div class="col-md-3">
 						<label for="price"> Order Price</label>
-						<input class="form-control" [step]="os.tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()"/>
+						<input class="form-control" [step]="tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()"/>
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input [step]="os.tickSize" class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
+						<input [step]="tickSize" class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
-						<input class="form-control" type="number" [step]="lotSize" name="quantity" [(ngModel)]="quantity" id="quantity" />
+						<input class="form-control" type="number" [step]="quantityMultiplier" name="quantity" [(ngModel)]="quantity" id="quantity" />
 					</div>
 				</div>
 				<hr />
@@ -143,11 +143,14 @@ export class OrderFormComponent {
 	stoplossValue: number = 0;
 	price: number = 0;
 	lotSize: number = 1;
+	tickSize: number = 0.05;
 	marginRequired: number = 0;
 	quantity: number = 0;
 	leverage: number = 0;
 	coUpper: number = 1;
-	coLower: number = 1
+	coLower: number = 1;
+	multiplier: number = 1;
+	quantityMultiplier = 1;
 
 	objMargin: object = {};
 	margins: Array<any>;
@@ -159,8 +162,10 @@ export class OrderFormComponent {
 		this.tradingsymbol = this.ds.orderFormOptions.tradingsymbol;
 		this.price = this.ds.orderFormOptions.price;
 		this.lotSize = this.ds.orderFormOptions.lotSize;
+		this.tickSize = this.ds.orderFormOptions.tickSize
 		this.coLower = this.ds.orderFormOptions.coLower;
 		this.coUpper = this.ds.orderFormOptions.coUpper;
+		this.multiplier = this.ds.orderFormOptions.multiplier;
 	}
 
 	ngOnInit() {
@@ -257,10 +262,11 @@ export class OrderFormComponent {
 			trigger = parseFloat((price + ((co_lower) * price)).toFixed(2))
 			//this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
 		}
-		
+
 		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
 		// Adjust the values to nearest 0.05
-		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*20)/20).toFixed(2));
+		let tickAdjustMultiplier = (1/this.tickSize)
+		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*tickAdjustMultiplier)/tickAdjustMultiplier).toFixed(2));
 
 		this.calculateQuantity()
 	}
@@ -268,10 +274,18 @@ export class OrderFormComponent {
 	calculateQuantity() {
 		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
 		let quantityThreshold = Math.ceil(maxRisk / (this.price - this.stoplossValue))
-
-		let calculatedQuantity = quantityThreshold - (quantityThreshold % this.lotSize);
+		let calculatedQuantity;
+console.log("multiplier", this.multiplier)
+		if(this.multiplier > 1) {
+			calculatedQuantity = quantityThreshold - (quantityThreshold % this.multiplier);
+			this.quantityMultiplier = this.multiplier;
+		} else {
+			calculatedQuantity = quantityThreshold - (quantityThreshold % this.lotSize);
+			this.quantityMultiplier = this.lotSize;
+		}
+console.log("calculated quantity", calculatedQuantity);		
 		this.quantity = Math.abs(calculatedQuantity);
-
+console.log("actual quantity", this.quantity);
 		let targetDistance = ((this.ds.availableFunds * (AppConfig.TARGET_PERCENTAGE / 100))/this.quantity);
 
 		if(this.transactionType == 'BUY') {
@@ -280,9 +294,10 @@ export class OrderFormComponent {
 			this.squareoffValue = this.price - targetDistance;
 		}
 
-		// Adjust the values to nearest 0.05
-		this.squareoffValue = parseFloat((Math.ceil(this.squareoffValue*20)/20).toFixed(2));
-
+		// Adjust the values to nearest tick size
+		let tickAdjustMultiplier = (1/this.tickSize)
+		this.squareoffValue = parseFloat((Math.round(this.squareoffValue*tickAdjustMultiplier)/tickAdjustMultiplier).toFixed(2));
+console.log("tick adjuster", tickAdjustMultiplier);
 		let co_lower = this.coLower / 100;
 
 		let x = Math.abs(this.price - this.stoplossValue) * this.quantity;

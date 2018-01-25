@@ -123,39 +123,39 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.ticksUpdated.subscribe(ticks => {
 			this.stocks.map(stock => {
 				let quote = this.ds.getFullQuote(stock.instrument_token);
-				console.log(quote)
-				stock.ltp = quote.ltp;
+				stock.ltp = quote.ltp ? quote.ltp : 0;
 				stock.Depth = quote.Depth;
 			})
 		});
 
 		let self = this;
-		this.http.get('http://localhost:8080/marketwatch/get')
-		.subscribe(results => {
-			let watchlist = (results.json())
-			_.map(watchlist, function(item) {
-				self.stockSelected(item, false);
-			})
+		this.ticker.on('connect', function() {
+			self.http.get('http://localhost:8080/marketwatch/get')
+			.subscribe(results => {
+				let watchlist = (results.json())
+				_.map(watchlist, function(item) {
+					self.stockSelected(item, false);
+				})
+			})	
 		})
+		
 	}
 	
 	showHideDepth(stock) {
-		if(!stock.toggleDepth ) {
-			stock.toggleDepth = true;
-		} else {
-			stock.toggleDepth = !stock.toggleDepth;
-		}
+		stock.toggleDepth = !stock.toggleDepth;
 	}
 
 	buyThis(stock) {
 		console.log(stock)
 		this.ds.orderFormOptions.transactionType = 'BUY',
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
-		this.ds.orderFormOptions.instrumentToken = stock.instrumentToken
+		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
 		this.ds.orderFormOptions.price = stock.ltp
-		this.ds.orderFormOptions.lotSize = stock.lotSize
-		this.ds.orderFormOptions.coUpper = stock.coUpper
-		this.ds.orderFormOptions.coLower = stock.coLower
+		this.ds.orderFormOptions.lotSize = stock.lot_size
+		this.ds.orderFormOptions.tickSize = stock.tick_size
+		this.ds.orderFormOptions.coUpper = stock.co_upper
+		this.ds.orderFormOptions.coLower = stock.co_lower
+		this.ds.orderFormOptions.multiplier = stock.multiplier
 		this.ds.showOverlay = true;
 		this.ds.showOrderForm = true;
 	}
@@ -163,11 +163,13 @@ export class MarketwatchComponent implements OnInit{
 	sellThis(stock) {
 		this.ds.orderFormOptions.transactionType = 'SELL',
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
-		this.ds.orderFormOptions.instrumentToken = stock.instrumentToken
+		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
 		this.ds.orderFormOptions.price = stock.ltp
-		this.ds.orderFormOptions.lotSize = stock.lotSize
-		this.ds.orderFormOptions.coUpper = stock.coUpper
-		this.ds.orderFormOptions.coLower = stock.coLower
+		this.ds.orderFormOptions.lotSize = stock.lot_size
+		this.ds.orderFormOptions.tickSize = stock.tick_size
+		this.ds.orderFormOptions.coUpper = stock.co_upper
+		this.ds.orderFormOptions.coLower = stock.co_lower
+		this.ds.orderFormOptions.multiplier = stock.multiplier
 		this.ds.showOverlay = true;
 		this.ds.showOrderForm = true;
 	}
