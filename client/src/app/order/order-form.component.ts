@@ -26,6 +26,10 @@ import 'rxjs/add/observable/of';
 		<div class='order-form' >
 			<form>
 				<div class="row">
+					<input class="col-xs-3" type='radio' name="delivery-type" id="deliveryTypeIntraday" value="MIS" (change)="toggleDeliveryType()"><label for="deliveryTypeIntraday" class="radio-inline">Intraday</label><info-tooltip [info]="'Buying Intraday. The position will be auto squared off at market price few mins before market close'"></info-tooltip>
+					<input class="col-xs-3" type='radio' name="delivery-type" id="deliveryTypeDelivery" value="CNC" checked (change)="toggleDeliveryType()"><label for="deliveryTypeDelivery" class="radio-inline">Delivery</label>
+				</div>
+				<div class="row" *ngIf="isIntraday">
 					<div class="order-type col-lg-4">
 						<input type='radio' name="order-type" id="orderTypeBO" value="BO" checked><label for="orderTypeBO" class="radio-inline">BO</label>
 						<input type='radio' name="order-type" id="orderTypeCO" value="CO"><label for="orderTypeCO" class="radio-inline">CO</label>
@@ -37,35 +41,21 @@ import 'rxjs/add/observable/of';
 					</div>
 				</div>
 				<hr />
-				<!-- <div class="order-stock">
-					<div class="form-group row">
-						<div class="col-md-4">
-							<label for="exchange">exchange</label>
-							<select id="exchange" class="form-control-md" id="exchange">
-								<option value='NSE' selected>NSE</option>
-								<option value='MCX'>MCX</option>
-							</select>
-						</div>
-						<div class="col-md-5">
-							<label for="tradingsymbol">Stock </label>
-							<input ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
-						</div>
-					</div>
-				</div> -->
-				<hr />
 				<div class="form-group row">
 					<div class="col-md-3">
 						<label for="stoplossValue"> Stop Loss</label>
-						<input class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
+						<input [disabled]="!isIntraday" class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
 					</div>
 					<div class="col-md-3">
-						<label for="price"> Order Price</label>
+						<label for="price">{{transactionType}} at 
+							<input type='checkbox' name="orderLimitMarket" id="orderLimitMarket" value="LIMIT" (change)="toggleLimitMarket()"><label for="orderLimitMarket" class="radio-inline">Market</label>
+						</label>
 						<input class="form-control" [step]="tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()"/>
 					</div>
 
 					<div class="col-md-3">
 						<label for="squareoffValue"> Target</label>
-						<input [step]="tickSize" class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
+						<input [disabled]="!isIntraday" [step]="tickSize" class="form-control" type="number" name="squareoffValue" [(ngModel)]="squareoffValue" id="squareoffValue"/>
 					</div>
 					<div class="col-md-3">
 						<label for="quantity">Quantity</label>
@@ -136,6 +126,7 @@ import 'rxjs/add/observable/of';
 	`]
 })
 export class OrderFormComponent {
+	isIntraday			: boolean = false;
 	transactionType 	: string = 'BUY';
 	tradingsymbol 		: string;
 	instrumentToken 	: string;
@@ -153,6 +144,7 @@ export class OrderFormComponent {
 	multiplier 			: number = 1;
 	quantityMultiplier 	: number = 1;
 	objMargin 			: object = {};
+
 	margins 			: Array<any>;
 
 	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer, private ticker: TickerService) {
@@ -178,6 +170,10 @@ export class OrderFormComponent {
 		this.calculateRisk()
 	}
 
+	// Toggle the delivery type between Intraday and Cash & Carry
+	toggleDeliveryType() {
+		this.isIntraday = !this.isIntraday;
+	}
 
 	/**
 	 * Function to calculate risk as per configured by the user

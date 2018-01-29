@@ -36,6 +36,9 @@ import {OrderFormComponent} from "./order/order-form.component";
 import {FundSummaryComponent} from "./funds/fund-summary.component";
 import {CurrentOrdersComponent} from "./order/current-orders/current-orders.component";
 
+// Shared components
+import {InfoTooltipComponent} from './shared/components/info-tooltip/info-tooltip.component';
+
 const appRoutes: Routes = [
 	{ path: 'dashboard', 	component: DashboardComponent },
 	{ path: 'login',      	component: LoginComponent },
@@ -61,6 +64,7 @@ const appRoutes: Routes = [
 		OrderFormComponent,
 		FundSummaryComponent,
 		CurrentOrdersComponent,
+		InfoTooltipComponent
 	],
 	providers   : [ChatService, WebSocketService,AuthService, CommunicatorService, DataService, OrderService, AuthService, TickerService],
 	bootstrap   : [AppComponent]
