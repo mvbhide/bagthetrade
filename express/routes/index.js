@@ -145,7 +145,7 @@ router.get('/kiteauthred', function(req, res, next) {
 init();
 		function init() {
 			// Fetch equity margins.
-			fetchMargins();
+			fetchMargins(res);
 
 			// Fetch funds
 			/*kc.margins("equity")
@@ -181,7 +181,7 @@ router.get('/getquote', function(req, res, next) {
 	})
 })
 
-function fetchMargins() {
+function fetchMargins(res) {
 	db.getAccessToken(config.API_KEY)
 	.then(function(response){
 		var kc = new KiteConnect(config.API_KEY, {access_token: response.data});
@@ -198,18 +198,30 @@ function fetchMargins() {
 				requestAsync('https://api.kite.trade/margins/equity'),
 				requestAsync('https://api.kite.trade/margins/futures'),
 				requestAsync('https://api.kite.trade/margins/commodity'),
-				kc.instruments('NSE').then(function(instruments){
-					console.log("NSE fetched")
+				kc.instruments('NSE')
+				.then(function(instruments){
+					console.log("NSE fetched", instruments.length)
 					return instruments;
+				})
+				.catch(function(err) {
+					console.log('NSE failed: ', err)
 				}),
-				kc.instruments('NFO').then(function(instruments){
-					console.log("NFO fetched")
+				kc.instruments('NFO')
+				.then(function(instruments){
+					console.log("NFO fetched", instruments.length)
 					return instruments;
+				})
+				.catch(function(err) {
+					console.log('NFO failed: ', err)
 				}),
-				kc.instruments('MCX').then(function(instruments){
+				kc.instruments('MCX')
+				.then(function(instruments){
 					console.log("MCX fetched")
 					return instruments;
 				})
+				.catch(function(err) {
+					console.log('MCX failed: ', err)
+				}),
 			]).then(function(alldata) {
 				console.log("Margins fetched");
 
@@ -242,9 +254,8 @@ function fetchMargins() {
 				})
 
 				console.log(db_margins.length + " Objects sanitized");
-				console.log(db_margins[0], db_margins[1], db_margins[2], db_margins[3])
 				db.insertMargins(db_margins)
-					.then(function(result) {res.send("Done");})
+					.then(function(result) {console.log("Done. Time taken: " + new Date() - startTime );})
 					.catch(function(err) {res.send('Error: ' + err)})
 					.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})
 			}).catch(function(err){
@@ -255,6 +266,7 @@ function fetchMargins() {
 	.catch(function(err) { 
 		console.log("Getting access token failed: ",err);
 	})
+	res.send("ok");
 }
 
 function updateOrders() {

@@ -150,6 +150,7 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.orderFormOptions.transactionType = 'BUY',
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
 		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
+		this.ds.orderFormOptions.segment = stock.segment;
 		this.ds.orderFormOptions.price = stock.ltp
 		this.ds.orderFormOptions.lotSize = stock.lot_size
 		this.ds.orderFormOptions.tickSize = stock.tick_size
@@ -164,6 +165,7 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.orderFormOptions.transactionType = 'SELL',
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
 		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
+		this.ds.orderFormOptions.segment = stock.segment;
 		this.ds.orderFormOptions.price = stock.ltp
 		this.ds.orderFormOptions.lotSize = stock.lot_size
 		this.ds.orderFormOptions.tickSize = stock.tick_size

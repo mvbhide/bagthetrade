@@ -136,176 +136,133 @@ import 'rxjs/add/observable/of';
 	`]
 })
 export class OrderFormComponent {
-	transactionType: string = 'BUY';
-	tradingsymbol: string;
-	instrumentToken: string;
-	squareoffValue: number = 0;
-	stoplossValue: number = 0;
-	price: number = 0;
-	lotSize: number = 1;
-	tickSize: number = 0.05;
-	marginRequired: number = 0;
-	quantity: number = 0;
-	leverage: number = 0;
-	coUpper: number = 1;
-	coLower: number = 1;
-	multiplier: number = 1;
-	quantityMultiplier = 1;
-
-	objMargin: object = {};
-	margins: Array<any>;
+	transactionType 	: string = 'BUY';
+	tradingsymbol 		: string;
+	instrumentToken 	: string;
+	segment 			: string;
+	squareoffValue 		: number = 0;
+	stoplossValue 		: number = 0;
+	price 				: number = 0;
+	lotSize 			: number = 1;
+	tickSize 			: number = 0.05;
+	marginRequired 		: number = 0;
+	quantity 			: number = 0;
+	leverage 			: number = 0;
+	coUpper 			: number = 1;
+	coLower 			: number = 1;
+	multiplier 			: number = 1;
+	quantityMultiplier 	: number = 1;
+	objMargin 			: object = {};
+	margins 			: Array<any>;
 
 	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer, private ticker: TickerService) {
-		this.margins = this.ds.getEquityMargins();
+		this.margins 		 = this.ds.getEquityMargins();
 		this.transactionType = this.ds.orderFormOptions.transactionType;
-		this.tradingsymbol = this.ds.orderFormOptions.tradingsymbol;
-		this.tradingsymbol = this.ds.orderFormOptions.tradingsymbol;
-		this.price = this.ds.orderFormOptions.price;
-		this.lotSize = this.ds.orderFormOptions.lotSize;
-		this.tickSize = this.ds.orderFormOptions.tickSize
-		this.coLower = this.ds.orderFormOptions.coLower;
-		this.coUpper = this.ds.orderFormOptions.coUpper;
-		this.multiplier = this.ds.orderFormOptions.multiplier;
+		this.tradingsymbol 	 = this.ds.orderFormOptions.tradingsymbol;
+		this.segment 		 = this.ds.orderFormOptions.segment;
+		this.price 			 = this.ds.orderFormOptions.price;
+		this.lotSize 		 = this.ds.orderFormOptions.lotSize;
+		this.tickSize 		 = this.ds.orderFormOptions.tickSize
+		this.coLower 		 = this.ds.orderFormOptions.coLower;
+		this.coUpper 		 = this.ds.orderFormOptions.coUpper;
+		this.multiplier 	 = this.ds.orderFormOptions.multiplier;
 	}
 
 	ngOnInit() {
 		this.calculateRisk();
 	}
 
-	observableSource = (keyword: any): Observable<any[]> => {
-		let url: string = 'http://localhost:8080/lookupstock?q='+keyword
-		if (keyword) {
-			return this.http.get(url)
-			.map(res => {
-
-				let json = res.json();
-				return json;
-			})
-		} else {
-			return Observable.of([]);
-		}
-	}
-
+	// Toggle the transaction type between BUY <--> SELL
 	toggleTransactionType() {
 		this.transactionType = this.transactionType == 'BUY' ? 'SELL' : 'BUY';
 		this.calculateRisk()
 	}
 
-	stockListFormatter(data: any) {
-		var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-		var dt = new Date(data.expiry);
-		var txtExpiry = "" + (dt.getFullYear()-2000) + months[dt.getMonth()] + "FUT"
-		if(data.segment == 'MCX') {
-			var snippet =  `<div class="auto-list-item-wrapper">
-						<div class="auto-tradingsymbol">${data.tradingsymbol}${txtExpiry}</div>
-						<div class="auto-stock-name" style="font-size:5px; color: #CCC;">${data.name}</div>
-					</div>`
-		} else {
-			var snippet =  `<div class="auto-list-item-wrapper">
-						<div class="auto-tradingsymbol">${data.tradingsymbol}</div>
-						<div class="auto-stock-name">${data.name}</div>
-					</div>`
-		}
 
-		return snippet;
-		
-	}
-
-	stockValueFormatter(data: any) {
-
-		if(data.segment == 'MCX') {
-			var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-			var dt = new Date(data.expiry);
-			var txtExpiry = "" + (dt.getFullYear()-2000) + months[dt.getMonth()] + "FUT";
-			return `${data.tradingsymbol}${txtExpiry}`;
-		} else {
-			return `${data.tradingsymbol}`;
-		}
-	}
- 	
-	stockSelected($event) {
-		if(!$event.tradingsymbol) return;
-
-		this.os.setProspectiveStock($event.tradingsymbol);
-		this.tradingsymbol = $event.tradingsymbol;
-		this.objMargin = $event;
-		this.instrumentToken = $event.instrument_token;
-		this.ticker.subscribe([this.instrumentToken]);
-		this.lotSize = $event.lot_size;
-
-		// Extract the exchange from the segment
-		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
-		let exchange = $event.segment.split("-")[0];
-		/*this.http.get('http://localhost:8080/getquote?tradingsymbol=' + this.tradingsymbol +"&exchange=" + exchange)
-		.subscribe(res => {
-			var quote = res.json();
-			console.log(quote)
-			
-			this.calculateRisk();
-		})*/
-		this.price = 115;
-		this.calculateRisk();
-		//this.cPort.send({method: CommConfig.SUBSCRIBE, payload: this.instrumentToken});
-	}
-
+	/**
+	 * Function to calculate risk as per configured by the user
+	 * Risk is calculated on percentage of avaiable funds
+	 * The stoploss value is determined which limits the loss to the configured risk
+	 */
 	calculateRisk() {
-		let avblMargin = this.ds.availableFunds;
-		let price = this.price;
+		let avblMargin  = this.ds.availableFunds;
+		let price 		= this.price;
+	
+		// co_lower and co_upper are params defined in the 
+		// margin api which help us calculate the leverage
+		// max allowed stoploss within the leverage
 		let co_lower = this.coLower / 100;
 		let co_upper = this.coUpper / 100;
+	
 		let trigger;
 
-		if(this.transactionType == 'BUY') {
-			trigger = parseFloat((price - ((co_lower) * price)).toFixed(2))
-			//this.squareoffValue = this.price + (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+		if( this.transactionType == 'BUY' ) {
+			trigger = parseFloat( (price - ( ( co_lower / 5 ) * price ) ).toFixed( 2 ) );
 		} else {
-			trigger = parseFloat((price + ((co_lower) * price)).toFixed(2))
-			//this.squareoffValue = this.price - (this.price * (AppConfig.TARGET_PERCENTAGE / 100));
+			trigger = parseFloat( (price + ( ( co_lower / 5 ) * price ) ).toFixed( 2 ) )
 		}
 
 		this.stoplossValue = this.stoplossValue > trigger ? this.stoplossValue : trigger;
-		// Adjust the values to nearest 0.05
-		let tickAdjustMultiplier = (1/this.tickSize)
-		this.stoplossValue  = parseFloat((Math.ceil(this.stoplossValue*tickAdjustMultiplier)/tickAdjustMultiplier).toFixed(2));
+		
+		// Adjust the values to nearest tick size
+		let tickAdjustMultiplier = ( 1 / this.tickSize )
+		this.stoplossValue  	 = parseFloat( ( Math.ceil( this.stoplossValue * tickAdjustMultiplier ) / tickAdjustMultiplier ).toFixed( 2 ) );
 
+		// Once done with calculating the risk, calculate the quantity
 		this.calculateQuantity()
 	}
 
+
+	/**
+	 * Function to calculate quantity as per the calculated stoploss
+	 * Quantity is calculated based on difference between stoploss and limit value
+	 * With that further we calculate the target as a percentage of avaiable funds
+	 */
 	calculateQuantity() {
-		let maxRisk = this.ds.availableFunds * (AppConfig.RISK_PERCENTAGE/100)
-		let quantityThreshold = Math.ceil(maxRisk / (this.price - this.stoplossValue))
+		// Maximum risk the user can bear
+		let maxRisk = this.ds.availableFunds * ( AppConfig.RISK_PERCENTAGE / 100 )
+
+		// Get the optimum quantity within the max risk
+		let quantityThreshold = Math.ceil( maxRisk / ( this.price - this.stoplossValue ) );
+		
+		// Commodities margins return the lot size as 1 which is in practice the amount of the commodity in that lot
+		// We have used multipler as accompaniment to lotsize in case of commodities to calculate the quantity
+		// correctly while keeping the lot size as 1 (which we need for placing order)
 		let calculatedQuantity;
-console.log("multiplier", this.multiplier)
+		
 		if(this.multiplier > 1) {
-			calculatedQuantity = quantityThreshold - (quantityThreshold % this.multiplier);
+			calculatedQuantity 		= quantityThreshold - ( quantityThreshold % this.multiplier );
 			this.quantityMultiplier = this.multiplier;
 		} else {
-			calculatedQuantity = quantityThreshold - (quantityThreshold % this.lotSize);
+			calculatedQuantity 		= quantityThreshold - ( quantityThreshold % this.lotSize );
 			this.quantityMultiplier = this.lotSize;
 		}
-console.log("calculated quantity", calculatedQuantity);		
-		this.quantity = Math.abs(calculatedQuantity);
-console.log("actual quantity", this.quantity);
-		let targetDistance = ((this.ds.availableFunds * (AppConfig.TARGET_PERCENTAGE / 100))/this.quantity);
+
+		this.quantity = Math.abs( calculatedQuantity );
+
+		let targetOffset = ( (this.ds.availableFunds * ( AppConfig.TARGET_PERCENTAGE / 100 ) ) / this.quantity );
 
 		if(this.transactionType == 'BUY') {
-			this.squareoffValue = this.price + targetDistance;
+			this.squareoffValue = this.price + targetOffset;
 		} else {
-			this.squareoffValue = this.price - targetDistance;
+			this.squareoffValue = this.price - targetOffset;
 		}
 
 		// Adjust the values to nearest tick size
 		let tickAdjustMultiplier = (1/this.tickSize)
-		this.squareoffValue = parseFloat((Math.round(this.squareoffValue*tickAdjustMultiplier)/tickAdjustMultiplier).toFixed(2));
-console.log("tick adjuster", tickAdjustMultiplier);
-		let co_lower = this.coLower / 100;
+		this.squareoffValue = parseFloat( ( Math.round( this.squareoffValue * tickAdjustMultiplier ) / tickAdjustMultiplier ).toFixed( 2 ) );
 
-		let x = Math.abs(this.price - this.stoplossValue) * this.quantity;
+		// Calculating the required margin and the leverage
+		// The pseudocode for this can be found at
+		// https://kite.trade/forum/discussion/2183/margin-calculation-for-bracket-and-cover-order?new=1
+		let co_lower = this.coLower / 100;
+		let x = Math.abs( this.price - this.stoplossValue ) * this.quantity;
 		let y = co_lower * this.price * this.quantity;
+		let marginMultipler = this.segment == 'MCX' ? 0.4 : 0.2;
 
 		let margin =  x > y ? x : y
-		margin = margin + (margin * 0.2);
-		console.log(margin)
+		margin = margin + (margin * marginMultipler);
+
 		this.marginRequired = Math.abs(margin);
 
 		this.leverage = (this.price * this.quantity) / this.marginRequired;

@@ -248,6 +248,8 @@ db.insertMargins = function(objMargins) {
 			txtValues = "(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")";
 			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues;
 			conn.query(query,{}, function(err, res){
+				console.log(err);
+				console.log(res);
 				if(err != null) {
 					reject(query);
 				} 
