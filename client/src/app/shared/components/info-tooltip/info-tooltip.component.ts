@@ -3,24 +3,37 @@ import { Component, Input } from '@angular/core'
 @Component({
 	selector: 'info-tooltip',
 	template: `
-		<span class="info-question-mark">?</span>
-		<div class="info-tooltip">{{info}}</div>
+		<div class="info-tooltip-container">
+			<span class="info-question-mark">?</span>
+			<div class="info-tooltip">{{info}}</div>
+		</div>
 	`,
 	styles: [`
+		.info-tooltip-container {
+			position: relative;
+			display: inline;
+		}
 		.info-question-mark {
-			background: #F5F5F5;
-			border: 1px solid #999;
-			border-radius: 50%;
-			padding: 1px 4px;
+		    background: #FFF;
+		    border: 1px solid #333;
+		    border-radius: 50%;
+		    padding: 0px 2px;
+		    font-family: sans-serif;
+		    font-size: 10px;
+		    cursor: pointer;
 		}
 
 		.info-tooltip {
 			position: absolute;
 			background: #FFF;
 			display: none;
-			padding: 5px;
-			width: 100px;
-			box-shadow: 0px 1px 1px 1px #CCC;
+			padding: 10px;
+			width: 150px;
+			box-shadow: 0px 0px 5px 1px #333;
+			top: -20px;
+			left: 25px;
+			text-align: justify;
+			border-radius: 5px;
 		}
 
 		.info-question-mark:hover + .info-tooltip {
@@ -35,5 +48,5 @@ import { Component, Input } from '@angular/core'
 })
 export class InfoTooltipComponent {
 	@Input() info: string = 'Test Information';
-
+	@Input() showfor: string = '';
 }
