@@ -3,7 +3,7 @@ import {Injectable, EventEmitter} from '@angular/core';
 @Injectable()
 export class DataService {
 
-	totalFunds: number = 50000;
+	totalFunds: number = 3547.98;
 	availableFunds: number = 50000;
 	marginData: any;
 	fundsUpdated: EventEmitter<any> = new EventEmitter();

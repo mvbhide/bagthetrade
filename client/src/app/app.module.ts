@@ -7,7 +7,6 @@ import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {RouterModule, Routes} from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-
 // services
 import {ChatService} from './shared/services/chat.service';
 import {WebSocketService} from './shared/services/websocket.service';

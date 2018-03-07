@@ -133,6 +133,7 @@ export class MarketwatchComponent implements OnInit{
 			self.http.get('http://localhost:8080/marketwatch/get')
 			.subscribe(results => {
 				let watchlist = (results.json())
+				watchlist.push({"tradingsymbol":"CRUDEOILM","name":"Light Sweet Crude OilMini","instrument_token":53511687,"co_lower":1,"co_upper":1.9,"tick_size":1,"instrument_type":"FUT","segment":"MCX","lot_size":1,"strike":0,"expiry":"2018-03-19T18:30:00.000Z","multiplier":10})
 				_.map(watchlist, function(item) {
 					self.stockSelected(item, false);
 				})

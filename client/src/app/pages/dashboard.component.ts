@@ -15,9 +15,9 @@ import {DataService} from '../shared/services/data-service.service'
 			<div class="marketwatch-component">
 				<marketwatch></marketwatch>
 			</div>
-			<!-- <div class="current-orders-component">
+			<div class="current-orders-component">
 				<current-orders></current-orders>
-			</div> -->
+			</div>
 			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>
