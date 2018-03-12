@@ -1,0 +1,337 @@
+var request = require('request-promise');
+var fs = require('fs');
+
+var nsecodes = [
+		{ code : "NSE/ABAN", 		name :	"Aban Offshore Limited" },
+		{ code : "NSE/ABB", 		name :	"ABB India Limited" },
+		{ code : "NSE/ABIRLANUVO", 	name :	"Aditya Birla Nuvo Limited" },
+		{ code : "NSE/ACC", 		name :	"ACC Limited" },
+		{ code : "NSE/ADANIENT", 	name :	"Adani Enterprises Limited" },
+		{ code : "NSE/ADANIPOWER", 	name :	"Adani Power Limited" },
+		{ code : "NSE/AJANTPHARM", 	name :	"Ajanta Pharma Limited" },
+		{ code : "NSE/ALBK", 		name :	"Allahabad Bank" },
+		{ code : "NSE/AMARAJABAT", 	name :	"Amara Raja Batteries Limited" },
+		{ code : "NSE/AMBUJACEM", 	name :	"Ambuja Cements Limited" },
+		{ code : "NSE/ANDHRABANK", 	name :	"Andhra Bank" },
+		{ code : "NSE/APOLLOHOSP", 	name :	"Apollo Hospitals Enterprise Limited" },
+		{ code : "NSE/APOLLOTYRE", 	name :	"Apollo Tyres Limited" },
+		{ code : "NSE/ARVIND", 		name :	"Arvind Limited" },
+		{ code : "NSE/ASHOKLEY", 	name :	"Ashok Leyland Limited" },
+		{ code : "NSE/ASIANPAINT", 	name :	"Asian Paints Limited" },
+		{ code : "NSE/AUROPHARMA", 	name :	"Aurobindo Pharma Limited" },
+		{ code : "NSE/AXISBANK", 	name :	"Axis Bank Limited" },
+		{ code : "NSE/BAJAJ_AUTO", 	name :	"Bajaj Auto Limited" },
+		{ code : "NSE/BAJAJCORP", 	name :	"Bajaj Corp Limited" },
+		{ code : "NSE/BAJAJELEC", 	name :	"Bajaj Electricals Limited" },
+		{ code : "NSE/BAJAJFINSV", 	name :	"Bajaj Finserv Limited" },
+		{ code : "NSE/BAJFINANCE", 	name :	"Bajaj Finance Limited" },
+		{ code : "NSE/BANKBARODA", 	name :	"Bank of Baroda" },
+		{ code : "NSE/BANKINDIA", 	name :	"Bank of India" },
+		{ code : "NSE/BATAINDIA", 	name :	"Bata India Limited" },
+		{ code : "NSE/BEL", 		name :	"Bharat Electronics Limited" },
+		{ code : "NSE/BEML", 		name :	"BEML Limited" },
+		{ code : "NSE/BHARATFORG", 	name :	"Bharat Forge Limited" },
+		{ code : "NSE/BHARTIARTL", 	name :	"Bharti Airtel Limited" },
+		{ code : "NSE/BHEL", 		name :	"Bharat Heavy Electricals Limited" },
+		{ code : "NSE/BIOCON", 		name :	"Biocon Limited" },
+		{ code : "NSE/BRITANNIA", 	name :	"Britannia Industries Limited" },
+		{ code : "NSE/CADILAHC", 	name :	"Cadila Healthcare Limited" },
+		{ code : "NSE/CAIRN", 		name :	"Cairn India Limited" },
+		{ code : "NSE/CANBK", 		name :	"Canara Bank" },
+		{ code : "NSE/CASTROL", 	name :	"Castrol India Limited" },
+		{ code : "NSE/CEATLTD", 	name :	"CEAT Limited" },
+		{ code : "NSE/CENTURYTEX", 	name :	"Century Textiles & Industries Limited" },
+		{ code : "NSE/CESC", 		name :	"CESC Limited" },
+		{ code : "NSE/CIPLA", 		name :	"Cipla Limited" },
+		{ code : "NSE/COALINDIA", 	name :	"Coal India Limited" },
+		{ code : "NSE/COLPAL", 		name :	"Colgate Palmolive (India) Limited" },
+		{ code : "NSE/CUMMINSIND", 	name :	"Cummins India Limited" },
+		{ code : "NSE/DCB", 		name :	"Development Credit Bank Limited" },
+		{ code : "NSE/DEWANHOUS", 	name :	"Dewan Housing Finance Corporation Limited" },
+		{ code : "NSE/DISHTV", 		name :	"Dish TV India Limited" },
+		{ code : "NSE/DIVISLAB", 	name :	"Divi''s Laboratories Limited" },
+		{ code : "NSE/DLF", 		name :	"DLF Limited" },
+		{ code : "NSE/DRREDDY", 	name :	"Dr. Reddy''s Laboratories Limited" },
+		{ code : "NSE/ENGINERSIN", 	name :	"Engineers India Limited" },
+		{ code : "NSE/EXIDEIND", 	name :	"Exide Industries Limited" },
+		{ code : "NSE/FEDERALBNK", 	name :	"The Federal Bank Limited" },
+		{ code : "NSE/FIEMIND", 	name :	"Fiem Industries Limited" },
+		{ code : "NSE/GAIL", 		name :	"GAIL (India) Limited" },
+		{ code : "NSE/GATI", 		name :	"GATI Limited" },
+		{ code : "NSE/GLENMARK", 	name :	"Glenmark Pharmaceuticals Limited" },
+		{ code : "NSE/GMRINFRA", 	name :	"GMR Infrastructure Limited" },
+		{ code : "NSE/GODREJCP", 	name :	"Godrej Consumer Products Limited" },
+		{ code : "NSE/GODREJIND", 	name :	"Godrej Industries Limited" },
+		{ code : "NSE/GRANULES", 	name :	"Granules India Limited" },
+		{ code : "NSE/HAVELLS", 	name :	"Havells India Limited" },
+		{ code : "NSE/HCC", 		name :	"Hindustan Construction Company Limited" },
+		{ code : "NSE/HCLTECH", 	name :	"HCL Technologies Limited" },
+		{ code : "NSE/HDFC", 		name :	"Housing Development Finance Corporation Limited" },
+		{ code : "NSE/HDFCBANK", 	name :	"HDFC Bank Limited" },
+		{ code : "NSE/HDIL", 		name :	"Housing Development and Infrastructure Limited" },
+		{ code : "NSE/HEG", 		name :	"HEG Limited" },
+		{ code : "NSE/HEROMOTOCO", 	name :	"Hero MotoCorp Limited" },
+		{ code : "NSE/HEXAWARE", 	name :	"Hexaware Technologies Limited" },
+		{ code : "NSE/HINDALCO", 	name :	"Hindalco Industries Limited" },
+		{ code : "NSE/HINDPETRO", 	name :	"Hindustan Petroleum Corporation Limited" },
+		{ code : "NSE/HINDUJAFO", 	name :	"Hinduja Foundries Limited" },
+		{ code : "NSE/HINDUJAVEN", 	name :	"Hinduja Ventures Limited" },
+		{ code : "NSE/HINDUNILVR", 	name :	"Hindustan Unilever Limited" },
+		{ code : "NSE/HINDZINC", 	name :	"Hindustan Zinc Limited" },
+		{ code : "NSE/ICICIBANK", 	name :	"ICICI Bank Limited" },
+		{ code : "NSE/ICIL", 		name :	"Indo Count Industries Limited" },
+		{ code : "NSE/IDBI", 		name :	"IDBI Bank Limited" },
+		{ code : "NSE/IDEA", 		name :	"Idea Cellular Limited" },
+		{ code : "NSE/IDFC", 		name :	"IDFC Limited" },
+		{ code : "NSE/IFCI", 		name :	"IFCI Limited" },
+		{ code : "NSE/INDIACEM", 	name :	"The India Cements Limited" },
+		{ code : "NSE/INDUSINDBK", 	name :	"IndusInd Bank Limited" },
+		{ code : "NSE/INFY", 		name :	"Infosys Limited" },
+		{ code : "NSE/IOB", 		name :	"Indian Overseas Bank" },
+		{ code : "NSE/IOC", 		name :	"Indian Oil Corporation Limited" },
+		{ code : "NSE/IRB", 		name :	"IRB Infrastructure Developers Limited" },
+		{ code : "NSE/ITC", 		name :	"ITC Limited" },
+		{ code : "NSE/JETAIRWAYS", 	name :	"Jet Airways (India) Limited" },
+		{ code : "NSE/JSWENERGY", 	name :	"JSW Energy Limited" },
+		{ code : "NSE/JSWSTEEL", 	name :	"JSW Steel Limited" },
+		{ code : "NSE/JUBILANT", 	name :	"Jubilant Life Sciences Limited" },
+		{ code : "NSE/JUBLFOOD", 	name :	"Jubilant Foodworks Limited" },
+		{ code : "NSE/KOTAKBANK", 	name :	"Kotak Mahindra Bank Limited" },
+		{ code : "NSE/KSCL", 		name :	"Kaveri Seed Company Limited" },
+		{ code : "NSE/KTKBANK", 	name :	"The Karnataka Bank Limited" },
+		{ code : "NSE/LICHSGFIN", 	name :	"LIC Housing Finance Limited" },
+		{ code : "NSE/LITL", 		name :	"Lanco Infratech Limited" },
+		{ code : "NSE/LUPIN", 		name :	"Lupin Limited" },
+		{ code : "NSE/MARICO", 		name :	"Marico Limited" },
+		{ code : "NSE/MARUTI", 		name :	"Maruti Suzuki India Limited" },
+		{ code : "NSE/MINDTREE", 	name :	"MindTree Limited" },
+		{ code : "NSE/MOTHERSUMI", 	name :	"Motherson Sumi Systems Limited" },
+		{ code : "NSE/NAGREEKEXP", 	name :	"Nagreeka Exports Limited" },
+		{ code : "NSE/NCC", 		name :	"NCC Limited" },
+		{ code : "NSE/NETWORK18", 	name :	"Network18 Media & Investments Limited" },
+		{ code : "NSE/NHPC", 		name :	"NHPC Limited" },
+		{ code : "NSE/NMDC", 		name :	"NMDC Limited" },
+		{ code : "NSE/NTPC", 		name :	"NTPC Limited" },
+		{ code : "NSE/OFSS", 		name :	"Oracle Financial Services Software Limited" },
+		{ code : "NSE/OIL", 		name :	"Oil India Limited" },
+		{ code : "NSE/ONGC", 		name :	"Oil & Natural Gas Corporation Limited" },
+		{ code : "NSE/ORIENTBANK", 	name :	"Oriental Bank of Commerce" },
+		{ code : "NSE/PETRONET", 	name :	"Petronet LNG Limited" },
+		{ code : "NSE/PFC", 		name :	"Power Finance Corporation Limited" },
+		{ code : "NSE/PIDILITIND", 	name :	"Pidilite Industries Limited" },
+		{ code : "NSE/PNB", 		name :	"Punjab National Bank" },
+		{ code : "NSE/POWERGRID", 	name :	"Power Grid Corporation of India Limited" },
+		{ code : "NSE/PTC", 		name :	"PTC India Limited" },
+		{ code : "NSE/RCOM", 		name :	"Reliance Communications Limited" },
+		{ code : "NSE/RECLTD", 		name :	"Rural Electrification Corporation Limited" },
+		{ code : "NSE/RELCAPITAL", 	name :	"Reliance Capital Limited" },
+		{ code : "NSE/RELIANCE", 	name :	"Reliance Industries Limited" },
+		{ code : "NSE/RELINFRA", 	name :	"Reliance Infrastructure Limited" },
+		{ code : "NSE/RELMEDIA", 	name :	"Reliance MediaWorks Limited" },
+		{ code : "NSE/RPOWER", 		name :	"Reliance Power Limited" },
+		{ code : "NSE/SAIL", 		name :	"Steel Authority of India Limited" },
+		{ code : "NSE/SBIN", 		name :	"State Bank of India" },
+		{ code : "NSE/SINTEX", 		name :	"Sintex Industries Limited" },
+		{ code : "NSE/SOUTHBANK", 	name :	"The South Indian Bank Limited" },
+		{ code : "NSE/SRF", 		name :	"SRF Limited" },
+		{ code : "NSE/SRTRANSFIN", 	name :	"Shriram Transport Finance Company Limited" },
+		{ code : "NSE/STAR", 		name :	"Strides Shasun Limited" },
+		{ code : "NSE/SUNPHARMA", 	name :	"Sun Pharmaceutical Industries Limited" },
+		{ code : "NSE/SUNTV", 		name :	"Sun TV Network Limited" },
+		{ code : "NSE/SUZLON", 		name :	"Suzlon Energy Limited" },
+		{ code : "NSE/SYNDIBANK", 	name :	"Syndicate Bank" },
+		{ code : "NSE/TATACHEM", 	name :	"Tata Chemicals Limited" },
+		{ code : "NSE/TATACOFFEE", 	name :	"Tata Coffee Limited" },
+		{ code : "NSE/TATACOMM", 	name :	"Tata Communications Limited" },
+		{ code : "NSE/TATAELXSI", 	name :	"Tata Elxsi Limited" },
+		{ code : "NSE/TATAGLOBAL", 	name :	"Tata Global Beverages Limited" },
+		{ code : "NSE/TATAMOTORS", 	name :	"Tata Motors Limited" },
+		{ code : "NSE/TATAPOWER", 	name :	"Tata Power Company Limited" },
+		{ code : "NSE/TATASTEEL", 	name :	"Tata Steel Limited" },
+		{ code : "NSE/TCS", 		name :	"Tata Consultancy Services Limited" },
+		{ code : "NSE/TECHM", 		name :	"Tech Mahindra Limited" },
+		{ code : "NSE/TITAN", 		name :	"Titan Company Limited" },
+		{ code : "NSE/TORNTPHARM", 	name :	"Torrent Pharmaceuticals Limited" },
+		{ code : "NSE/TORNTPOWER", 	name :	"Torrent Power Limited" },
+		{ code : "NSE/TVSMOTOR", 	name :	"TVS Motor Company Limited" },
+		{ code : "NSE/UBHOLDINGS", 	name :	"United Breweries (Holdings) Limited" },
+		{ code : "NSE/UBL", 		name :	"United Breweries Limited" },
+		{ code : "NSE/ULTRACEMCO", 	name :	"UltraTech Cement Limited" },
+		{ code : "NSE/UNIONBANK", 	name :	"Union Bank of India" },
+		{ code : "NSE/UNIPHOS", 	name :	"United Phosphorus Limited" },
+		{ code : "NSE/UNITECH", 	name :	"Unitech Limited" },
+		{ code : "NSE/UNITEDBNK", 	name :	"United Bank of India" },
+		{ code : "NSE/VOLTAS", 		name :	"Voltas Limited" },
+		{ code : "NSE/WIPRO", 		name :	"Wipro Limited" },
+		{ code : "NSE/WOCKPHARMA", 	name :	"Wockhardt Limited" },
+		{ code : "NSE/YESBANK", 	name :	"Yes Bank Limited" },
+		{ code : "NSE/ZEEL", 		name :	"Zee Entertainment Enterprises Limited" },
+		{ code : "NSE/BHARATFIN", 	name :	"Bharat Financial Inclusion Limited" },
+	];
+
+
+var end_date = new Date();
+var start_date = new Date();
+start_date.setDate(start_date.getDate() - 10);
+
+var strStartDate = start_date.toISOString().slice(0,10) //'yyyy-mm-dd';
+var strEnddate = end_date.toISOString().slice(0,10)
+var count = 0;
+var txtFile = strEnddate + ".txt";
+var arrDelete = new Array();
+
+function recall() {
+		//var url = 'https://www.quandl.com/api/v3/datasets/' + nsecodes[count].code + '.json?start_date=' + start_date + '&end_date=' + end_date + '&api_key=WK9h5VDx9hJ_6sHp6Wgj';
+		var options = {
+			uri : 'https://www.quandl.com/api/v3/datasets/' + nsecodes[count].code + '.json',
+			qs : {
+				start_date : strStartDate,
+				end_date : strEnddate,
+				api_key : 'WK9h5VDx9hJ_6sHp6Wgj'
+			},
+			headers: {
+		        'User-Agent': 'Request-Promise'
+		    },
+			json : true
+		}
+
+		request(options)
+		.then(function(res) {
+			if(res.dataset.data.length < 2) {
+				console.log(res)
+				fs.appendFile(txtFile, "*************" + nsecodes[count].code + "******************\n", function() {
+					fs.appendFile(txtFile,'data chruning cancelled for ' + nsecodes[count].code + '. No data available\n', function() {
+						fs.appendFile(txtFile, "*********************************************************\n\n", function() {
+							console.log("*************" + nsecodes[count].code + "******************");
+							console.log("data chruning cancelled for " + nsecodes[count].code + ". No data available");
+							console.log("*********************************************************");
+							count++;
+							return;
+						});
+					});
+				});
+			}
+			var objData = {};
+			objData.code = nsecodes[count].code;
+			objData.name = nsecodes[count].name;
+			objData.data = res.dataset.data;
+			scanner(objData);
+			console.log(count, nsecodes[count].code, nsecodes[count].name)
+			if(count <= nsecodes.length) {
+				count++;
+			} else {
+				fs.appendFile(txtFile, JSON.stringify(arrDelete), function() {return;});
+			}
+			setTimeout(recall,500);
+		},
+		function(err) {
+			fs.appendFile(txtFile, "*************" + nsecodes[count].code + "******************\n");
+			fs.appendFile(txtFile, err);
+			fs.appendFile(txtFile, "*********************************************************\n\n");
+			
+			if(count < nsecodes.length) {
+				count++;
+				recall();
+			} else {
+				return;
+			}
+		})
+		.catch(function(err) {
+			console.log("API call failed for " + nsecodes[count].code + " : ");
+			if(count < nsecodes.length) {
+				count++;
+				recall();
+			} else {
+				return;
+			}
+		})
+	}
+		
+
+recall();
+
+var scanner = function(objData) {
+	var data = objData.data
+	var objCandle = {};
+	var c1,c2,c3,c4;
+	var currentCount = count;
+	if(data.length < 2) {
+		return;
+	}
+	for(var i = 0; i < 5; i++) {
+		objCandle.date = data[i][0];
+		objCandle.open = data[i][1];
+		objCandle.high = data[i][2];
+		objCandle.low = data[i][3];
+		objCandle.close = data[i][5];
+		objCandle.candleSize = Number((objCandle.high - objCandle.low).toFixed(2));
+		objCandle.body = Number(Math.abs(objCandle.open - objCandle.close).toFixed(2));
+		objCandle.bodyCenter = Number(((objCandle.open + objCandle.close)/2).toFixed(2));
+		if(objCandle.open > objCandle.close) {
+			objCandle.color = "Red"
+		}
+		if(objCandle.close > objCandle.open) {
+			objCandle.color = "Green"
+		}
+		eval('c' + (i + 1) + ' = objCandle' );
+		objCandle = {};
+	}
+	var result = {};
+	result.trend = "";
+	result.pattern = "";
+
+	if( ( c2.high < c3.high < c4.high) && ( c2.low > c3.low > c4.low) ) {
+		result.trend = "down";
+	}
+
+	if( ( c2.high > c3.high > c4.high) && ( c2.low < c3.low < c4.low) ) {
+		result.trend = "up";
+	}
+
+	if( c1.candleSize > c2.candleSize && c1.body < 0.3 * c1.candleSize ) {
+		if( (c1.high-c1.bodyCenter) < (c1.bodyCenter - c1.low)/3 ) {
+			result.pattern = "Downtrend reversal exhaution Candle";	
+		}
+		if( (c1.bodyCenter - c1.low) < (c1.high - c1.bodyCenter)/3 )  {
+			result.pattern = "Uptrend reversal exhaution Candle";	
+		}
+	}
+
+	if( (c1.open > c2.high) && (c1.close < c2.bodyCenter) ) {
+		result.pattern = "Dark cloud cover";
+	}
+
+	if( c1.color == "Red"  && (c1.open > c2.high) && (c1.close < c2.low) ) {
+		result.pattern = "Bearish Engulfing candle"
+	}
+
+	if( c1.color == "Green"  && (c1.open < c2.low) && (c1.close > c2.high) ) {
+		result.pattern = "Bullish Engulfing candle"
+	}
+
+	if(c1.high < 20) {
+		arrDelete.push(nsecodes[count]);
+	}
+
+	var output = "";
+	if( result.trend != "") {
+		output = objData.code + " is in an " + result.trend + "trend";
+	}
+
+	if(result.pattern != "") {
+		output += " and creating a " + result.pattern;
+	}
+	if(output != "") {
+		fs.appendFile(txtFile, "*************" + nsecodes[currentCount].code + "******************\n", function() {
+			fs.appendFile(txtFile,output, function() {
+				fs.appendFile(txtFile, "\n*********************************************************\n\n", function() {});
+			});
+		});
+		
+
+		console.log("*************" + nsecodes[currentCount].code + "******************");
+		console.log(output);
+		console.log("*********************************************************");
+	}
+}
+
