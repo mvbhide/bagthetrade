@@ -9,14 +9,14 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
-			<!-- <div class="fund-summary-component">
+			<div class="fund-summary-component">
 				<fund-summary></fund-summary>
-			</div> -->
-			<div class="marketwatch-component">
-				<marketwatch></marketwatch>
 			</div>
 			<div class="current-orders-component">
 				<current-orders></current-orders>
+			</div>
+			<div class="marketwatch-component">
+				<marketwatch></marketwatch>
 			</div>
 			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>

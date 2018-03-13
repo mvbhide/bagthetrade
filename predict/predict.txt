@@ -4,7 +4,6 @@ var fs = require('fs');
 var nsecodes = [
 		{ code : "NSE/ABAN", 		name :	"Aban Offshore Limited" },
 		{ code : "NSE/ABB", 		name :	"ABB India Limited" },
-		{ code : "NSE/ABIRLANUVO", 	name :	"Aditya Birla Nuvo Limited" },
 		{ code : "NSE/ACC", 		name :	"ACC Limited" },
 		{ code : "NSE/ADANIENT", 	name :	"Adani Enterprises Limited" },
 		{ code : "NSE/ADANIPOWER", 	name :	"Adani Power Limited" },
@@ -36,9 +35,7 @@ var nsecodes = [
 		{ code : "NSE/BIOCON", 		name :	"Biocon Limited" },
 		{ code : "NSE/BRITANNIA", 	name :	"Britannia Industries Limited" },
 		{ code : "NSE/CADILAHC", 	name :	"Cadila Healthcare Limited" },
-		{ code : "NSE/CAIRN", 		name :	"Cairn India Limited" },
 		{ code : "NSE/CANBK", 		name :	"Canara Bank" },
-		{ code : "NSE/CASTROL", 	name :	"Castrol India Limited" },
 		{ code : "NSE/CEATLTD", 	name :	"CEAT Limited" },
 		{ code : "NSE/CENTURYTEX", 	name :	"Century Textiles & Industries Limited" },
 		{ code : "NSE/CESC", 		name :	"CESC Limited" },
@@ -199,8 +196,9 @@ function recall() {
 		request(options)
 		.then(function(res) {
 			if(res.dataset.data.length < 2) {
-				console.log("*************" + nsecodes[count].code + "****************************************");
-				console.log("data chruning cancelled for " + nsecodes[count].code + ". No data available");
+				console.log(res.dataset)
+				console.log("**************" + nsecodes[count].code + "***************************************");
+				console.log("cancelled for " + nsecodes[count].code + ". No data available");
 				console.log("*********************************************************************************");
 
 				/*fs.appendFile(txtFile, "*************" + nsecodes[count].code + "******************\n", function() {
@@ -220,7 +218,6 @@ function recall() {
 				objData.name = nsecodes[count].name;
 				objData.data = res.dataset.data;
 				scanner(objData);
-				console.log(count, nsecodes[count].code, nsecodes[count].name)
 			}
 			if(count <= nsecodes.length) {
 				count++;

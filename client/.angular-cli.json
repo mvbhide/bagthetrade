@@ -25,7 +25,7 @@
       ],
       "scripts": [
         "assets/js/jquery-3.2.1.min.js",
-        "assets/js/bootstrap.min.js"
+        "assets/js/bootstrap.bundle.min.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
