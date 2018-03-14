@@ -228,9 +228,13 @@ function fetchMargins(res) {
 				// Merge equity and futures margin data
 				var margins = _.concat(alldata[0][0], alldata[1][0])
 				var instruments = _.concat(alldata[3], alldata[4]);
-				var mergedList = _.map(margins, function(item){
-					if(item && item.tradingsymbol) {
-				    	return _.extend(item, _.find(instruments, {tradingsymbol: item.tradingsymbol}));
+
+				var mergedList = _.map(instruments, function(i){
+					if(i && i.tradingsymbol) {
+					    	return _.extend(i, _.find(margins, function (m) {
+					    		return _.includes(i.tradingsymbol, m.tradingsymbol)
+					    	})
+				    	);
 				    }
 				})
 
@@ -238,35 +242,45 @@ function fetchMargins(res) {
 				var commMargins = alldata[2][0];
 				var commodity = alldata[5];
 
+				console.log("fetched and segregated all margins")
+
+				// Filter rare used commodities like quarterly expiry commodties etc
+				var commodity = _.filter(commodity, function(c){
+					return c.name != "";
+				});
+
 				var mergedCommodityMargins = _.map(commodity, function(item){
 					if(item && item.tradingsymbol) {
 						let ts = item.tradingsymbol;
 				    	return _.extend(item, _.find(commMargins, {tradingsymbol: _.replace(ts, ts.substr(-8), "")}));
 				    }
 				})
-				
-				var filteredCommodityMargins = _.filter(mergedCommodityMargins, 'co_lower');
 
-				// merge both margin data
-				var finalMargins = _.concat(mergedList, filteredCommodityMargins);
+				console.log("preparing to sanitize objects")
+				
+				// merge both equity and commodity margin data
+				var finalMargins = _.concat(mergedList, mergedCommodityMargins);
+
 				var db_margins = _.map(finalMargins, function(margin) {
 					return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])
 				})
 
 				console.log(db_margins.length + " Objects sanitized");
+				
 				db.insertMargins(db_margins)
-					.then(function(result) {console.log("Done. Time taken: " + new Date() - startTime );})
-					.catch(function(err) {res.send('Error: ' + err)})
-					.finally(function(){res.send("Done. Time taken: " + new Date() - startTime )})
+					.then(function(result) {console.log("Done. Time taken: ")})
+					.catch(function(err) {console.log('Error: ' + err)})
+					.then(function(){console.log("Done. Time taken: ")})
 			}).catch(function(err){
 				res.send("Error:" + err);
 			})
+			res.send('ok');
 		})
 	})
 	.catch(function(err) { 
 		console.log("Getting access token failed: ",err);
 	})
-	res.send("ok");
+
 }
 
 function updateOrders() {
