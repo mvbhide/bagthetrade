@@ -12,22 +12,19 @@ import _ from 'lodash';
 	template: `
 	<div class="marketwatch">
 		<div>
-			<label for="tradingsymbol">Stock </label>
 			<input placeholder="Add to watchlist" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 		</div>
 
 		<div *ngFor="let stock of stocks" class="div-watchlist">
 			<div class="stock-realtime-info" (click)="showHideDepth(stock)">
 				<div class="row">
-					<div class='stock-name col-xs-5'>{{stock.tradingsymbol}}</div>
-					<div class='ltp col-xs-5 text-right'>{{stock.ltp}}</div>
-					<div class='col-xs-1'>
-						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
-					</div>
+					<div class='stock-name col-md-6'>{{stock.tradingsymbol}}</div>
+					<div class='ltp col-md-6 text-right'>{{stock.ltp}}</div>
+					
 				</div>
 				<div class="row">
-					<div class='segment col-xs-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
-					<div class='segment col-xs-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
+					<div class='segment col-md-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
+					<div class='segment col-md-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
 					<div class='ltp col-lg-6'>
 						
 					</div>
@@ -35,26 +32,28 @@ import _ from 'lodash';
 			</div>
 			<div class="stock-details" id="{{stock.instrument_token}}" [@toggleState]="stock.toggleDepth">
 				<div class="row">
-					<div class="col-xs-11 text-right">
+					<div class="col-md-10 text-right">
 						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
 						<button (click)="sellThis(stock)" class="btn sell-colored">S</button>
+					</div>
+					<div class='col-md-1'>
+						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
 					</div>
 				</div>
 				<div class="row" *ngIf="stock.Depth">
 					<div class="" *ngFor="let key of depthRange">
-						<div class="buy-depth col-xs-6">
+						<div class="buy-depth col-md-6">
 							<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
 							<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
 							<span class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</span>
 						</div>
-						<div class="sell-depth col-xs-6">
+						<div class="sell-depth col-md-6">
 							<span class="sell-text">{{stock.Depth.sell[key].Price}}</span>
 							<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
 							<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
 						</div>
 					</div>
 				</div>
-
 			</div>
 		</div>
 

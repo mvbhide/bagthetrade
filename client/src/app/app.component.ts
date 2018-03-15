@@ -13,6 +13,7 @@ import {TickerService} from './shared/services/ticker-service.service';
 			width: 100%;
 			background: #263238;
 			color: #FFF;
+			z-index:100;
 		}
 		.header nav {
 			float: right;
@@ -23,14 +24,13 @@ import {TickerService} from './shared/services/ticker-service.service';
 		.header nav ul li {
 			display: inline-block;
 			cursor: pointer;
-			padding: 12px 0px;
-			margin: 2px 30px;
+			padding: 10px 0px 0px 0px;
+			margin: 1px 30px;
 		}
 		.header nav ul li.active {
 			border-bottom: 3px solid #FFF
 		}
 		.header nav ul li a {
-			font-size: 18px;
 			color: #FFF;
 			text-decoration: none;
 			letter-spacing: 1.2px;

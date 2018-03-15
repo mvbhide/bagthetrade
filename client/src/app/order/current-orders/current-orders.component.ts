@@ -9,7 +9,7 @@ import _ from 'lodash';
 	template: `
 	<div class="order-list-container">
 		<div class="order-list">
-			<div *ngFor="let pOrders of clubbedOrders.primaryOrders">
+			<!-- <div *ngFor="let pOrders of clubbedOrders.primaryOrders">
 				<div *ngIf="pOrders.stopLossOrders.length>0" class="panel panel-primary">
 					<div class="panel-heading">{{pOrders.transaction_type}} <strong>{{pOrders.quantity}}</strong> {{pOrders.tradingsymbol}} @ <strong>{{pOrders.price | currency : 'INR' : true : '1.2-2'}}</strong> | Approximate Margin Used : {{pOrders.approx_margin_used | currency : 'INR' : true : '1.0-0'}} | Approximate Brokerage & taxes {{pOrders.broTax | currency : 'INR' : true : '1.0-0'}} </div>
 					<div class="panel-body">
@@ -58,9 +58,9 @@ import _ from 'lodash';
 						</div>
 					</div>
 				</div>
-			</div>
+			</div> -->
 			<div class="orders">
-				<table class="table">
+				<table class="table table-sm">
 					<thead>
 						<th>Instrument</th>
 						<th>Last Traded Price</th>

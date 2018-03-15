@@ -8,6 +8,10 @@
 	
 }
 
+html {
+    font-size: 14px;
+}
+
 @font-face {
 	font-family: 'Hanzo';
 	url: './assets/fonts/Hattori_Hanzo-webfont.woff';

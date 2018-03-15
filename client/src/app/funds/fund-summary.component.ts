@@ -10,11 +10,11 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 		<div class='fund-summary-container row'>
 			<div class='total-funds col-lg-2'>
 				<label>Total Fund: </label>
-				<span [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{totalFunds | currency : 'INR' : 'symbol': '4.2-2'}}</span>
+				<h3 [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{totalFunds | currency : 'INR' : 'symbol': '4.2-2'}}</h3>
 			</div>
 			<div class='available-funds col-lg-2'>
 				<label>Available Fund: </label>
-				<span [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{availableFunds | currency : 'INR' : 'symbol': '4.2-2'}}</span>
+				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{availableFunds | currency : 'INR' : 'symbol': '4.2-2'}}</h3>
 			</div>
 		</div>
 	`,

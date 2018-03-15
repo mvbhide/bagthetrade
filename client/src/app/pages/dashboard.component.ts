@@ -9,15 +9,26 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
-			<div class="fund-summary-component">
-				<fund-summary></fund-summary>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="fund-summary-component">
+						<fund-summary></fund-summary>
+					</div>
+				</div>
 			</div>
-			<div class="current-orders-component">
-				<current-orders></current-orders>
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="marketwatch-component">
+						<marketwatch></marketwatch>
+					</div>
+				</div>
+				<div class="col-sm-9">
+					<div class="current-orders-component">
+						<current-orders></current-orders>
+					</div>
+				</div>
 			</div>
-			<div class="marketwatch-component">
-				<marketwatch></marketwatch>
-			</div>
+			
 			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>
@@ -28,6 +39,9 @@ import {DataService} from '../shared/services/data-service.service'
 		.page-container {
 			width: 96%;
 			margin: 0 auto;
+		}
+		.fund-summary-component {
+			margin-bottom: 30px;
 		}
 		.order-form-dialog {
 			position: fixed;
