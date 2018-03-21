@@ -45,7 +45,7 @@ import {DataService} from '../shared/services/data-service.service'
 		}
 		.order-form-dialog {
 			position: fixed;
-			top: 5%;
+			top: 20vh;
 			left: 20%;
 			padding: 20px;
 			box-shadow: 0px 0px 2px 0px #263238;

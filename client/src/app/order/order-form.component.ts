@@ -27,32 +27,46 @@ import 'rxjs/add/observable/of';
 			<form>
 				<div class="row">
 					<div class="col-lg-3 del-type-intraday">
-						<input type='radio' name="delivery-type" id="deliveryTypeIntraday" value="MIS" (change)="toggleDeliveryType()"><label for="deliveryTypeIntraday" class="radio-inline">Intraday</label>
+						<input type='radio' name="order-type" id="orderTypeIntraday" value="MIS" (change)="toggleOrderType()"><label for="orderTypeIntraday" class="radio-inline">Intraday</label>
 						<info-tooltip showfor=".del-type-intraday" info="Buying Intraday. The position will be auto squared off at market price few mins before market close"></info-tooltip>
 					</div>
 					<div class="col-lg-3 del-type-delivery">
-						<input class="col-lg-3 text-right" type='radio' name="delivery-type" id="deliveryTypeDelivery" value="CNC" checked (change)="toggleDeliveryType()"><label for="deliveryTypeDelivery" class="radio-inline">Delivery</label>
+						<input class="col-lg-3 text-right" type='radio' name="order-type" id="orderTypeDelivery" value="CNC" checked (change)="toggleOrderType()"><label for="orderTypeDelivery" class="radio-inline">Delivery</label>
+					</div>
+					<div class="col-lg-3 del-type-stoplss">
+						<input class="col-lg-3 text-right" type='checkbox' name="order-type-stoploss" id="orderTypeStoploss" value="CNC" (change)="toggleStoplossOrder()"><label for="orderTypeStoploss" class="radio-inline">Stoploss</label>
 					</div>
 				</div>
 				<hr />
-				<div class="row" *ngIf="isIntraday">
-					<div class="order-type col-lg-6">
-						<input type='radio' name="order-type" id="orderTypeMIS" value="Normal" (change)="setIntradayOrderType('normal')"><label for="orderTypeMIS" class="radio-inline">Normal</label>
-						<input type='radio' name="order-type" id="orderTypeBO" value="BO" checked (change)="setIntradayOrderType('bo')"><label for="orderTypeBO" class="radio-inline">BO </label>
-						<info-tooltip info="'Bracket Order: You can place {{transactionType}} order, stoploss order and target order in a single transaction'"></info-tooltip>
-						<input type='radio' name="order-type" id="orderTypeCO" value="CO" (change)="setIntradayOrderType('co')"><label for="orderTypeCO" class="radio-inline">CO</label>
-						<info-tooltip info="'Cover Order: You can place {{transactionType}} order and stoploss order a single transaction. The {{transactionType}} order would be placed at available market rate'"></info-tooltip>
-					</div>
-					<div class="metadata col-lg-6">
-						<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-						<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
+				<div class="div-intraday-order-type">
+					<div class="row">
+						<div class="order-type col-lg-6">
+							<div class="div-order-variety">
+								<input type='radio' name="intraday-order-type" id="orderTypeMIS" value="Normal" (change)="setIntradayOrderType('normal')">
+								<label for="orderTypeMIS" class="radio-inline">Normal</label>
+							</div>
+							<div class="div-order-variety" *ngIf='isIntraday'>
+								<input type='radio' name="intraday-order-type" id="orderTypeBO" value="BO" checked (change)="setIntradayOrderType('bo')">
+								<label for="orderTypeBO" class="radio-inline">BO </label>
+								<info-tooltip info="'Bracket Order: You can place {{transactionType}} order, stoploss order and target order in a single transaction'"></info-tooltip>
+							</div>
+							<div class="div-order-variety" *ngIf='isIntraday'>
+								<input type='radio' name="intraday-order-type" id="orderTypeCO" value="CO" (change)="setIntradayOrderType('co')">
+								<label for="orderTypeCO" class="radio-inline">CO</label>
+								<info-tooltip info="'Cover Order: You can place {{transactionType}} order and stoploss order a single transaction. The {{transactionType}} order would be placed at available market rate'"></info-tooltip>
+							</div>
+						</div>
+						<div class="metadata col-lg-6" *ngIf='isIntraday'>
+							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
+							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
+						</div>
 					</div>
 				</div>
-				<hr />
+
 				<div class="form-group row">
-					<div class="col-md-3" [ngClass]="{'can-specify' : isBracketOrder || isCoverOrder, 'cannot-specify' : !isBracketOrder && !isCoverOrder}">
-						<label for="stoplossValue"> Stop Loss</label>
-						<input [disabled]="!isIntraday" class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
+					<div class="col-md-3" [ngClass]="{'can-specify' : isBracketOrder || isCoverOrder || isStoplossOrder, 'cannot-specify' : !isBracketOrder && !isCoverOrder && !isStoplossOrder}">
+						<label for="stoplossValue">Trigger Stop Loss @</label>
+						<input class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
 					</div>
 					<div class="col-md-3">
 						<label for="price">{{transactionType}} at 
@@ -111,6 +125,11 @@ import 'rxjs/add/observable/of';
 		.order-form ul li {
 			list-style: none;
 		}
+		.div-intraday-order-type {
+			border-bottom: 1px solid #DEDEDE;
+			margin-bottom: 15px;
+			padding-bottom: 10px;
+		}
 		.cannot-specify {
 			disabled: true;
 			opacity: 0.2;
@@ -139,6 +158,7 @@ import 'rxjs/add/observable/of';
 })
 export class OrderFormComponent {
 	isIntraday			: boolean = false;
+	isStoplossOrder		: boolean = false;
 	isBracketOrder		: boolean = false;
 	isCoverOrder		: boolean = false;
 	isLimitOrder		: boolean = true;
@@ -186,7 +206,7 @@ export class OrderFormComponent {
 	}
 
 	// Toggle the delivery type between Intraday and Cash & Carry
-	toggleDeliveryType() {
+	toggleOrderType() {
 		this.isIntraday = !this.isIntraday;
 		if(this.isIntraday) {
 			this.isBracketOrder = true;
@@ -195,6 +215,12 @@ export class OrderFormComponent {
 			this.isBracketOrder = false;
 			this.isLimitOrder = true;
 		}
+	}
+
+
+	// Toggle whether the current order is a stop loss order or a Entry / Exit order
+	toggleStoplossOrder() {
+		this.isStoplossOrder = !this.isStoplossOrder;
 	}
 
 	toggleLimitMarket() {
