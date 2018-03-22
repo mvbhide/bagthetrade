@@ -27,7 +27,7 @@ import 'rxjs/add/observable/of';
 			<form>
 				<div class="row">
 					<div class="col-lg-3 del-type-intraday">
-						<input type='radio' name="order-type" id="orderTypeIntraday" value="MIS" (change)="toggleOrderType()"><label for="orderTypeIntraday" class="radio-inline">Intraday</label>
+						<input type='radio' [checked]="isBracketOrder || isCoverOrder" name="order-type" id="orderTypeIntraday" value="MIS" (change)="toggleOrderType()"><label for="orderTypeIntraday" class="radio-inline">Intraday</label>
 						<info-tooltip showfor=".del-type-intraday" info="Buying Intraday. The position will be auto squared off at market price few mins before market close"></info-tooltip>
 					</div>
 					<div class="col-lg-3 del-type-delivery">
@@ -42,15 +42,15 @@ import 'rxjs/add/observable/of';
 					<div class="row">
 						<div class="order-type col-lg-6">
 							<div class="div-order-variety">
-								<input type='radio' name="intraday-order-type" id="orderTypeMIS" value="Normal" (change)="setIntradayOrderType('normal')">
-								<label for="orderTypeMIS" class="radio-inline">Normal</label>
+								<input [checked]="!isBracketOrder && !isCoverOrder" type='radio' name="intraday-order-type" id="orderTypeNormal" checked value="Normal" (change)="setIntradayOrderType('normal')">
+								<label for="orderTypeNormal" class="radio-inline">Regular</label>
 							</div>
-							<div class="div-order-variety" *ngIf='isIntraday'>
-								<input type='radio' name="intraday-order-type" id="orderTypeBO" value="BO" checked (change)="setIntradayOrderType('bo')">
+							<div class="div-order-variety">
+								<input type='radio' name="intraday-order-type" id="orderTypeBO" value="BO" (change)="setIntradayOrderType('bo')">
 								<label for="orderTypeBO" class="radio-inline">BO </label>
 								<info-tooltip info="'Bracket Order: You can place {{transactionType}} order, stoploss order and target order in a single transaction'"></info-tooltip>
 							</div>
-							<div class="div-order-variety" *ngIf='isIntraday'>
+							<div class="div-order-variety">
 								<input type='radio' name="intraday-order-type" id="orderTypeCO" value="CO" (change)="setIntradayOrderType('co')">
 								<label for="orderTypeCO" class="radio-inline">CO</label>
 								<info-tooltip info="'Cover Order: You can place {{transactionType}} order and stoploss order a single transaction. The {{transactionType}} order would be placed at available market rate'"></info-tooltip>
@@ -70,7 +70,7 @@ import 'rxjs/add/observable/of';
 					</div>
 					<div class="col-md-3">
 						<label for="price">{{transactionType}} at 
-							<input [checked]="!isLimitOrder" type='checkbox' name="orderLimitMarket" id="orderLimitMarket" value="LIMIT" (change)="toggleLimitMarket()"><label for="orderLimitMarket" class="radio-inline">Market</label>
+							<input [readonly]="isBracketOrder" [checked]="!isLimitOrder || isBracketOrder" type='checkbox' name="orderLimitMarket" id="orderLimitMarket" value="LIMIT" (change)="toggleLimitMarket()"><label for="orderLimitMarket" class="radio-inline">Market</label>
 						</label>
 						<input class="form-control" [step]="tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()" [ngClass]="{'can-specify' : isLimitOrder, 'cannot-specify' : !isLimitOrder}"/>
 					</div>
@@ -209,10 +209,11 @@ export class OrderFormComponent {
 	toggleOrderType() {
 		this.isIntraday = !this.isIntraday;
 		if(this.isIntraday) {
-			this.isBracketOrder = true;
-			this.isLimitOrder = true;
+			//this.isBracketOrder = true;
+			//this.isLimitOrder = true;
 		} else {
 			this.isBracketOrder = false;
+			this.isCoverOrder = false;
 			this.isLimitOrder = true;
 		}
 	}
@@ -230,16 +231,18 @@ export class OrderFormComponent {
 	setIntradayOrderType(orderType) {
 		switch (orderType) {
 			case 'normal':
-				this.isBracketOrder = false;
-				this.isCoverOrder = false;
-				this.isLimitOrder = true;
+				// this.isBracketOrder = false;
+				// this.isCoverOrder = false;
+				// this.isLimitOrder = true;
 				break;
 			case 'bo':
+				this.isIntraday = true;
 				this.isBracketOrder = true;
 				this.isCoverOrder = false;
 				this.isLimitOrder = true;
 				break;
 			case 'co':
+				this.isIntraday = true;
 				this.isBracketOrder = false;
 				this.isCoverOrder = true;
 				this.isLimitOrder = false;
