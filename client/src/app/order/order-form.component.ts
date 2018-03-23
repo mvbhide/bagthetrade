@@ -27,14 +27,14 @@ import 'rxjs/add/observable/of';
 			<form>
 				<div class="row">
 					<div class="col-lg-3 del-type-intraday">
-						<input type='radio' [checked]="isBracketOrder || isCoverOrder" name="order-type" id="orderTypeIntraday" value="MIS" (change)="toggleOrderType()"><label for="orderTypeIntraday" class="radio-inline">Intraday</label>
+						<input type='radio' [checked]="isBracketOrder || isCoverOrder || isIntraday" name="order-type" id="orderTypeIntraday" value="MIS" (change)="toggleOrderType()"><label for="orderTypeIntraday" class="radio-inline">Intraday</label>
 						<info-tooltip showfor=".del-type-intraday" info="Buying Intraday. The position will be auto squared off at market price few mins before market close"></info-tooltip>
 					</div>
 					<div class="col-lg-3 del-type-delivery">
 						<input class="col-lg-3 text-right" type='radio' name="order-type" id="orderTypeDelivery" value="CNC" checked (change)="toggleOrderType()"><label for="orderTypeDelivery" class="radio-inline">Delivery</label>
 					</div>
-					<div class="col-lg-3 del-type-stoplss">
-						<input class="col-lg-3 text-right" type='checkbox' name="order-type-stoploss" id="orderTypeStoploss" value="CNC" (change)="toggleStoplossOrder()"><label for="orderTypeStoploss" class="radio-inline">Stoploss</label>
+					<div class="col-lg-3 del-type-stoplss" [ngClass]="{'cannot-specify' : (isBracketOrder || isCoverOrder)}">
+						<input class="col-lg-3 text-right" type='checkbox' name="order-type-stoploss" id="orderTypeStoploss" [checked]="isStoplossOrder" value="CNC" (change)="toggleStoplossOrder()"><label for="orderTypeStoploss" class="radio-inline">Stoploss</label>
 					</div>
 				</div>
 				<hr />
@@ -69,8 +69,8 @@ import 'rxjs/add/observable/of';
 						<input class="form-control" [step]="tickSize" type="number" [(ngModel)]="stoplossValue" name="stoplossValue" id="stoplossValue" (change)="calculateQuantity()" />
 					</div>
 					<div class="col-md-3">
-						<label for="price">{{transactionType}} at 
-							<input [readonly]="isBracketOrder" [checked]="!isLimitOrder || isBracketOrder" type='checkbox' name="orderLimitMarket" id="orderLimitMarket" value="LIMIT" (change)="toggleLimitMarket()"><label for="orderLimitMarket" class="radio-inline">Market</label>
+						<label for="price">{{isStoplossOrder ? 'SL' : transactionType}} at 
+							<input [disabled]="isBracketOrder" [checked]="!isLimitOrder" type='checkbox' name="orderLimitMarket" id="orderLimitMarket" value="LIMIT" (change)="toggleLimitMarket()"><label for="orderLimitMarket" class="radio-inline">Market</label>
 						</label>
 						<input class="form-control" [step]="tickSize" type="number" id="price" [(ngModel)]="price" name="price" (change)="calculateQuantity()" [ngClass]="{'can-specify' : isLimitOrder, 'cannot-specify' : !isLimitOrder}"/>
 					</div>
@@ -231,21 +231,23 @@ export class OrderFormComponent {
 	setIntradayOrderType(orderType) {
 		switch (orderType) {
 			case 'normal':
-				// this.isBracketOrder = false;
-				// this.isCoverOrder = false;
-				// this.isLimitOrder = true;
+				this.isBracketOrder = false;
+				this.isCoverOrder = false;
+				this.isLimitOrder = true;
 				break;
 			case 'bo':
 				this.isIntraday = true;
 				this.isBracketOrder = true;
 				this.isCoverOrder = false;
 				this.isLimitOrder = true;
+				this.isStoplossOrder = false;
 				break;
 			case 'co':
 				this.isIntraday = true;
 				this.isBracketOrder = false;
 				this.isCoverOrder = true;
 				this.isLimitOrder = false;
+				this.isStoplossOrder = false;
 				break;
 		}
 	}
