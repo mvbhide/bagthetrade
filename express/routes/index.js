@@ -162,6 +162,29 @@ init();
 	//}
 })
 
+router.get('/orders', function(req, res, next) {
+	var options = {
+		url: "https://kite.zerodha.com/api/orders",
+		headers: {
+			"pragma": "no-cache",
+			"cookie": "__utma=134287610.1856101391.1467608684.1472032015.1472047196.52; __cfduid=da986d6747210d6b220c05a1b6f0bac311495618832; _ga=GA1.2.1856101391.1467608684; kfsession=CjQANZLu91eC0lOOJKQesmLQmIvpXka1; public_token=YDvVJfiuk2sgOI1i4hUdipgQZdCz329P; user_id=RP6292",
+			"accept-language": "en-US,en;q=0.9",
+			"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+			"x-kite-version": "1.1.16",
+			"accept": "application/json, text/plain, */*",
+			"cache-control": "no-cache",
+			"authority": "kite.zerodha.com",
+			"referer": "https://kite.zerodha.com/dashboard",
+			"x-csrftoken": "YDvVJfiuk2sgOI1i4hUdipgQZdCz329P"
+		}
+	}
+
+	request(options, function(err, response, body) {
+		res.json(response)
+	})
+
+})
+
 router.get('/getquote', function(req, res, next) {
 	var q = req.query.tradingsymbol;
 	var e = req.query.exchange;

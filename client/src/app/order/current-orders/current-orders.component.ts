@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core'
 import { CommunicatorService } from '../../shared/communicator/communicator.service';
 import { DataService } from '../../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { Observable } from 'rxjs/Observable';
+import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import _ from 'lodash';
 
 @Component({
@@ -84,6 +86,22 @@ import _ from 'lodash';
 									</div>
 								</div>
 							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="orders">
+				<table class="table table-sm">
+					<thead>
+						<th>Instrument</th>
+						<th>Quantity</th>
+						<th>Profit / Loss</th>
+					</thead>
+					<tbody>
+						<tr *ngFor="let instrument of objectkeys(positions)">
+							<td>{{instrument}}</td>
+							<td>{{positions[instrument].quantity}}</td>
+							<td>{{positions[instrument].pnl}}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -178,7 +196,13 @@ import _ from 'lodash';
 })
 export class CurrentOrdersComponent implements OnInit {
 	clubbedOrders: Array<object> = [];
-	constructor(private cPort: CommunicatorService, private ds: DataService) {
+	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http) {
+		this.http.get('http://localhost:8080/orders')
+		.subscribe(data => {
+			var res = data.json();
+			this.orders = JSON.parse(res.body).data
+			this.clubOrders()
+		})
 		this.cPort = cPort;
 		this.ds = ds;
 	}
@@ -239,6 +263,30 @@ export class CurrentOrdersComponent implements OnInit {
 
 	clubOrders() {
 		let orders = this.orders;
+
+		// Calculate positions
+		for(let i=0; i<orders.length; i++) {
+			if(!this.positions[orders[i].tradingsymbol]) {
+				this.positions[orders[i].tradingsymbol] = {};
+				this.positions[orders[i].tradingsymbol]['tradingsymbol'] = orders[i].tradingsymbol;
+				this.positions[orders[i].tradingsymbol]['quantity'] = 0;
+				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
+				this.positions[orders[i].tradingsymbol]['average_price'] = 0;
+				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
+			}
+			
+			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED'){
+				if(orders[i].transaction_type == 'SELL') {
+					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
+					this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price);
+				}
+				if(orders[i].transaction_type == 'BUY') {
+					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
+					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price);
+				}
+			}
+		}
+
 		if(orders.length == 0) return;
 		let clubbedOrders = [];
 		
@@ -264,7 +312,7 @@ export class CurrentOrdersComponent implements OnInit {
 				let o = clubbedOrders['primaryOrders'][i];
 
 				// Multiplying quantity by 10 temporarily to test for crudeoil
-				o.quantity = o.quantity * 1250;
+				//o.quantity = o.quantity * 1250;
 
 				let turnover = o.price * o.quantity * 2;
 				let brokerage = Math.min(turnover*0.0001, 40);
@@ -309,5 +357,9 @@ export class CurrentOrdersComponent implements OnInit {
 	}
 	//orders: Array<object> = [];
 
-	orders: Array<object> = 	[{"placed_by":"RP6292","order_id":"180313001825995","exchange_order_id":"231807200151718","parent_order_id":"180313001825994","status":"TRIGGER PENDING","status_message":null,"order_timestamp":"2018-03-13 16:55:25","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"SL-M","transaction_type":"BUY","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":0,"trigger_price":183.1,"average_price":0,"filled_quantity":0,"pending_quantity":1,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":null},{"placed_by":"RP6292","order_id":"180313001825994","exchange_order_id":"211807200129118","parent_order_id":null,"status":"COMPLETE","status_message":null,"order_timestamp":"2018-03-13 17:01:07","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"LIMIT","transaction_type":"SELL","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":182.4,"trigger_price":0,"average_price":182.4,"filled_quantity":1,"pending_quantity":0,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":"HZuqrO6cqc0lo56n"}];
+	orders: Array<any> = 	[];//[{"placed_by":"RP6292","order_id":"180313001825995","exchange_order_id":"231807200151718","parent_order_id":"180313001825994","status":"TRIGGER PENDING","status_message":null,"order_timestamp":"2018-03-13 16:55:25","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"SL-M","transaction_type":"BUY","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":0,"trigger_price":183.1,"average_price":0,"filled_quantity":0,"pending_quantity":1,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":null},{"placed_by":"RP6292","order_id":"180313001825994","exchange_order_id":"211807200129118","parent_order_id":null,"status":"COMPLETE","status_message":null,"order_timestamp":"2018-03-13 17:01:07","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"LIMIT","transaction_type":"SELL","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":182.4,"trigger_price":0,"average_price":182.4,"filled_quantity":1,"pending_quantity":0,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":"HZuqrO6cqc0lo56n"}];
+	positions: Array<any> = [];
+
+	// Using Object.keys as a variable to use in the template to loop through positions
+	objectkeys = Object.keys;
 }
