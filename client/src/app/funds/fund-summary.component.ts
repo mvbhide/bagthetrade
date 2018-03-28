@@ -16,18 +16,23 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 				<label>Available Fund: </label>
 				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{availableFunds | currency : 'INR' : 'symbol': '4.2-2'}}</h3>
 			</div>
+			<div class='profit-loss col-lg-4'>
+				<label>Intraday P/L</label><span class="lbl-small"> (including brokerage & Taxes) </span>
+				<h3 [ngClass]="{'profit' : pnl >= 0, 'loss' : pnl < 0}">{{pnl - brotax | currency : 'INR' : 'true': '1.2-2'}}</h3>
+			</div>
 		</div>
 	`,
 	styles: [`
-		.fund-summary-container span {
-			font-size: 26px;
+		.lbl-small {
+			font-size:8px;
 		}
 	`]
 })
 export class FundSummaryComponent implements OnInit {
 	totalFunds: number = 0;
 	availableFunds : number = 0;
-
+	pnl: number = 375;
+	brotax: number = 15.29;
 	constructor(private ds: DataService) {
 		this.totalFunds = this.ds.totalFunds;
 		this.availableFunds = this.ds.availableFunds;

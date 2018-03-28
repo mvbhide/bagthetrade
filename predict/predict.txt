@@ -169,7 +169,7 @@ var nsecodes = [
 
 var end_date = new Date();
 var start_date = new Date();
-start_date.setDate(start_date.getDate() - 10);
+start_date.setDate(start_date.getDate() - 90);
 
 var strStartDate = start_date.toISOString().slice(0,10) //'yyyy-mm-dd';
 var strEnddate = end_date.toISOString().slice(0,10)
@@ -178,7 +178,7 @@ var txtFile = strEnddate + ".txt";
 var arrDelete = new Array();
 
 function recall() {
-		console.log('calling request for ' + count);
+		//console.log('calling request for ' + count);
 		//var url = 'https://www.quandl.com/api/v3/datasets/' + nsecodes[count].code + '.json?start_date=' + start_date + '&end_date=' + end_date + '&api_key=WK9h5VDx9hJ_6sHp6Wgj';
 		var options = {
 			uri : 'https://www.quandl.com/api/v3/datasets/' + nsecodes[count].code + '.json',
@@ -196,11 +196,11 @@ function recall() {
 		request(options)
 		.then(function(res) {
 			if(res.dataset.data.length < 2) {
-				console.log(res.dataset)
+				/*console.log(res.dataset)
 				console.log("**************" + nsecodes[count].code + "***************************************");
 				console.log("cancelled for " + nsecodes[count].code + ". No data available");
 				console.log("*********************************************************************************");
-
+				*/
 				/*fs.appendFile(txtFile, "*************" + nsecodes[count].code + "******************\n", function() {
 					fs.appendFile(txtFile,'data chruning cancelled for ' + nsecodes[count].code + '. No data available\n', function() {
 						fs.appendFile(txtFile, "*********************************************************\n\n", function() {
@@ -239,7 +239,7 @@ function recall() {
 			}
 		})
 		.catch(function(err) {
-			console.log("API call failed for " + nsecodes[count].code + " : ");
+			console.log("API call failed for " + nsecodes[count].code + " : " + err);
 			if(count < nsecodes.length) {
 				count++;
 				recall();
@@ -256,11 +256,14 @@ var scanner = function(objData) {
 	var data = objData.data
 	var objCandle = {};
 	var c1,c2,c3,c4;
+	var c = []
+	var todaysCandle = {};
 	var currentCount = count;
 	if(data.length < 2) {
 		return;
 	}
-	for(var i = 0; i < 5; i++) {
+	for(var i = 0; i < 90; i++) {
+		if(typeof data[i] == 'undefined') break;
 		objCandle.date = data[i][0];
 		objCandle.open = data[i][1];
 		objCandle.high = data[i][2];
@@ -275,10 +278,33 @@ var scanner = function(objData) {
 		if(objCandle.close > objCandle.open) {
 			objCandle.color = "Green"
 		}
-		eval('c' + (i + 1) + ' = objCandle' );
+		//eval('c' + (i + 1) + ' = objCandle' );
+		if(i==0) {
+			todaysCandle = objCandle;
+		}
+		c[i] = objCandle;
 		objCandle = {};
 	}
-	var result = {};
+
+	todaysCandle.sr = [0,0,0,0];
+	for(var i = 0; i < c.length; i++) {
+		if( c[i].high > todaysCandle.high && c[i].low < todaysCandle.high ) {
+			todaysCandle.sr[0]++;
+		}
+		if( c[i].high > todaysCandle.open && c[i].low < todaysCandle.open ) {
+			todaysCandle.sr[1]++;
+		}
+		if( c[i].high > todaysCandle.close && c[i].low < todaysCandle.close ) {
+			todaysCandle.sr[2]++;
+		}
+		if( c[i].high > todaysCandle.low && c[i].low < todaysCandle.high ) {
+			todaysCandle.sr[3]++;
+		}
+	}
+
+	console.log(todaysCandle.sr[0] + "\t|\t" + todaysCandle.sr[1] + "\t|\t" + todaysCandle.sr[2] + "\t|\t" + todaysCandle.sr[3] + "\t|\t" + objData.name );
+
+	/*var result = {};
 	result.trend = "";
 	result.pattern = "";
 
@@ -334,6 +360,6 @@ var scanner = function(objData) {
 		console.log("*************" + nsecodes[currentCount].code + "******************");
 		console.log(output);
 		console.log("*********************************************************");
-	}
+	}*/
 }
 

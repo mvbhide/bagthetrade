@@ -60,7 +60,7 @@ import _ from 'lodash';
 						</div>
 					</div>
 				</div>
-			</div> -->
+			</div>
 			<div class="orders">
 				<table class="table table-sm">
 					<thead>
@@ -91,7 +91,7 @@ import _ from 'lodash';
 						</tr>
 					</tbody>
 				</table>
-			</div>
+			</div> -->
 			<div class="orders">
 				<table class="table table-sm">
 					<thead>
@@ -108,9 +108,9 @@ import _ from 'lodash';
 							<td>{{i}}</td>
 							<td>{{positions[i].quantity}}</td>
 							<td>{{positions[i].ltp}}</td>
-							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl != 0 ? positions[i].projectedpnl : positions[i].pnl | currency : 'INR' : false : '1.2-2' }}</td>
+							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{(positions[i].projectedpnl != 0 ? positions[i].projectedpnl : positions[i].pnl) | number : '1.2-2' }}</td>
 							<td>{{(positions[i].projectedpnl / ds.totalFunds) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
-							<td>{{positions[i].brotax}}</td>
+							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
 							<td>
 								<div class="btn-group dropup">
 									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Show Actions</button>
@@ -218,6 +218,7 @@ import _ from 'lodash';
 export class CurrentOrdersComponent implements OnInit {
 	clubbedOrders: Array<object> = [];
 	includeBroTax: boolean = false;
+	latestTicks: any = "";
 	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http) {
 		this.http.get('http://localhost:8080/orders')
 		.subscribe(data => {
@@ -235,56 +236,8 @@ export class CurrentOrdersComponent implements OnInit {
 		
 		this.clubOrders();
 		this.ds.ticksUpdated.subscribe(ticks => {
-			console.log(this.includeBroTax)
-			for (var i=0; i<Object.keys(this.positions).length; i++) {
-				let o = this.positions[Object.keys(this.positions)[i]];
-				let tickdata = ticks.ticks;
-
-				// Add Brokerage to positions
-				for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
-					if(this.clubbedOrders['primaryOrders'][i].instrument_token == o.instrument_token) {
-						if(this.clubbedOrders['primaryOrders'][i].broTax) {
-							o.brotax = this.clubbedOrders['primaryOrders'][i].broTax;
-						}
-					}
-				}
-
-				for(let j=0; j<tickdata.length;j++) {
-					if(tickdata[j].Token == o.instrument_token){
-						o.ltp = tickdata[j].LastTradedPrice;
-						if(o.quantity > 0) {
-							o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
-						} else {
-							o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))	
-						}
-
-						if(this.includeBroTax == true) {
-							o.projectedpnl -= o.brotax
-						}	
-					}
-				}
-			}
-
-			if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
-			for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
-				let tickdata = ticks.ticks;
-				for(let j=0; j<tickdata.length;j++) {
-					if(this.clubbedOrders['primaryOrders'][i]['instrument_token'] == tickdata[j]['Token']) {
-						this.clubbedOrders['primaryOrders'][i]['ltp'] = tickdata[j]['LastTradedPrice'];
-						if(this.clubbedOrders['primaryOrders'][i]['transaction_type'] == 'BOUGHT') {
-							this.clubbedOrders['primaryOrders'][i]['pnl'] = (tickdata[j]['LastTradedPrice'] - this.clubbedOrders['primaryOrders'][i]['price']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);
-						} else {
-							this.clubbedOrders['primaryOrders'][i]['pnl'] = (this.clubbedOrders['primaryOrders'][i]['price'] - tickdata[j]['LastTradedPrice']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);	
-						}
-						
-						if(tickdata[j]['mode'] == 'full') {
-							this.clubbedOrders['primaryOrders'][i]['topAsk'] = tickdata[j]['Depth'].buy[0].Price;
-							this.clubbedOrders['primaryOrders'][i]['topBid'] = tickdata[j]['Depth'].sell[0].Price;
-						}
-					}	
-				}
-				
-			}	
+			this.latestTicks = ticks;
+			this.calculatePositions(ticks)	
 		})
 
 		this.ds.ordersUpdated.subscribe(orders=> {
@@ -415,9 +368,64 @@ export class CurrentOrdersComponent implements OnInit {
 
 
 	toggleIncludeBroTax() {
-		this.includeBroTax = !this.includeBroTax
+		console.log(this.latestTicks);
+		this.includeBroTax = !this.includeBroTax;
+		this.calculatePositions(this.latestTicks)
 	}
 
+
+	calculatePositions(ticks) {
+		if(ticks == "" || ticks == null) return;
+		for (var i=0; i<Object.keys(this.positions).length; i++) {
+			let o = this.positions[Object.keys(this.positions)[i]];
+			let tickdata = ticks.ticks;
+
+			// Add Brokerage to positions
+			for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
+				if(this.clubbedOrders['primaryOrders'][i].instrument_token == o.instrument_token) {
+					if(this.clubbedOrders['primaryOrders'][i].broTax) {
+						o.brotax = this.clubbedOrders['primaryOrders'][i].broTax;
+					}
+				}
+			}
+
+			for(let j=0; j<tickdata.length;j++) {
+				if(tickdata[j].Token == o.instrument_token){
+					o.ltp = tickdata[j].LastTradedPrice;
+					if(o.quantity > 0) {
+						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
+					} else {
+						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))	
+					}
+
+					if(this.includeBroTax == true) {
+						o.projectedpnl -= o.brotax
+					}	
+				}
+			}
+		}
+
+		if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
+		for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
+			let tickdata = ticks.ticks;
+			for(let j=0; j<tickdata.length;j++) {
+				if(this.clubbedOrders['primaryOrders'][i]['instrument_token'] == tickdata[j]['Token']) {
+					this.clubbedOrders['primaryOrders'][i]['ltp'] = tickdata[j]['LastTradedPrice'];
+					if(this.clubbedOrders['primaryOrders'][i]['transaction_type'] == 'BOUGHT') {
+						this.clubbedOrders['primaryOrders'][i]['pnl'] = (tickdata[j]['LastTradedPrice'] - this.clubbedOrders['primaryOrders'][i]['price']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);
+					} else {
+						this.clubbedOrders['primaryOrders'][i]['pnl'] = (this.clubbedOrders['primaryOrders'][i]['price'] - tickdata[j]['LastTradedPrice']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);	
+					}
+					
+					if(tickdata[j]['mode'] == 'full') {
+						this.clubbedOrders['primaryOrders'][i]['topAsk'] = tickdata[j]['Depth'].buy[0].Price;
+						this.clubbedOrders['primaryOrders'][i]['topBid'] = tickdata[j]['Depth'].sell[0].Price;
+					}
+				}	
+			}
+			
+		}
+	}
 
 	//orders: Array<object> = [];
 
