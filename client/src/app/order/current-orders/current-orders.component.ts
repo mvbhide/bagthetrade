@@ -68,6 +68,7 @@ import _ from 'lodash';
 						<th>Last Traded Price</th>
 						<th>Profit / Loss</th>
 						<th>% change</th>
+						<th>Brokerage</th>
 						<th>Actions</th>
 					</thead>
 					<tbody>
@@ -76,6 +77,7 @@ import _ from 'lodash';
 							<td>{{pOrders.ltp}}</td>
 							<td>{{pOrders.pnl | currency : 'INR' : true : '1.2-2'}}</td>
 							<td>{{(pOrders.pnl / ds.totalFunds) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td>{{pOrders.broTax | currency : 'INR' : true : '1.2-2'}}</td>
 							<td>
 								<div class="btn-group dropup">
 									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Show Actions</button>
@@ -95,13 +97,30 @@ import _ from 'lodash';
 					<thead>
 						<th>Instrument</th>
 						<th>Quantity</th>
-						<th>Profit / Loss</th>
+						<th>LTP</th>
+						<th>Profit / Loss <input type="checkbox" (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
+						<th>% change</th>
+						<th>Brokerage</th>
+						<th>Action</th>
 					</thead>
 					<tbody>
-						<tr *ngFor="let instrument of objectkeys(positions)">
-							<td>{{instrument}}</td>
-							<td>{{positions[instrument].quantity}}</td>
-							<td>{{positions[instrument].pnl}}</td>
+						<tr *ngFor="let i of objectkeys(positions)">
+							<td>{{i}}</td>
+							<td>{{positions[i].quantity}}</td>
+							<td>{{positions[i].ltp}}</td>
+							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl != 0 ? positions[i].projectedpnl : positions[i].pnl | currency : 'INR' : false : '1.2-2' }}</td>
+							<td>{{(positions[i].projectedpnl / ds.totalFunds) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td>{{positions[i].brotax}}</td>
+							<td>
+								<div class="btn-group dropup">
+									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Show Actions</button>
+									<div class="dropdown-menu">
+										<a class="dropdown-item" href="#">Exit</a>
+										<a class="dropdown-item" href="#">Move Stop loss to breakeven</a>
+										<a class="dropdown-item" href="#">Modify</a>
+									</div>
+								</div>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -117,6 +136,7 @@ import _ from 'lodash';
 					<th>Status</th>
 					<th>OrderId</th>
 					<th>Parent OrderId</th>
+					<th>Bro Tax</th>
 				</tr>
 				<tr *ngFor="let order of orders">		
 					<td>{{order.tradingsymbol}}</td>
@@ -125,6 +145,7 @@ import _ from 'lodash';
 					<td>{{order.status}}</td>
 					<td>{{order.order_id}}</td>
 					<td>{{order.parent_order_id}}</td>
+					<td>{{order.broTax}}</td>
 				</tr>
 			</table>
 		</div>
@@ -196,6 +217,7 @@ import _ from 'lodash';
 })
 export class CurrentOrdersComponent implements OnInit {
 	clubbedOrders: Array<object> = [];
+	includeBroTax: boolean = false;
 	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http) {
 		this.http.get('http://localhost:8080/orders')
 		.subscribe(data => {
@@ -213,6 +235,35 @@ export class CurrentOrdersComponent implements OnInit {
 		
 		this.clubOrders();
 		this.ds.ticksUpdated.subscribe(ticks => {
+			console.log(this.includeBroTax)
+			for (var i=0; i<Object.keys(this.positions).length; i++) {
+				let o = this.positions[Object.keys(this.positions)[i]];
+				let tickdata = ticks.ticks;
+
+				// Add Brokerage to positions
+				for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
+					if(this.clubbedOrders['primaryOrders'][i].instrument_token == o.instrument_token) {
+						if(this.clubbedOrders['primaryOrders'][i].broTax) {
+							o.brotax = this.clubbedOrders['primaryOrders'][i].broTax;
+						}
+					}
+				}
+
+				for(let j=0; j<tickdata.length;j++) {
+					if(tickdata[j].Token == o.instrument_token){
+						o.ltp = tickdata[j].LastTradedPrice;
+						if(o.quantity > 0) {
+							o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
+						} else {
+							o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))	
+						}
+
+						if(this.includeBroTax == true) {
+							o.projectedpnl -= o.brotax
+						}	
+					}
+				}
+			}
 
 			if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
 			for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
@@ -269,19 +320,25 @@ export class CurrentOrdersComponent implements OnInit {
 			if(!this.positions[orders[i].tradingsymbol]) {
 				this.positions[orders[i].tradingsymbol] = {};
 				this.positions[orders[i].tradingsymbol]['tradingsymbol'] = orders[i].tradingsymbol;
+				this.positions[orders[i].tradingsymbol]['instrument_token'] = orders[i].instrument_token;
 				this.positions[orders[i].tradingsymbol]['quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
-				this.positions[orders[i].tradingsymbol]['average_price'] = 0;
+				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
+				this.positions[orders[i].tradingsymbol]['brotax'] = 0;
+			}
+
+			if(orders[i].broTax) {
+				this.positions[orders[i].tradingsymbol].brotax += orders[i].broTax;
 			}
 			
 			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED'){
 				if(orders[i].transaction_type == 'SELL') {
-					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
+					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
 					this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price);
 				}
 				if(orders[i].transaction_type == 'BUY') {
-					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
+					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
 					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price);
 				}
 			}
@@ -355,6 +412,13 @@ export class CurrentOrdersComponent implements OnInit {
 		this.clubbedOrders = clubbedOrders;
 		console.log(clubbedOrders);
 	}
+
+
+	toggleIncludeBroTax() {
+		this.includeBroTax = !this.includeBroTax
+	}
+
+
 	//orders: Array<object> = [];
 
 	orders: Array<any> = 	[];//[{"placed_by":"RP6292","order_id":"180313001825995","exchange_order_id":"231807200151718","parent_order_id":"180313001825994","status":"TRIGGER PENDING","status_message":null,"order_timestamp":"2018-03-13 16:55:25","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"SL-M","transaction_type":"BUY","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":0,"trigger_price":183.1,"average_price":0,"filled_quantity":0,"pending_quantity":1,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":null},{"placed_by":"RP6292","order_id":"180313001825994","exchange_order_id":"211807200129118","parent_order_id":null,"status":"COMPLETE","status_message":null,"order_timestamp":"2018-03-13 17:01:07","exchange_update_timestamp":null,"exchange_timestamp":"2018-03-13 16:55:25","variety":"co","exchange":"MCX","tradingsymbol":"NATURALGAS18MARFUT","instrument_token":53705991,"order_type":"LIMIT","transaction_type":"SELL","validity":"DAY","product":"CO","quantity":1,"disclosed_quantity":0,"price":182.4,"trigger_price":0,"average_price":182.4,"filled_quantity":1,"pending_quantity":0,"cancelled_quantity":0,"market_protection":0,"tag":null,"guid":"HZuqrO6cqc0lo56n"}];
