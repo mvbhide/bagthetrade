@@ -1,0 +1,11 @@
+
+************** Order placement ***********************************
+
+curl "https://kite.zerodha.com/api/orders/bo" -H "cookie: __utma=134287610.1856101391.1467608684.1472032015.1472047196.52; __cfduid=da986d6747210d6b220c05a1b6f0bac311495618832; _ga=GA1.2.1856101391.1467608684; kfsession=bXlUqXzPi5EP4JEI27Y89vrbRaDGrSi1; public_token=028fefd05073ce24c50b141f2a00f492; user_id=RP6292" -H "origin: https://kite.zerodha.com" -H "accept-encoding: gzip, deflate, br" -H "accept-language: en-US,en;q=0.9" -H "x-csrftoken: 028fefd05073ce24c50b141f2a00f492" -H "pragma: no-cache" -H "user-agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36" -H "content-type: application/x-www-form-urlencoded" -H "accept: application/json, text/plain, */*" -H "cache-control: no-cache" -H "authority: kite.zerodha.com" -H "referer: https://kite.zerodha.com/dashboard" -H "x-kite-version: 1.2.1" --data "exchange=NSE^&tradingsymbol=PNB^&transaction_type=BUY^&order_type=LIMIT^&quantity=1^&price=95.3^&product=MIS^&validity=DAY^&disclosed_quantity=0^&trigger_price=0^&squareoff=2^&stoploss=1^&trailing_stoploss=0^&variety=bo" --compressed
+
+
+
+************** Margins ***********************************************
+
+
+curl "https://kite.zerodha.com/api/user/margins" -H "pragma: no-cache" -H "cookie: __utma=134287610.1856101391.1467608684.1472032015.1472047196.52; __cfduid=da986d6747210d6b220c05a1b6f0bac311495618832; _ga=GA1.2.1856101391.1467608684; kfsession=bXlUqXzPi5EP4JEI27Y89vrbRaDGrSi1; public_token=028fefd05073ce24c50b141f2a00f492; user_id=RP6292" -H "x-if-none-match: ^\^"QNjR5gY44ClFWDcQ^\^"" -H "accept-encoding: gzip, deflate, br" -H "accept-language: en-US,en;q=0.9" -H "user-agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36" -H "x-kite-version: 1.2.1" -H "accept: application/json, text/plain, */*" -H "cache-control: no-cache" -H "authority: kite.zerodha.com" -H "referer: https://kite.zerodha.com/dashboard" -H "x-csrftoken: 028fefd05073ce24c50b141f2a00f492" --compressed
