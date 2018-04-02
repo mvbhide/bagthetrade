@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import {Router} from '@angular/router';
 import {FundSummaryComponent} from '../funds/fund-summary.component'
 import {CurrentOrdersComponent} from '../order/current-orders/current-orders.component'
 import {MarketwatchComponent} from '../marketwatch/marketwatch.component'
@@ -9,6 +10,9 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
+			<div class="row">
+				<a class="col-sm-12 text-right" href="javascript:void(0);" (click)="logout()">Logout</a>
+			</div>
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="fund-summary-component">
@@ -71,7 +75,11 @@ import {DataService} from '../shared/services/data-service.service'
 })
 export class DashboardComponent {
 
-	constructor(private ds: DataService){
+	constructor(private route: Router, private ds: DataService){
+		if(!window.localStorage.pid) {
+			this.route.navigate(['/login'])
+		}
+
 		this.ds.showOverlay = false;
 		this.ds.showOrderForm = false;
 	}
@@ -79,5 +87,10 @@ export class DashboardComponent {
 	closeOrderForm() {
 		this.ds.showOrderForm = false;
 		this.ds.showOverlay = false;
+	}
+
+	logout() {
+		window.localStorage.clear();
+		this.route.navigate(['/login']);
 	}
 }

@@ -4,7 +4,9 @@ import {FundSummaryComponent} from '../funds/fund-summary.component'
 @Component({
 	selector   : 'dashboard',
 	template:`
-		<fund-summary></fund-summary>
+		<div class="text-center">
+			<h1 class="loss">Page not found</h1>
+		</div>
 	`
 })
 export class PageNotFoundComponent {

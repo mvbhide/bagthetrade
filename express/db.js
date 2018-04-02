@@ -23,25 +23,20 @@ var objResults = {
 
 db.authenticateUser = function(e,p) {
 	return new Promise(function(resolve, reject) {
-		conn.connect(function(err){
-			if(err) {
-				objResults.success = false
-				objResults.data = err
-				reject(objResults)
-			}
+			var conn = connect();
 			var query = "SELECT * FROM `user` WHERE email='" + e +"' AND password='" + p + "'";
 			conn.query(query,{}, function(err, results) {
 				if(results && results.length == 1) {
 					objResults.success = true;
-					req.session.user = results;
+					objResults.data = results;
 					resolve(objResults);
 				} else {
 					objResults.success = false;
-					reject(objResults)
+					resolve(objResults)
 				}
 			})
 		})
-	})
+	
 }
 
 db.getAccessToken = function(api_key) {

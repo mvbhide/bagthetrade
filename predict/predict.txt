@@ -262,7 +262,7 @@ var scanner = function(objData) {
 	if(data.length < 2) {
 		return;
 	}
-	for(var i = 0; i < 90; i++) {
+	for(var i = 0; i < 120; i++) {
 		if(typeof data[i] == 'undefined') break;
 		objCandle.date = data[i][0];
 		objCandle.open = data[i][1];
@@ -302,7 +302,7 @@ var scanner = function(objData) {
 		}
 	}
 
-	console.log(todaysCandle.sr[0] + "\t|\t" + todaysCandle.sr[1] + "\t|\t" + todaysCandle.sr[2] + "\t|\t" + todaysCandle.sr[3] + "\t|\t" + objData.name );
+	console.log(todaysCandle.sr[0] + "," + todaysCandle.sr[1] + "," + todaysCandle.sr[2] + "," + todaysCandle.sr[3] + "," + objData.name );
 
 	/*var result = {};
 	result.trend = "";

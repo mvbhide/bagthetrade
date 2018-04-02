@@ -16,42 +16,46 @@ import _ from 'lodash';
 		</div>
 
 		<div *ngFor="let stock of stocks" class="div-watchlist">
-			<div class="stock-realtime-info" (click)="showHideDepth(stock)">
+			<div class="stock-realtime-info">
 				<div class="row">
 					<div class='stock-name col-md-6'>{{stock.tradingsymbol}}</div>
 					<div class='ltp col-md-6 text-right'>{{stock.ltp}}</div>
-					
 				</div>
 				<div class="row">
 					<div class='segment col-md-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
 					<div class='segment col-md-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
-					<div class='ltp col-lg-6'>
-						
+				</div>
+				<div class="stock-details" id="{{stock.instrument_token}}">
+					<div class="stock-actions">
+						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
+						<button (click)="sellThis(stock)" class="btn sell-colored">S</button>
+						<button (click)="showHideDepth(stock)" class="btn">D</button>
+						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="btn close" aria-label="Close" title="Remove from watchlist">&times;</button>
 					</div>
 				</div>
 			</div>
-			<div class="stock-details" id="{{stock.instrument_token}}" [@toggleState]="stock.toggleDepth">
-				<div class="row">
-					<div class="col-md-10 text-right">
-						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
-						<button (click)="sellThis(stock)" class="btn sell-colored">S</button>
+			
+			<div class="row" *ngIf="stock.Depth" [@toggleState]="stock.toggleDepth">
+				<table class="table">
+					<tr *ngFor="let key of depthRange">
+						<td class="buy-text" text-align="left">{{stock.Depth.buy[key].Price}}</td>
+						<td class="text-right depth-total">{{stock.Depth.buy[key].Total}}</td>
+						<td class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</td>
+						<td class="sell-text">{{stock.Depth.sell[key].Price}}</td>
+						<td class="text-right depth-total">{{stock.Depth.sell[key].Total}}</td>
+						<td class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</td>
+					</tr>
+				</table>
+				<div class="" *ngFor="let key of depthRange">
+					<div class="buy-depth col-md-6">
+						<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
+						<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
+						<span class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</span>
 					</div>
-					<div class='col-md-1'>
-						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="close" aria-label="Close" title="Remove from watchlist">&times;</button>
-					</div>
-				</div>
-				<div class="row" *ngIf="stock.Depth">
-					<div class="" *ngFor="let key of depthRange">
-						<div class="buy-depth col-md-6">
-							<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
-							<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
-							<span class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</span>
-						</div>
-						<div class="sell-depth col-md-6">
-							<span class="sell-text">{{stock.Depth.sell[key].Price}}</span>
-							<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
-							<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
-						</div>
+					<div class="sell-depth col-md-6">
+						<span class="sell-text">{{stock.Depth.sell[key].Price}}</span>
+						<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
+						<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
 					</div>
 				</div>
 			</div>
@@ -73,14 +77,28 @@ import _ from 'lodash';
 
 		.div-watchlist {
 			margin-top: 30px;
+			border-bottom: 1px solid #CCC;
+			padding-bottom: 5px;
+		}
+		.stock-realtime-info {
+			position: relative;
+		}
+		.stock-actions button {
+			margin-right: 5px;
 		}
 		.segment {
 			font-size: 10px;
 		}
+
+		.stock-realtime-info:hover > .stock-details {
+			visibility: visible;
+		}
+
 		.stock-details {
-			background: #F5F5F5;
-			padding: 8px 0px;
-			border-top: 1px solid #DDD;
+			position: absolute;
+			top: 0;
+			right: 40px;
+			visibility: hidden;
 		}
 
 		.depth-total {

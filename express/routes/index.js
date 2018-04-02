@@ -10,7 +10,22 @@ var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
 var request = require('request');
 var Promise = require('promise');
+var redis = require('redis').createClient();
 var _ = require('lodash');
+
+redis.on("error", function(err) {
+	console.log(err);
+})
+var kitecookie;
+var csrftoken;
+
+redis.hget("u1", "kitecookie", function(err, val) {
+	var kitecookie = val;
+});
+
+redis.hget("u1", "csrftoken", function(err, val) {
+	var csrftoken = val;
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -19,7 +34,7 @@ router.get('/', function(req, res, next) {
 
 router.get('/ticker', function(req, res, next) {
 	var marketData = [];
-	var counter = 0;;
+	var counter = 0;
 	var tckr = new KiteTicker({
 		api_key: 'kitefront',
 		user_id: 'RP6292',
@@ -167,7 +182,7 @@ router.get('/orders', function(req, res, next) {
 		url: "https://kite.zerodha.com/api/orders",
 		headers: {
 			"pragma": "no-cache",
-			"cookie": "__cfduid=df3df54d0b55af290cf988a578869516f1509683057; _ga=GA1.2.751187083.1509683060; _gid=GA1.2.255424330.1522041235; kfsession=r40RuWqFMtmSwWk8dMUJgFljDbAC4bXJ; public_token=MiLSaGBIhVr99jYpAZoSWQFPr55VTuI3; user_id=RP6292",
+			"cookie": "__cfduid=df3df54d0b55af290cf988a578869516f1509683057; _ga=GA1.2.751187083.1509683060; __utmz=134287610.1522326914.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utma=134287610.751187083.1509683060.1522326914.1522328827.2; _gid=GA1.2.121981840.1522604315; kfsession=FYi152N5N2YKHWOQTr3BzONqfqflcj2b; public_token=yIfWbUVt1XOvCeG932gNLdIZqtxuq8eJ; user_id=RP6292",
 			"accept-language": "en-US,en;q=0.9",
 			"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
 			"x-kite-version": "1.1.16",
@@ -175,14 +190,83 @@ router.get('/orders', function(req, res, next) {
 			"cache-control": "no-cache",
 			"authority": "kite.zerodha.com",
 			"referer": "https://kite.zerodha.com/dashboard",
-			"x-csrftoken": "MiLSaGBIhVr99jYpAZoSWQFPr55VTuI3"
+			"x-csrftoken": "yIfWbUVt1XOvCeG932gNLdIZqtxuq8eJ"
 		}
 	}
 
 	request(options, function(err, response, body) {
 		res.json(response)
 	})
+})
 
+router.get('/margins', function(req, res, next) {
+	var kitecookie;
+	var csrftoken;
+
+	redis.hget("u1", "kitecookie", function(err, val) {
+		kitecookie = val;
+		console.log(kitecookie);
+	});
+
+	redis.hget("u1", "csrftoken", function(err, val) {
+		csrftoken = val;
+		console.log(csrftoken)
+	});
+	
+	setTimeout(function() {
+		var options = {
+			url: "https://kite.zerodha.com/api/user/margins",
+			headers: {
+				"pragma": "no-cache",
+				"cookie": "__cfduid=df3df54d0b55af290cf988a578869516f1509683057; _ga=GA1.2.751187083.1509683060; __utmz=134287610.1522326914.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utma=134287610.751187083.1509683060.1522326914.1522328827.2; _gid=GA1.2.121981840.1522604315; kfsession=FYi152N5N2YKHWOQTr3BzONqfqflcj2b; public_token=yIfWbUVt1XOvCeG932gNLdIZqtxuq8eJ; user_id=RP6292",
+				"accept-language": "en-US,en;q=0.9",
+				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+				"x-kite-version": "1.1.16",
+				"accept": "application/json, text/plain, */*",
+				"cache-control": "no-cache",
+				"authority": "kite.zerodha.com",
+				"referer": "https://kite.zerodha.com/dashboard",
+				"x-csrftoken": "yIfWbUVt1XOvCeG932gNLdIZqtxuq8eJ"
+			}
+		}
+		console.log(options)
+		request(options, function(err, response, body) {
+			res.json(response)
+		})	
+	}, 1000)
+	
+})
+
+router.get('/session', function(req, res, next) {
+	var a;
+	redis.hget("u1", "kitecookie", function(err, val) {
+		console.log(err, val);
+		a = val;
+		console.log(a)
+		res.send(a);
+	});
+	
+})
+
+router.post('/login', function(req, res, next) {
+	if(req.body) {
+		var u = req.body.u;
+		var p = req.body.p;
+		var kitecookie = req.body.kitecookie;
+		var csrftoken = req.body.csrfToken;
+		console.log(u,p);
+		db.authenticateUser(u,p)
+		.then(function(response) {
+			
+				redis.hset("u" + response.data[0].id, "kitecookie", kitecookie, redis.print);
+				redis.hset("u" + response.data[0].id , "csrftoken", csrftoken, redis.print);
+			
+			res.json(response);
+
+		})
+	} else {
+		res.json("Error");
+	}
 })
 
 router.get('/getquote', function(req, res, next) {
