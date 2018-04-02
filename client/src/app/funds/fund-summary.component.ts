@@ -18,7 +18,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 			</div>
 			<div class='profit-loss col-lg-4'>
 				<label>Intraday P/L</label><span class="lbl-small"> (including brokerage & Taxes) </span>
-				<h3 [ngClass]="{'profit' : pnl >= 0, 'loss' : pnl < 0}">{{pnl - brotax | currency : 'INR' : 'true': '1.2-2'}}</h3>
+				<h3 [ngClass]="{'profit' : pnl >= 0, 'loss' : pnl < 0}">{{ds.pnl | currency : 'INR' : 'true': '1.2-2'}}</h3>
 			</div>
 		</div>
 	`,
@@ -36,12 +36,16 @@ export class FundSummaryComponent implements OnInit {
 	constructor(private ds: DataService) {
 		this.totalFunds = this.ds.totalFunds;
 		this.availableFunds = this.ds.availableFunds;
+		this.pnl = this.ds.pnl;
+		this.brotax = this.ds.brotax;
 	}
 
 	ngOnInit():void {
 		this.ds.fundsUpdated.subscribe(funds => {
 			this.totalFunds = funds.total;
 			this.availableFunds = funds.available;
+			this.pnl = this.ds.pnl;
+			this.brotax = this.ds.brotax;
 		})
 	}
 }

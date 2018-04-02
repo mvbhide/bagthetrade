@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core'
+import { TickerService } from '../../shared/services/ticker-service.service'
 import { CommunicatorService } from '../../shared/communicator/communicator.service';
 import { DataService } from '../../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
@@ -219,7 +220,8 @@ export class CurrentOrdersComponent implements OnInit {
 	clubbedOrders: Array<object> = [];
 	includeBroTax: boolean = false;
 	latestTicks: any = "";
-	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http) {
+
+	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http, private ticker: TickerService) {
 		this.http.get('http://localhost:8080/orders')
 		.subscribe(data => {
 			var res = data.json();
@@ -290,14 +292,19 @@ export class CurrentOrdersComponent implements OnInit {
 			}
 			
 			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED'){
-				if(orders[i].transaction_type == 'SELL') {
-					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
-					this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price);
+				if(orders[i]['product'] == 'CO' && orders[i]['status'] != 'TRIGGER PENDING') {
+
+				} else {
+					if(orders[i].transaction_type == 'SELL') {
+						this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
+						this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price);
+					}
+					if(orders[i].transaction_type == 'BUY') {
+						this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
+						this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price);
+					}	
 				}
-				if(orders[i].transaction_type == 'BUY') {
-					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
-					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price);
-				}
+				
 			}
 		}
 
@@ -366,6 +373,11 @@ export class CurrentOrdersComponent implements OnInit {
 			}
 		}
 
+		// Subscribe ticker for the orders
+		for(let i=0; i<clubbedOrders['primaryOrders'].length; i++) {
+			this.ticker.subscribe([clubbedOrders['primaryOrders'][i].instrument_token])
+		}
+
 		this.clubbedOrders = clubbedOrders;
 		console.log(clubbedOrders);
 	}
@@ -380,6 +392,8 @@ export class CurrentOrdersComponent implements OnInit {
 
 	calculatePositions(ticks) {
 		if(ticks == "" || ticks == null) return;
+		this.ds.pnl = 0;
+		this.ds.brotax = 0;
 		for (var i=0; i<Object.keys(this.positions).length; i++) {
 			let o = this.positions[Object.keys(this.positions)[i]];
 			let tickdata = ticks.ticks;
@@ -389,14 +403,17 @@ export class CurrentOrdersComponent implements OnInit {
 				if(this.clubbedOrders['primaryOrders'][i].instrument_token == o.instrument_token) {
 					if(this.clubbedOrders['primaryOrders'][i].broTax) {
 						o.brotax = this.clubbedOrders['primaryOrders'][i].broTax;
+						this.ds.brotax += o.brotax;
 					}
 				}
 			}
 
+
+
 			for(let j=0; j<tickdata.length;j++) {
 				if(tickdata[j].Token == o.instrument_token){
 					o.ltp = tickdata[j].LastTradedPrice;
-					if(o.quantity > 0) {
+					if(o.quantity != 0) {
 						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
 					} else {
 						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))	
@@ -404,7 +421,9 @@ export class CurrentOrdersComponent implements OnInit {
 
 					if(this.includeBroTax == true) {
 						o.projectedpnl -= o.brotax
-					}	
+					}
+
+					this.ds.pnl += o.projectedpnl
 				}
 			}
 		}

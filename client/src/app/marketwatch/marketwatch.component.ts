@@ -46,7 +46,7 @@ import _ from 'lodash';
 						<td class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</td>
 					</tr>
 				</table>
-				<div class="" *ngFor="let key of depthRange">
+				<!-- <div class="" *ngFor="let key of depthRange">
 					<div class="buy-depth col-md-6">
 						<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
 						<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
@@ -57,7 +57,7 @@ import _ from 'lodash';
 						<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
 						<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
 					</div>
-				</div>
+				</div> -->
 			</div>
 		</div>
 
@@ -131,7 +131,7 @@ import _ from 'lodash';
 })
 export class MarketwatchComponent implements OnInit{
 	stocks: any = [];
-	depthRange: Array<number> = _.range(4);
+	depthRange: Array<number> = _.range(5);
 
 	constructor(private cs: CommunicatorService, private http: Http, private ds: DataService, private ticker: TickerService) {
 	}
@@ -152,6 +152,7 @@ export class MarketwatchComponent implements OnInit{
 				let watchlist = (results.json())
 				watchlist.push({"tradingsymbol":"NATURALGAS","name":"Light Sweet Crude OilMini","instrument_token":53705991,"co_lower":1,"co_upper":1.9,"tick_size":0.1,"instrument_type":"FUT","segment":"MCX","lot_size":0,"strike":0,"expiry":"2018-03-19T18:30:00.000Z","multiplier":1250})
 				_.map(watchlist, function(item) {
+					console.log(item)
 					self.stockSelected(item, false);
 				})
 			})	

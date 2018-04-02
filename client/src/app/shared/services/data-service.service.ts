@@ -5,6 +5,8 @@ export class DataService {
 
 	totalFunds: number = 5000;
 	availableFunds: number = 50000;
+	pnl: number = 0;
+	brotax: number = 0;
 	marginData: any;
 	fundsUpdated: EventEmitter<any> = new EventEmitter();
 	ticksUpdated: EventEmitter<any> = new EventEmitter();
