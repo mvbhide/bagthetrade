@@ -245,7 +245,7 @@ db.insertMargins = function(objMargins) {
 			conn.query(query,{}, function(err, res){
 				if(err != null) {
 					reject(query);
-				} 
+				}
 			})
 		})
 		resolve(true)

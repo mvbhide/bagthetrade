@@ -333,7 +333,7 @@ function fetchMargins(res) {
 				}),
 				kc.instruments('MCX')
 				.then(function(instruments){
-					console.log("MCX fetched")
+					console.log("MCX fetched", instruments.length)
 					return instruments;
 				})
 				.catch(function(err) {
@@ -342,18 +342,39 @@ function fetchMargins(res) {
 			]).then(function(alldata) {
 				console.log("Margins fetched");
 
-				// Merge equity and futures margin data
-				var margins = _.concat(alldata[0][0], alldata[1][0])
-				var instruments = _.concat(alldata[3], alldata[4]);
+				// Merge equity Margins and Instruments
+				var equityMargins = alldata[0][0];
+				var equityInstruments = alldata[3];
 
-				var mergedList = _.map(instruments, function(i){
+				var mergedEquity = _.map(equityInstruments, function(i){
 					if(i && i.tradingsymbol) {
-					    	return _.extend(i, _.find(margins, function (m) {
-					    		return _.includes(i.tradingsymbol, m.tradingsymbol)
-					    	})
-				    	);
+						return _.extend(i, _.find(equityMargins, function (m) {
+			    			return _.includes(i.tradingsymbol, m.tradingsymbol)	
+						}));	
 				    }
 				})
+
+				console.log('Equity Margins and Instruments merged');
+				
+				// Merge futures Margins and Instruments
+				var futuresMargins = alldata[1][0];
+				var futuresInstruments = alldata[4];
+
+				var mergedFutures = _.map(futuresInstruments, function(i){
+					if(i && i.tradingsymbol) {
+						if(_.endsWith(i.tradingsymbol, 'CE') || _.endsWith(i.tradingsymbol, 'PE')) {
+							return _.extend({}, _.find(futuresMargins, function (m) {
+								let symbol = i.tradingsymbol.replace(/(\w+)(\d{2})(\w{3})(\d+)(\w+)/, "$1$2$3FUT")
+			    				return m.tradingsymbol == symbol;
+						    }), i);	
+						} else {
+							return _.extend(i, _.find(futuresMargins, function (m) {
+			    				return _.includes(i.tradingsymbol, m.tradingsymbol)	
+						    }));	
+						}
+				    }
+				})
+				console.log('Futures Margins and Instruments merged');
 
 				// Merge commodity margin data
 				var commMargins = alldata[2][0];
@@ -373,10 +394,12 @@ function fetchMargins(res) {
 				    }
 				})
 
+				console.log("Merged commodity margins")
+
 				console.log("preparing to sanitize objects")
-				
-				// merge both equity and commodity margin data
-				var finalMargins = _.concat(mergedList, mergedCommodityMargins);
+
+				// merge all margin data
+				var finalMargins = _.concat(mergedEquity, mergedFutures, mergedCommodityMargins);
 
 				var db_margins = _.map(finalMargins, function(margin) {
 					return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])
@@ -439,5 +462,30 @@ function requestAsync(url) {
         });
     });
 }
+
+
+
+router.get('/test', function(req, res, next) {
+	
+	var instruments = [{name: "Milind", tradingsymbol: "ACC18APR1000CE"},{name: "Pawan", tradingsymbol: "ACC18APR1100CE"},{name: "Sarita", tradingsymbol: "ABB18APR1000PE"},{name: "Swapnil", tradingsymbol: "ACC18APRFUT"}];
+	
+	var margins = [{a:1.5, tradingsymbol: "ACC18APRFUT", u:4}, {a:3.5, tradingsymbol: "ABB18APRFUT", u:3}];
+
+	var opt = _.map(instruments, function(i){
+	    if(i && i.tradingsymbol) {
+	        if(_.endsWith(i.tradingsymbol, 'CE') || _.endsWith(i.tradingsymbol, 'PE')) {
+	            return _.extend({}, _.find(margins, function (m) {
+	                let symbol = i.tradingsymbol.replace(/(\w+)(\d{2})(\w{3})(\d+)(\w+)/, "$1$2$3FUT")
+	                return m.tradingsymbol == symbol
+	            }),i);	
+	        } else {
+	            return _.extend(_.find(margins, function (m) {
+	                return _.includes(i.tradingsymbol, m.tradingsymbol)	
+	            }),i);	
+	        }
+	    }
+	})
+	res.json(opt);
+})
 
 module.exports = router;
