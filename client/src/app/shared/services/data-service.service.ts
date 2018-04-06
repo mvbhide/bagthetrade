@@ -5,6 +5,8 @@ export class DataService {
 
 	totalFunds: number = 5000;
 	availableFunds: number = 50000;
+	equityNet: number = 0;
+	commodityNet: number = 0;
 	pnl: number = 0;
 	brotax: number = 0;
 	marginData: any;
@@ -41,7 +43,6 @@ export class DataService {
 	}
 
 	setAvailableFunds(amount) {
-		console.log(amount)
 		this.availableFunds = amount;
 		this.fundsUpdated.emit({total: this.totalFunds, available: this.availableFunds});
 	}
@@ -49,6 +50,12 @@ export class DataService {
 	setTotalFunds(amount) {
 		this.totalFunds = amount;
 		this.fundsUpdated.emit({total: this.totalFunds, available: this.availableFunds});
+	}
+
+	setFunds(marginData) {
+		this.equityNet = marginData.equity.net;
+		this.commodityNet = marginData.commodity.net;
+		this.fundsUpdated.emit({total: this.totalFunds, available: this.availableFunds, equityNet: this.equityNet, commodityNet: this.commodityNet});	
 	}
 
 	updateTicks(ticks) {

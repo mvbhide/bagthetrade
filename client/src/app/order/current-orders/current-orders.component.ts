@@ -228,10 +228,7 @@ export class CurrentOrdersComponent implements OnInit {
 			this.orders = JSON.parse(res.body).data
 			this.clubOrders()
 		})
-		this.http.get('http://localhost:8080/margins')
-		.subscribe(data => {
-			console.log(data.json().body)
-		})
+		
 		this.cPort = cPort;
 		this.ds = ds;
 	}

@@ -35,15 +35,15 @@ import _ from 'lodash';
 				</div>
 			</div>
 			
-			<div class="row" *ngIf="stock.Depth" [@toggleState]="stock.toggleDepth">
-				<table class="table">
+			<div class="" *ngIf="stock.Depth" [@toggleState]="stock.toggleDepth">
+				<table class="table-depth">
 					<tr *ngFor="let key of depthRange">
-						<td class="buy-text" text-align="left">{{stock.Depth.buy[key].Price}}</td>
-						<td class="text-right depth-total">{{stock.Depth.buy[key].Total}}</td>
-						<td class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</td>
-						<td class="sell-text">{{stock.Depth.sell[key].Price}}</td>
-						<td class="text-right depth-total">{{stock.Depth.sell[key].Total}}</td>
-						<td class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</td>
+						<td width="18%" class="text-left buy-text depth-col1" text-align="left">{{stock.Depth.buy[key].Price}}</td>
+						<td width="6%" class="text-left buy-text depth-col2">{{stock.Depth.buy[key].Total}}</td>
+						<td width="26%" class="text-right buy-text depth-col3">{{stock.Depth.buy[key].Quantity}}</td>
+						<td width="18%" class="text-left sell-text depth-col4">{{stock.Depth.sell[key].Price}}</td>
+						<td width="6%" class="text-left sell-text depth-col5">{{stock.Depth.sell[key].Total}}</td>
+						<td width="26%" class="text-right sell-text depth-col6">{{stock.Depth.sell[key].Quantity}}</td>
 					</tr>
 				</table>
 				<!-- <div class="" *ngFor="let key of depthRange">
@@ -100,7 +100,13 @@ import _ from 'lodash';
 			right: 40px;
 			visibility: hidden;
 		}
-
+		.table-depth {
+			width: 100%;
+			margin-top: 10px;
+		}
+		table.table-depth tbody tr td.depth-col3 {
+			padding-right: 5px;
+		}
 		.depth-total {
 			opacity: 0.8;
 			color: #AAA;

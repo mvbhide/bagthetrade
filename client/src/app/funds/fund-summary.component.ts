@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { Http, Response, Headers, RequestOptions } from '@angular/http';
 
 
 @Component({
@@ -9,12 +10,12 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 	template: `
 		<div class='fund-summary-container row'>
 			<div class='total-funds col-lg-2'>
-				<label>Total Fund: </label>
-				<h3 [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{totalFunds | currency : 'INR' : 'symbol': '4.2-2'}}</h3>
+				<label>Equity : </label>
+				<h3 [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{equityNet | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
 			</div>
 			<div class='available-funds col-lg-2'>
-				<label>Available Fund: </label>
-				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{availableFunds | currency : 'INR' : 'symbol': '4.2-2'}}</h3>
+				<label>Commodity : </label>
+				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{commodityNet | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
 			</div>
 			<div class='profit-loss col-lg-4'>
 				<label>Intraday P/L</label><span class="lbl-small"> (including brokerage & Taxes) </span>
@@ -31,9 +32,11 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 export class FundSummaryComponent implements OnInit {
 	totalFunds: number = 0;
 	availableFunds : number = 0;
-	pnl: number = 375;
-	brotax: number = 15.29;
-	constructor(private ds: DataService) {
+	equityNet: number = 0;
+	commodityNet: number = 0;
+	pnl: number = 0;
+	brotax: number = 0;
+	constructor(private ds: DataService, private http: Http) {
 		this.totalFunds = this.ds.totalFunds;
 		this.availableFunds = this.ds.availableFunds;
 		this.pnl = this.ds.pnl;
@@ -44,8 +47,17 @@ export class FundSummaryComponent implements OnInit {
 		this.ds.fundsUpdated.subscribe(funds => {
 			this.totalFunds = funds.total;
 			this.availableFunds = funds.available;
+			this.equityNet = funds.equityNet;
+			this.commodityNet = funds.commodityNet;
 			this.pnl = this.ds.pnl;
 			this.brotax = this.ds.brotax;
+console.log(funds)
+		})
+
+		this.http.get('http://localhost:8080/margins')
+		.subscribe(data => {
+			var funds = JSON.parse(data.json().body);
+			this.ds.setFunds(funds.data);
 		})
 	}
 }
