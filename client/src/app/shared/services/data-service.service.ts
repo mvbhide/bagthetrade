@@ -3,8 +3,8 @@ import {Injectable, EventEmitter} from '@angular/core';
 @Injectable()
 export class DataService {
 
-	totalFunds: number = 5000;
-	availableFunds: number = 50000;
+	totalFunds: number = 0;
+	availableFunds: number = 0;
 	equityNet: number = 0;
 	commodityNet: number = 0;
 	pnl: number = 0;
@@ -55,6 +55,7 @@ export class DataService {
 	setFunds(marginData) {
 		this.equityNet = marginData.equity.net;
 		this.commodityNet = marginData.commodity.net;
+		this.totalFunds = marginData.equity.available.cash;
 		this.fundsUpdated.emit({total: this.totalFunds, available: this.availableFunds, equityNet: this.equityNet, commodityNet: this.commodityNet});	
 	}
 

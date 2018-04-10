@@ -134,6 +134,9 @@ import _ from 'lodash';
 					<th>Trading Symbol</th>
 					<th>BUY / SELL</th>
 					<th>Quantity</th>
+					<th>Avg Price</th>
+					<th>Price</th>
+					<th>Trigger Price</th>
 					<th>Status</th>
 					<th>OrderId</th>
 					<th>Parent OrderId</th>
@@ -143,6 +146,9 @@ import _ from 'lodash';
 					<td>{{order.tradingsymbol}}</td>
 					<td>{{order.transaction_type}}</td>
 					<td>{{order.quantity}}</td>
+					<td>{{order.average_price}}</td>
+					<td>{{order.price}}</td>
+					<td>{{order.trigger_price}}</td>
 					<td>{{order.status}}</td>
 					<td>{{order.order_id}}</td>
 					<td>{{order.parent_order_id}}</td>
@@ -288,7 +294,7 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol].brotax += orders[i].broTax;
 			}
 			
-			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED' && orders[i]['status'] != 'OPEN' && orders[i]['status'] != 'TRIGGER PENDING' ){
+			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED'){
 			
 				if(orders[i].transaction_type == 'SELL') {
 					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
@@ -406,10 +412,8 @@ export class CurrentOrdersComponent implements OnInit {
 			for(let j=0; j<tickdata.length;j++) {
 				if(tickdata[j].Token == o.instrument_token){
 					o.ltp = tickdata[j].LastTradedPrice;
+					o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
 
-						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity))						
-
-					
 					if(this.includeBroTax == true) {
 						o.projectedpnl -= o.brotax
 					}

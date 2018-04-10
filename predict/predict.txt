@@ -262,13 +262,14 @@ var scanner = function(objData) {
 	if(data.length < 2) {
 		return;
 	}
-	for(var i = 0; i < 120; i++) {
+	for(var i = 0; i < 180; i++) {
 		if(typeof data[i] == 'undefined') break;
 		objCandle.date = data[i][0];
 		objCandle.open = data[i][1];
 		objCandle.high = data[i][2];
 		objCandle.low = data[i][3];
 		objCandle.close = data[i][5];
+		objCandle.volume = data[i][6];
 		objCandle.candleSize = Number((objCandle.high - objCandle.low).toFixed(2));
 		objCandle.body = Number(Math.abs(objCandle.open - objCandle.close).toFixed(2));
 		objCandle.bodyCenter = Number(((objCandle.open + objCandle.close)/2).toFixed(2));
@@ -286,8 +287,10 @@ var scanner = function(objData) {
 		objCandle = {};
 	}
 
+	var avg_vol = 0;
+
 	todaysCandle.sr = [0,0,0,0];
-	for(var i = 0; i < c.length; i++) {
+	for(var i = 1; i < c.length; i++) {
 		if( c[i].high > todaysCandle.high && c[i].low < todaysCandle.high ) {
 			todaysCandle.sr[0]++;
 		}
@@ -300,48 +303,50 @@ var scanner = function(objData) {
 		if( c[i].high > todaysCandle.low && c[i].low < todaysCandle.high ) {
 			todaysCandle.sr[3]++;
 		}
+		avg_vol += (c[i].volume / i);
 	}
 
-	console.log(todaysCandle.sr[0] + "," + todaysCandle.sr[1] + "," + todaysCandle.sr[2] + "," + todaysCandle.sr[3] + "," + objData.name );
-
-	/*var result = {};
+	var result = {};
 	result.trend = "";
 	result.pattern = "";
 
-	if( ( c2.high < c3.high < c4.high) && ( c2.low > c3.low > c4.low) ) {
+/*	if( ( c2.high < c3.high < c4.high) && ( c2.low > c3.low > c4.low) ) {
 		result.trend = "down";
 	}
 
 	if( ( c2.high > c3.high > c4.high) && ( c2.low < c3.low < c4.low) ) {
 		result.trend = "up";
-	}
+	}*/
 
-	if( c1.candleSize > c2.candleSize && c1.body < 0.3 * c1.candleSize ) {
-		if( (c1.high-c1.bodyCenter) < (c1.bodyCenter - c1.low)/3 ) {
+	if( c[0].candleSize > c[1].candleSize && c[0].body < 0.3 * c[0].candleSize ) {
+		if( (c[0].high-c[0].bodyCenter) < (c[0].bodyCenter - c[0].low)/3 ) {
 			result.pattern = "Downtrend reversal exhaution Candle";	
 		}
-		if( (c1.bodyCenter - c1.low) < (c1.high - c1.bodyCenter)/3 )  {
+		if( (c[0].bodyCenter - c[0].low) < (c[0].high - c[0].bodyCenter)/3 )  {
 			result.pattern = "Uptrend reversal exhaution Candle";	
 		}
 	}
 
-	if( (c1.open > c2.high) && (c1.close < c2.bodyCenter) ) {
+	if( (c[0].open > c[1].high) && (c[0].close < c[1].bodyCenter) ) {
 		result.pattern = "Dark cloud cover";
 	}
 
-	if( c1.color == "Red"  && (c1.open > c2.high) && (c1.close < c2.low) ) {
+	if( c[0].color == "Red"  && (c[0].open > c[1].high) && (c[0].close < c[1].low) ) {
 		result.pattern = "Bearish Engulfing candle"
 	}
 
-	if( c1.color == "Green"  && (c1.open < c2.low) && (c1.close > c2.high) ) {
+	if( c[0].color == "Green"  && (c[0].open < c[1].low) && (c[0].close > c[1].high) ) {
 		result.pattern = "Bullish Engulfing candle"
 	}
 
-	if(c1.high < 20) {
-		arrDelete.push(nsecodes[count]);
-	}
 
-	var output = "";
+	console.log(objData.name + "," + todaysCandle.sr[0] + "," + todaysCandle.sr[1] + "," + todaysCandle.sr[2] + "," + todaysCandle.sr[3] + "," + avg_vol + "," + todaysCandle.volume + "," + result.pattern);
+
+	/*if(c1.high < 20) {
+		arrDelete.push(nsecodes[count]);
+	}*/
+
+	/*var output = "";
 	if( result.trend != "") {
 		output = objData.code + " is in an " + result.trend + "trend";
 	}
