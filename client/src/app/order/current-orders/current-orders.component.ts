@@ -279,10 +279,28 @@ export class CurrentOrdersComponent implements OnInit {
 
 		// Calculate positions
 		for(let i=0; i<orders.length; i++) {
+			if(orders[i]['exchange'] == 'MCX') {
+				let symbol = orders[i].tradingsymbol.substring(0, orders[i].tradingsymbol.length - 8);
+				switch(symbol) {
+					case 'CRUDEOILM':
+						orders[i].multiplier = 10;
+						break;
+					case 'CRUDEOIL':
+						orders[i].multiplier = 100;
+						break;
+					case 'COPPERM':
+					case 'NICKEL' :
+						orders[i].multiplier = 250;
+						break;
+				}
+			} else {
+				orders[i].multiplier = 1;
+			}
 			if(!this.positions[orders[i].tradingsymbol] && orders[i].status !== 'REJECTED') {
 				this.positions[orders[i].tradingsymbol] = {};
 				this.positions[orders[i].tradingsymbol]['tradingsymbol'] = orders[i].tradingsymbol;
 				this.positions[orders[i].tradingsymbol]['instrument_token'] = orders[i].instrument_token;
+				this.positions[orders[i].tradingsymbol]['multiplier'] = orders[i].multiplier;
 				this.positions[orders[i].tradingsymbol]['quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
@@ -294,15 +312,20 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol].brotax += orders[i].broTax;
 			}
 			
-			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED'){
+			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED' && orders[i].status !== 'OPEN' && orders[i].status !== 'TRIGGER PENDING'){
 			
 				if(orders[i].transaction_type == 'SELL') {
-					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
-					this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price);
+					try {
+						this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
+						this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
+					} catch (e) {
+						console.log(orders[i]);
+					}
+					
 				}
 				if(orders[i].transaction_type == 'BUY') {
 					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
-					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price);
+					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 				}	
 			}
 		}
@@ -332,7 +355,7 @@ export class CurrentOrdersComponent implements OnInit {
 				let o = clubbedOrders['primaryOrders'][i];
 
 				// Multiplying quantity by 10 temporarily to test for crudeoil
-				//o.quantity = o.quantity * 1250;
+				o.quantity = o.quantity * o.multiplier;
 
 				let turnover = o.price * o.quantity * 2;
 				let brokerage = Math.min(turnover*0.0001, 40);
@@ -347,10 +370,10 @@ export class CurrentOrdersComponent implements OnInit {
 				o.stopLossOrders = [];
 				o.completedOrders = [];
 				o.cancelledOrders = [];
-				o.ltp = 157;
-				o.topAsk = 156.95;
-				o.topBid = 157.05;
-				o['pnl'] = (o['price'] - o.ltp)*o['quantity'];
+				o.ltp = 1;
+				o.topAsk = 1;
+				o.topBid = 1;
+				o['pnl'] = (o['price'] - o.ltp)*o['quantity']*o['multiplier'];
 			}
 
 			for(let j=0; j<orders.length; j++) {
@@ -407,12 +430,10 @@ export class CurrentOrdersComponent implements OnInit {
 				}
 			}
 
-
-
 			for(let j=0; j<tickdata.length;j++) {
 				if(tickdata[j].Token == o.instrument_token){
 					o.ltp = tickdata[j].LastTradedPrice;
-					o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity))
+					o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)
 
 					if(this.includeBroTax == true) {
 						o.projectedpnl -= o.brotax

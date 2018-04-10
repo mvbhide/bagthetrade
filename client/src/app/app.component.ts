@@ -37,7 +37,7 @@ import {TickerService} from './shared/services/ticker-service.service';
 			opacity: 0.8;
 		}
 		.content {
-			margin-top: 100px;
+			margin-top: 70px;
 		}
 		.overlay {
 		    position: fixed;

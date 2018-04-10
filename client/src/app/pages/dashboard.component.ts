@@ -10,29 +10,22 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
+			
 			<div class="row">
-				<a class="col-sm-12 text-right" href="javascript:void(0);" (click)="logout()">Logout</a>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
-					<div class="fund-summary-component">
-						<fund-summary></fund-summary>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-3">
+				<div class="col-sm-3 bd-sidebar">
 					<div class="marketwatch-component">
 						<marketwatch></marketwatch>
 					</div>
 				</div>
 				<div class="col-sm-9">
+					<div class="fund-summary-component text-right">
+						<fund-summary></fund-summary>
+					</div>
 					<div class="current-orders-component">
 						<current-orders></current-orders>
 					</div>
 				</div>
-			</div>
-			
+			</div>			
 			<div class="order-form-dialog" *ngIf="ds.showOrderForm">
 				<div class="close-order-form-dialog" (click)="closeOrderForm()"></div>
 				<order-form></order-form>

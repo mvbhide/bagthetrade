@@ -262,15 +262,16 @@ router.post('/login', function(req, res, next) {
 	if(req.body) {
 		var u = req.body.u;
 		var p = req.body.p;
-		var kitecookie = req.body.kitecookie;
-		var csrftoken = req.body.csrfToken;
+		var kitecookie = req.body.kitecookie ? req.body.kitecookie : '';
+		var csrftoken = req.body.csrfToken ? req.body.csrftoken : '';
 		console.log(u,p);
 		db.authenticateUser(u,p)
 		.then(function(response) {
-			
+			if(kitecookie != '' && csrftoken != '') {
 				redis.hset("u" + response.data[0].id, "kitecookie", kitecookie, redis.print);
 				redis.hset("u" + response.data[0].id , "csrftoken", csrftoken, redis.print);
-			
+			}
+				
 			res.json(response);
 
 		})
@@ -408,8 +409,8 @@ function fetchMargins(res) {
 				console.log(db_margins.length + " Objects sanitized");
 				
 				db.insertMargins(db_margins)
-					.then(function(result) {console.log("Done. Time taken: ")})
-					.catch(function(err) {console.log('Error: ' + err)})
+					.then(function(result) {console.log("Done. Time taken: ", new Date().getTime() - startTime)})
+					.catch(function(err) {console.log(err)})
 					.then(function(){console.log("Done. Time taken: ")})
 			}).catch(function(err){
 				res.send("Error:" + err);

@@ -21,6 +21,10 @@ import { Http, Response, Headers, RequestOptions } from '@angular/http';
 						<input type="password" class="form-control" ([ngModel])="password" name="password" #password />
 					</div>
 					<div class="form-group">
+						<input type="checkbox" id="skiptokens" class="form-control" ([ngModel])="skiptokens" name="skiptokens" #skiptokens />
+						<label for="skiptokens">Skip tokens</label>
+					</div>
+					<div class="form-group">
 						<label>Kite Cookie</label>
 						<input type="text" class="form-control" ([ngModel])="kitecookie" name="kitecookie" #kitecookie />
 					</div>
@@ -58,12 +62,19 @@ export class LoginComponent {
 
 	isError: boolean = false;
 	errorMsg: string = "";
+	skiptokens: boolean;
 
 	constructor(private route: Router, private http: Http, private cs: CommunicatorService) {}
 	authenticate(email, password, kitecookie, csrfToken) {
 		this.isError = false;
 		this.errorMsg = "";
-		var body = {u: email, p: password, csrfToken: csrfToken, kitecookie: kitecookie};
+		var body;
+		if(this.skiptokens) {
+			body = {u: email, p: password, csrfToken: '', kitecookie: ''};	
+		} else {
+			body = {u: email, p: password, csrfToken: csrfToken, kitecookie: kitecookie};
+		}
+		
 		this.http.post('http://localhost:8080/login', body)
 		.subscribe(data => {
 			var res = data.json();

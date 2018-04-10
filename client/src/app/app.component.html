@@ -1,14 +1,12 @@
 <div class="overlay" *ngIf="ds.showOverlay"></div>
-<!-- <div class="header">
+<div class="header navbar flex-column flex-md-row bg-navbar">
 	<nav>
 		<ul>
-			<li class="active"><a routerLink="/dashboard" routerLinkActive="active"><h5>Dashboard</h5></a></li>
-			<li><a routerLink="/position" routerLinkActive="active"><h5>Positions</h5></a></li>
-			<li><a routerLink="/portfolio" routerLinkActive="active"><h5>Portfolio</h5></a></li>
+			<li><a class="col-sm-12 text-right" href="javascript:void(0);" (click)="logout()">Logout</a></li>
 		</ul>
 	</nav>
-</div> -->
-<div class="content">
+</div>
+<div class="content container-fluid">
 	<router-outlet></router-outlet>
 </div>
 

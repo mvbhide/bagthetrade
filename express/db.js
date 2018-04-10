@@ -8,7 +8,7 @@ connect = function(){
 	var conn = mysql({
 		host: config.DB.host,
 		user: config.DB.username,
-		password: '',
+		password: '',//'YP]XMpV1xGyJ',
 		database: config.DB.database,
 		multipleStatements: true
 	})
@@ -26,6 +26,7 @@ db.authenticateUser = function(e,p) {
 			var conn = connect();
 			var query = "SELECT * FROM `user` WHERE email='" + e +"' AND password='" + p + "'";
 			conn.query(query,{}, function(err, results) {
+				console.log(err, results)
 				if(results && results.length == 1) {
 					objResults.success = true;
 					objResults.data = results;
@@ -234,22 +235,28 @@ db.createCandleData = function(arrCandles) {
 
 db.insertMargins = function(objMargins) {
 	return new Promise(function(resolve, reject) {
+		var count = 0;
+		
+		var fullQuery = "";
+		var arrValues = [];
+		_.map(_.take(objMargins, 10000), function(margin) {
+			var columnList = "(" + Object.keys(margin).join(',') + ")";
+			let txtValues = '';
+			
+			txtValues = "(" + _.map(_.values(margin), function(v){return "'" + _.escape(v) + "'" }).join(',') + ")";
+			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues + ";";
+			fullQuery += query;
+		})
 		var conn = connect();
 		
-		var count = 0;
-		_.map(objMargins, function(margin) {
-			let txtValues = '';
-			let columnList = "(" + Object.keys(margin).join(',') + ")";
-			txtValues = "(" + _.map(_.values(margin), function(v){return "'" + v + "'" }).join(',') + ")";
-			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues;
-			conn.query(query,{}, function(err, res){
-				if(err != null) {
-					reject(query);
-				}
-			})
+		conn.query(fullQuery,{}, function(err, res){
+			if(err != null) {
+				console.log(err);
+				reject(fullQuery);
+			} else {
+				resolve(true)
+			}
 		})
-		resolve(true)
-		
 	})		
 }
 
