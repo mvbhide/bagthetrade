@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import {Router} from '@angular/router';
 import {DataService} from './shared/services/data-service.service';
 import {TickerService} from './shared/services/ticker-service.service';
 
@@ -51,5 +52,10 @@ import {TickerService} from './shared/services/ticker-service.service';
 	`]
 })
 export class AppComponent {
-	constructor(private ds: DataService, private ts: TickerService){}
+	constructor(private ds: DataService, private ts: TickerService, private route: Router){}
+
+	logout() {
+		window.localStorage.clear();
+		this.route.navigate(['/login']);
+	}
 }

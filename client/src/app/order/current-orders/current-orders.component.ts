@@ -328,7 +328,35 @@ export class CurrentOrdersComponent implements OnInit {
 					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 				}	
 			}
+
+			if( orders[i].status != 'REJECTED'){
+				let o = orders[i];
+				
+				o.quantity = o.quantity * o.multiplier;
+
+				let turnover = o.price * o.quantity;
+				let brokerage = parseFloat(Math.min(turnover*0.0001, 20).toFixed(2));
+
+				let transactionCharges = parseFloat((turnover * 0.0000325).toFixed(2));
+
+				// Transaction tax is levied on the sell side of the order
+				let transactionTax = 0;
+				if( o.transaction_type == 'SELL') {
+					transactionTax = Math.ceil(parseFloat(((o.price * o.quantity) * 0.00025).toFixed(2)));
+				}
+			
+				let gst = parseFloat(((brokerage + transactionCharges) * 0.18).toFixed(2));
+				let stampDuty = parseFloat((turnover * 0.00002).toFixed(2));
+				let sebiCharges = parseFloat((turnover * 0.0000015).toFixed(2));
+
+				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;	
+				console.log(o.tradingsymbol, o.transaction_type, brokerage, transactionCharges, transactionTax, gst, stampDuty, sebiCharges);
+			}
+			
+			
+			//o['pnl'] = (o['price'] - o.ltp)*o['quantity']*o['multiplier'];
 		}
+		console.log(this.orders)
 
 		if(orders.length == 0) return;
 		let clubbedOrders = [];
@@ -351,21 +379,27 @@ export class CurrentOrdersComponent implements OnInit {
 		}
 
 		for(let i=0; i<clubbedOrders['primaryOrders'].length; i++) {
-			if((clubbedOrders['primaryOrders'][i]['variety'] == 'bo' || clubbedOrders['primaryOrders'][i]['variety'] == 'co') && clubbedOrders['primaryOrders'][i]['status'] != 'REJECTED') {
+			if((clubbedOrders['primaryOrders'][i]['variety'] == 'bo' || clubbedOrders['primaryOrders'][i]['variety'] == 'co' || clubbedOrders['primaryOrders'][i]['product'] == 'MIS') && clubbedOrders['primaryOrders'][i]['status'] != 'REJECTED') {
 				let o = clubbedOrders['primaryOrders'][i];
+				
+				/*o.quantity = o.quantity * o.multiplier;
 
-				// Multiplying quantity by 10 temporarily to test for crudeoil
-				o.quantity = o.quantity * o.multiplier;
+				let turnover = o.price * o.quantity;
+				let brokerage = Math.min(turnover*0.0001, 20);
 
-				let turnover = o.price * o.quantity * 2;
-				let brokerage = Math.min(turnover*0.0001, 40);
-				let transactionCharges = turnover * 0.000021;
-				let transactionTax = (o.price * o.quantity) * 0.0001;
+				let transactionCharges = turnover * 0.0000325;
+
+				// Transaction tax is levied on the sell side of the order
+				let transactionTax = 0;
+				if( o.trasaction_type == 'SOLD') {
+					transactionTax = (o.price * o.quantity) * 0.00025;
+				}
+			
 				let gst = (brokerage + transactionCharges) * 0.18;
 				let stampDuty = turnover * 0.00002;
 				let sebiCharges = turnover * 0.0000015;
 
-				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;
+				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;*/
 				o.targetOrders = [];
 				o.stopLossOrders = [];
 				o.completedOrders = [];
@@ -421,10 +455,10 @@ export class CurrentOrdersComponent implements OnInit {
 			let tickdata = ticks.ticks;
 
 			// Add Brokerage to positions
-			for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
-				if(this.clubbedOrders['primaryOrders'][i].instrument_token == o.instrument_token) {
-					if(this.clubbedOrders['primaryOrders'][i].broTax) {
-						o.brotax = this.clubbedOrders['primaryOrders'][i].broTax;
+			for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
+				if(this.orders[ord_count].instrument_token == o.instrument_token) {
+					if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED') {
+						o.brotax += this.orders[ord_count].broTax;
 						this.ds.brotax += o.brotax;
 					}
 				}
@@ -443,6 +477,7 @@ export class CurrentOrdersComponent implements OnInit {
 				}
 			}
 		}
+
 
 		/*if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
 		for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {

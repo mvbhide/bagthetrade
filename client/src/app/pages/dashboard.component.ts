@@ -81,9 +81,4 @@ export class DashboardComponent {
 		this.ds.showOrderForm = false;
 		this.ds.showOverlay = false;
 	}
-
-	logout() {
-		window.localStorage.clear();
-		this.route.navigate(['/login']);
-	}
 }

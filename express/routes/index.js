@@ -263,7 +263,7 @@ router.post('/login', function(req, res, next) {
 		var u = req.body.u;
 		var p = req.body.p;
 		var kitecookie = req.body.kitecookie ? req.body.kitecookie : '';
-		var csrftoken = req.body.csrfToken ? req.body.csrftoken : '';
+		var csrftoken = req.body.csrfToken ? req.body.csrfToken : '';
 		console.log(u,p);
 		db.authenticateUser(u,p)
 		.then(function(response) {
