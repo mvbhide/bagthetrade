@@ -342,7 +342,7 @@ export class CurrentOrdersComponent implements OnInit {
 				// Transaction tax is levied on the sell side of the order
 				let transactionTax = 0;
 				if( o.transaction_type == 'SELL') {
-					transactionTax = Math.ceil(parseFloat(((o.price * o.quantity) * 0.00025).toFixed(2)));
+					transactionTax = Math.round(parseFloat(((o.price * o.quantity) * 0.00025).toFixed(2)));
 				}
 			
 				let gst = parseFloat(((brokerage + transactionCharges) * 0.18).toFixed(2));
@@ -452,30 +452,35 @@ export class CurrentOrdersComponent implements OnInit {
 		this.ds.brotax = 0;
 		for (var i=0; i<Object.keys(this.positions).length; i++) {
 			let o = this.positions[Object.keys(this.positions)[i]];
+			o.brotax = 0;
 			let tickdata = ticks.ticks;
 
 			// Add Brokerage to positions
-			for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
-				if(this.orders[ord_count].instrument_token == o.instrument_token) {
-					if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED') {
-						o.brotax += this.orders[ord_count].broTax;
-						this.ds.brotax += o.brotax;
+			
+				for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
+					if(this.orders[ord_count].instrument_token == o.instrument_token) {
+						if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED') {
+							o.brotax += this.orders[ord_count].broTax;
+							this.ds.brotax += o.brotax;
+						}
+					}
+				}	
+			
+			
+			
+				for(let j=0; j<tickdata.length;j++) {
+					if(tickdata[j].Token == o.instrument_token){
+						o.ltp = tickdata[j].LastTradedPrice;
+						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)
+
+						if(this.includeBroTax == true) {
+							o.projectedpnl -= o.brotax
+						}
+
+						this.ds.pnl += o.projectedpnl
 					}
 				}
-			}
-
-			for(let j=0; j<tickdata.length;j++) {
-				if(tickdata[j].Token == o.instrument_token){
-					o.ltp = tickdata[j].LastTradedPrice;
-					o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)
-
-					if(this.includeBroTax == true) {
-						o.projectedpnl -= o.brotax
-					}
-
-					this.ds.pnl += o.projectedpnl
-				}
-			}
+			
 		}
 
 
