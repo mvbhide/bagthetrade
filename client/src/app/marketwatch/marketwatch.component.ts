@@ -157,7 +157,6 @@ export class MarketwatchComponent implements OnInit{
 			.subscribe(results => {
 				let watchlist = (results.json())
 				_.map(watchlist, function(item) {
-					console.log(item)
 					self.stockSelected(item, false);
 				})
 			})	

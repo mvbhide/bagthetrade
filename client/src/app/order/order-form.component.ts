@@ -36,6 +36,10 @@ import 'rxjs/add/observable/of';
 					<div class="col-lg-3 del-type-stoplss" [ngClass]="{'cannot-specify' : (isBracketOrder || isCoverOrder)}">
 						<input class="col-lg-3 text-right" type='checkbox' name="order-type-stoploss" id="orderTypeStoploss" [checked]="isStoplossOrder" value="CNC" (change)="toggleStoplossOrder()"><label for="orderTypeStoploss" class="radio-inline">Stoploss</label>
 					</div>
+					<div class="col-lg-3" *ngIf="warning">
+						<i id="warning" class="glyphicon glyphicon-warning"></i>
+						<info-tooltip showfor="#warning" info="{{warningMessage}}"></info-tooltip>
+					</div>
 				</div>
 				<hr />
 				<div class="div-intraday-order-type">
@@ -45,7 +49,7 @@ import 'rxjs/add/observable/of';
 								<input [checked]="!isBracketOrder && !isCoverOrder" type='radio' name="intraday-order-type" id="orderTypeNormal" checked value="Normal" (change)="setIntradayOrderType('normal')">
 								<label for="orderTypeNormal" class="radio-inline">Regular</label>
 							</div>
-							<div class="div-order-variety">
+							<div class="div-order-variety" [ngClass]="{'cannot-specify' : segment=='MCX' }">
 								<input type='radio' name="intraday-order-type" id="orderTypeBO" value="BO" (change)="setIntradayOrderType('bo')">
 								<label for="orderTypeBO" class="radio-inline">BO </label>
 								<info-tooltip info="'Bracket Order: You can place {{transactionType}} order, stoploss order and target order in a single transaction'"></info-tooltip>
@@ -58,7 +62,7 @@ import 'rxjs/add/observable/of';
 						</div>
 						<div class="metadata col-lg-6" *ngIf='isIntraday'>
 							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.availableFunds}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
+							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.equityNet}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
 						</div>
 					</div>
 				</div>
@@ -162,7 +166,9 @@ export class OrderFormComponent {
 	isBracketOrder		: boolean = false;
 	isCoverOrder		: boolean = false;
 	isLimitOrder		: boolean = true;
-	transactionType 	: string = 'BUY';
+	warning 			: boolean = false;
+	warningMessage		: string  = '';
+	transactionType 	: string  = 'BUY';
 	tradingsymbol 		: string;
 	instrumentToken 	: string;
 	segment 			: string;
@@ -179,6 +185,7 @@ export class OrderFormComponent {
 	multiplier 			: number = 1;
 	quantityMultiplier 	: number = 1;
 	objMargin 			: object = {};
+
 
 	margins 			: Array<any>;
 
@@ -258,7 +265,7 @@ export class OrderFormComponent {
 	 * The stoploss value is determined which limits the loss to the configured risk
 	 */
 	calculateRisk() {
-		let avblMargin  = this.ds.availableFunds;
+		let avblMargin  = this.ds.equityNet;
 		let price 		= this.price;
 	
 		// co_lower and co_upper are params defined in the 
@@ -293,7 +300,7 @@ export class OrderFormComponent {
 	 */
 	calculateQuantity() {
 		// Maximum risk the user can bear
-		let maxRisk = this.ds.availableFunds * ( AppConfig.RISK_PERCENTAGE / 100 )
+		let maxRisk = this.ds.equityNet * ( AppConfig.RISK_PERCENTAGE / 100 )
 
 		// Get the optimum quantity within the max risk
 		let quantityThreshold = Math.ceil( maxRisk / ( this.price - this.stoplossValue ) );
@@ -303,6 +310,7 @@ export class OrderFormComponent {
 		// correctly while keeping the lot size as 1 (which we need for placing order)
 		let calculatedQuantity;
 		
+		// Calcuating Quantity multiplier to be used on the form to increase / decrease as per lot size
 		if(this.multiplier > 1) {
 			calculatedQuantity 		= quantityThreshold - ( quantityThreshold % this.multiplier );
 			this.quantityMultiplier = this.multiplier;
@@ -313,7 +321,11 @@ export class OrderFormComponent {
 
 		this.quantity = Math.abs( calculatedQuantity );
 
-		let targetOffset = ( (this.ds.availableFunds * ( AppConfig.TARGET_PERCENTAGE / 100 ) ) / this.quantity );
+		if( this.quantity == 0 ) {
+			this.warning = true;
+			this.warningMessage = "The margin required for 1 lot seems insufficient. Please add funds or look for a smaller lot size";
+		}
+		let targetOffset = ( (this.ds.equityNet * ( AppConfig.TARGET_PERCENTAGE / 100 ) ) / this.quantity );
 
 		if(this.transactionType == 'BUY') {
 			this.squareoffValue = this.price + targetOffset;

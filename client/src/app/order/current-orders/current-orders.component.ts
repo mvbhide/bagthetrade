@@ -350,7 +350,6 @@ export class CurrentOrdersComponent implements OnInit {
 				let sebiCharges = parseFloat((turnover * 0.0000015).toFixed(2));
 
 				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;	
-				console.log(o.tradingsymbol, o.transaction_type, brokerage, transactionCharges, transactionTax, gst, stampDuty, sebiCharges);
 			}
 			
 			
