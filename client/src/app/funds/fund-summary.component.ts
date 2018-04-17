@@ -19,7 +19,8 @@ import { Http, Response, Headers, RequestOptions } from '@angular/http';
 			</div>
 			<div class='profit-loss col-lg-4'>
 				<label>Intraday P/L</label><span class="lbl-small"> (including brokerage & Taxes) </span>
-				<h3 [ngClass]="{'profit' : ds.pnl >= 0, 'loss' : ds.pnl < 0}">{{ds.pnl | currency : 'INR' : 'true': '1.2-2'}}</h3>
+				<h3 [ngClass]="{'profit' : ds.pnl >= 0, 'loss' : ds.pnl < 0}">{{ds.pnl | currency : 'INR' : 'true': '1.2-2'}}</h3> <h5>{{ds.pnl / ds.totalFunds | percent : '1.2-2'}}</h5><span class="small"> of your account value</span>
+
 			</div>
 		</div>
 	`,

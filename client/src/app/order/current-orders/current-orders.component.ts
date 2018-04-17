@@ -109,7 +109,7 @@ import _ from 'lodash';
 							<td>{{i}}</td>
 							<td>{{positions[i].quantity}}</td>
 							<td>{{positions[i].ltp}}</td>
-							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{(positions[i].projectedpnl != 0 ? positions[i].projectedpnl : positions[i].pnl) | number : '1.2-2' }}</td>
+							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{(positions[i].quantity > 0 ? positions[i].projectedpnl : positions[i].pnl) | number : '1.2-2' }}</td>
 							<td>{{(positions[i].projectedpnl / ds.totalFunds) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
 							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
 							<td>
@@ -458,7 +458,7 @@ export class CurrentOrdersComponent implements OnInit {
 			
 				for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
 					if(this.orders[ord_count].instrument_token == o.instrument_token) {
-						if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED') {
+						if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED' && this.orders[ord_count].status != 'CANCELLED') {
 							o.brotax += this.orders[ord_count].broTax;
 							this.ds.brotax += o.brotax;
 						}

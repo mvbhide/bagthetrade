@@ -1,5 +1,7 @@
 import {Injectable, EventEmitter} from '@angular/core';
-import {DataService} from './data-service.service'
+import {DataService} from './data-service.service';
+
+import _ from 'lodash';
 
 @Injectable()
 export class TickerService {
@@ -31,11 +33,14 @@ export class TickerService {
 	modeLTP   = "ltp";
 
 	constructor(private ds: DataService)  {
+		window.localStorage.ticks = JSON.stringify('');
 		this.connect();
 		var self = this;
-		this.on("tick", function(ticks) {
+		this.on("tick", function(ticks) { 
+			ticks = _.unionBy(ticks, JSON.parse(window.localStorage.ticks), 'Token');
 			console.log(ticks)
 			self.ds.updateTicks(ticks);
+			window.localStorage.ticks = JSON.stringify(ticks);
 		})
 	}
 
