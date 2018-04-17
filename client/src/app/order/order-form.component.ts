@@ -299,8 +299,12 @@ export class OrderFormComponent {
 	 * With that further we calculate the target as a percentage of avaiable funds
 	 */
 	calculateQuantity() {
+
+		// Select the margin from equity or commodity based on the selected item
+		let segMargin = this.segment == 'MCX' ? 'commodityNet' : 'equityNet';
+
 		// Maximum risk the user can bear
-		let maxRisk = this.ds.equityNet * ( AppConfig.RISK_PERCENTAGE / 100 )
+		let maxRisk = this.ds[segMargin] * ( AppConfig.RISK_PERCENTAGE / 100 )
 
 		// Get the optimum quantity within the max risk
 		let quantityThreshold = Math.ceil( maxRisk / ( this.price - this.stoplossValue ) );
@@ -325,7 +329,7 @@ export class OrderFormComponent {
 			this.warning = true;
 			this.warningMessage = "The margin required for 1 lot seems insufficient. Please add funds or look for a smaller lot size";
 		}
-		let targetOffset = ( (this.ds.equityNet * ( AppConfig.TARGET_PERCENTAGE / 100 ) ) / this.quantity );
+		let targetOffset = ( (this.ds[segMargin] * ( AppConfig.TARGET_PERCENTAGE / 100 ) ) / this.quantity );
 
 		if(this.transactionType == 'BUY') {
 			this.squareoffValue = this.price + targetOffset;

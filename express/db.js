@@ -3,6 +3,7 @@ var config = require('./config')
 var Promise = require('promise');
 var db = {};
 var _ = require('lodash');
+var fs = require('fs');
 
 connect = function(){
 	var conn = mysql({
@@ -239,7 +240,7 @@ db.insertMargins = function(objMargins) {
 		
 		var fullQuery = "";
 		var arrValues = [];
-		_.map(_.take(objMargins, 10000), function(margin) {
+		_.map(objMargins, function(margin) {
 			var columnList = "(" + Object.keys(margin).join(',') + ")";
 			let txtValues = '';
 			
@@ -247,16 +248,20 @@ db.insertMargins = function(objMargins) {
 			var query = "INSERT INTO instruments " + columnList + " VALUES " + txtValues + ";";
 			fullQuery += query;
 		})
-		var conn = connect();
+
+		fs.appendFile('query.sql', fullQuery, function(err, res){
+			console.log(err, res);
+		})
+
+		/*var conn = connect();
 		
 		conn.query(fullQuery,{}, function(err, res){
 			if(err != null) {
-				console.log(err);
-				reject(fullQuery);
+				reject(err);
 			} else {
 				resolve(true)
 			}
-		})
+		})*/
 	})		
 }
 

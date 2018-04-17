@@ -400,7 +400,7 @@ function fetchMargins(res) {
 				console.log("preparing to sanitize objects")
 
 				// merge all margin data
-				var finalMargins = _.concat(mergedEquity, mergedFutures, mergedCommodityMargins);
+				var finalMargins = _.concat(mergedCommodityMargins, mergedEquity, mergedFutures);
 
 				var db_margins = _.map(finalMargins, function(margin) {
 					return _.omit(margin, ['margin', 'mis_multiplier', 'nrml_margin', 'mis_margin', 'exchange_token', 'last_price', 'exchange'])

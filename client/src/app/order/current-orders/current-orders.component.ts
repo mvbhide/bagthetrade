@@ -334,7 +334,7 @@ export class CurrentOrdersComponent implements OnInit {
 				
 				o.quantity = o.quantity * o.multiplier;
 
-				let turnover = o.price * o.quantity;
+				let turnover = o.price == 0 ? o.average_price * o.quantity : o.price * o.quantity;
 				let brokerage = parseFloat(Math.min(turnover*0.0001, 20).toFixed(2));
 
 				let transactionCharges = parseFloat((turnover * 0.0000325).toFixed(2));

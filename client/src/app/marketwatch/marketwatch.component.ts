@@ -12,7 +12,7 @@ import _ from 'lodash';
 	template: `
 	<div class="marketwatch">
 		<div>
-			<input placeholder="Add to watchlist" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
+			<input placeholder="Add to watchlist" min-chars="2" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 		</div>
 
 		<div *ngFor="let stock of stocks" class="div-watchlist">
@@ -146,7 +146,7 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.ticksUpdated.subscribe(ticks => {
 			this.stocks.map(stock => {
 				let quote = this.ds.getFullQuote(stock.instrument_token);
-				stock.ltp = quote.ltp ? quote.ltp : 0;
+				stock.ltp = quote ? quote.ltp : 0;
 				stock.Depth = quote.Depth;
 			})
 		});
