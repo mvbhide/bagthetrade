@@ -3,7 +3,7 @@ import { CommunicatorService } from '../shared/communicator/communicator.service
 import { DataService } from '../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
-
+import * as config from '../shared/services/config.service';
 
 @Component({
 	selector: 'fund-summary',
@@ -52,10 +52,9 @@ export class FundSummaryComponent implements OnInit {
 			this.commodityNet = funds.commodityNet;
 			this.pnl = this.ds.pnl;
 			this.brotax = this.ds.brotax;
-console.log(funds)
 		})
 
-		this.http.get('http://localhost:8080/margins')
+		this.http.get(config.API_ROOT + 'margins')
 		.subscribe(data => {
 			var funds = JSON.parse(data.json().body);
 			this.ds.setFunds(funds.data);

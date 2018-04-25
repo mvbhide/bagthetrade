@@ -10,6 +10,7 @@ import { CommConfig } from '../config/comm.config';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import 'rxjs/add/observable/of';
+import * as config from '../shared/services/config.service'
 
 
 
@@ -46,8 +47,8 @@ import 'rxjs/add/observable/of';
 					<div class="row">
 						<div class="order-type col-lg-6">
 							<div class="div-order-variety">
-								<input [checked]="!isBracketOrder && !isCoverOrder" type='radio' name="intraday-order-type" id="orderTypeNormal" checked value="Normal" (change)="setIntradayOrderType('normal')">
-								<label for="orderTypeNormal" class="radio-inline">Regular</label>
+								<input [checked]="!isBracketOrder && !isCoverOrder" type='radio' name="intraday-order-type" id="orderTypeRegular" checked value="Regular" (change)="setIntradayOrderType('regular')">
+								<label for="orderTypeRegular" class="radio-inline">Regular</label>
 							</div>
 							<div class="div-order-variety" [ngClass]="{'cannot-specify' : segment=='MCX' }">
 								<input type='radio' name="intraday-order-type" id="orderTypeBO" value="BO" (change)="setIntradayOrderType('bo')">
@@ -169,6 +170,7 @@ export class OrderFormComponent {
 	warning 			: boolean = false;
 	warningMessage		: string  = '';
 	transactionType 	: string  = 'BUY';
+	orderType 			: string  = 'regular';
 	tradingsymbol 		: string;
 	instrumentToken 	: string;
 	segment 			: string;
@@ -236,8 +238,9 @@ export class OrderFormComponent {
 	}
 
 	setIntradayOrderType(orderType) {
+		this.orderType = orderType;
 		switch (orderType) {
-			case 'normal':
+			case 'regular':
 				this.isBracketOrder = false;
 				this.isCoverOrder = false;
 				this.isLimitOrder = true;
@@ -365,15 +368,20 @@ export class OrderFormComponent {
 			segment: 'equity',
 			transaction_type: this.transactionType,
 			price: this.price,
-			squareoff_value: Math.abs(this.price-this.squareoffValue).toFixed(2),
-			stoploss_value: Math.abs(this.price-this.stoplossValue).toFixed(2),
+			squareoff_value: Math.abs(this.price - this.squareoffValue).toFixed(2),
+			stoploss_value: Math.abs(this.price - this.stoplossValue).toFixed(2),
 			quantity: this.quantity,
-			order_type: 'LIMIT',
+			order_type: this.isLimitOrder ? 'LIMIT' : 'MARKET',
 			product: 'MIS',
-			validity: 'DAY'
+			validity: 'DAY',
+			variety: this.orderType
 		}
 
-		this.cPort.send({method : 'placeorder', payload: payload})
+		this.http.post(config.API_ROOT + 'order', payload)
+		.subscribe(data => {
+			var result = JSON.parse(data.json().body);
+			console.log(result);
+		})
 	}
 	
 }

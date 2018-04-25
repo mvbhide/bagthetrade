@@ -451,6 +451,10 @@ router.get('/tickertest', function(req, res, next) {
 	next();
 })
 
+router.post('/order', function(req, res, next) {
+	console.log("Hi")
+})
+
 function startTicker() {
 	ticker.subscribe(325121);
 }

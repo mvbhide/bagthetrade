@@ -6,6 +6,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import _ from 'lodash';
+import * as config from '../../shared/services/config.service';
 
 @Component({
 	selector: 'current-orders',
@@ -228,7 +229,7 @@ export class CurrentOrdersComponent implements OnInit {
 	latestTicks: any = "";
 
 	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http, private ticker: TickerService) {
-		this.http.get('http://localhost:8080/orders')
+		this.http.get(config.API_ROOT + 'orders')
 		.subscribe(data => {
 			var res = data.json();
 			this.orders = JSON.parse(res.body).data

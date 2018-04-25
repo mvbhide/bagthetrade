@@ -6,6 +6,7 @@ import { CommunicatorService} from '../shared/communicator/communicator.service'
 import { DataService } from '../shared/services/data-service.service'
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import _ from 'lodash';
+import * as config from '../shared/services/config.service'
 
 @Component({
 	selector: 'marketwatch',
@@ -153,7 +154,7 @@ export class MarketwatchComponent implements OnInit{
 
 		let self = this;
 		this.ticker.on('connect', function() {
-			self.http.get('http://localhost:8080/marketwatch/get')
+			self.http.get(config.API_ROOT + 'marketwatch/get')
 			.subscribe(results => {
 				let watchlist = (results.json())
 				_.map(watchlist, function(item) {
@@ -200,7 +201,7 @@ export class MarketwatchComponent implements OnInit{
 	}
 
 	observableSource = (keyword: any): Observable<any[]> => {
-		let url: string = 'http://localhost:8080/stocks/lookup?q='+keyword
+		let url: string = config.API_ROOT + 'stocks/lookup?q=' + keyword
 		if (keyword) {
 			return this.http.get(url)
 			.map(res => {
@@ -255,7 +256,7 @@ export class MarketwatchComponent implements OnInit{
 		
 		this.stocks.push($event);
 		if(persist == true) {
-			this.http.get('http://localhost:8080/marketwatch/add/' + $event.instrument_token)
+			this.http.get(config.API_ROOT + 'marketwatch/add/' + $event.instrument_token)
 			.subscribe(res => {
 				let json = res.json();
 			})
@@ -269,7 +270,7 @@ export class MarketwatchComponent implements OnInit{
 			return stock.instrument_token == instrument_token
 		})
 
-		this.http.get('http://localhost:8080/marketwatch/remove/' + instrument_token)
+		this.http.get( config.API_ROOT + 'remove/' + instrument_token)
 		.subscribe(res => {
 			let json = res.json();
 			console.log(json)
