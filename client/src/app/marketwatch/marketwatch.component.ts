@@ -254,6 +254,12 @@ export class MarketwatchComponent implements OnInit{
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
 		let exchange = $event.segment.split("-")[0];
 		
+		if($event.segment == 'MCX') {
+			let dt = new Date($event.expiry)
+			var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+			$event.tradingsymbol += (dt.getFullYear()-2000) + months[dt.getMonth()] + "FUT"
+		}
+
 		this.stocks.push($event);
 		if(persist == true) {
 			this.http.get(config.API_ROOT + 'marketwatch/add/' + $event.instrument_token)
@@ -270,7 +276,7 @@ export class MarketwatchComponent implements OnInit{
 			return stock.instrument_token == instrument_token
 		})
 
-		this.http.get( config.API_ROOT + 'remove/' + instrument_token)
+		this.http.get( config.API_ROOT + 'marketwatch/remove/' + instrument_token)
 		.subscribe(res => {
 			let json = res.json();
 			console.log(json)

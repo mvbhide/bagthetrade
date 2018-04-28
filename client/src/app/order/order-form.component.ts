@@ -174,6 +174,7 @@ export class OrderFormComponent {
 	tradingsymbol 		: string;
 	instrumentToken 	: string;
 	segment 			: string;
+	exchange			: string;
 	squareoffValue 		: number = 0;
 	stoplossValue 		: number = 0;
 	price 				: number = 0;
@@ -196,6 +197,7 @@ export class OrderFormComponent {
 		this.transactionType = this.ds.orderFormOptions.transactionType;
 		this.tradingsymbol 	 = this.ds.orderFormOptions.tradingsymbol;
 		this.segment 		 = this.ds.orderFormOptions.segment;
+		this.exchange		 = this.ds.orderFormOptions.exchange
 		this.price 			 = this.ds.orderFormOptions.price;
 		this.lotSize 		 = this.ds.orderFormOptions.lotSize;
 		this.tickSize 		 = this.ds.orderFormOptions.tickSize
@@ -361,27 +363,65 @@ export class OrderFormComponent {
 	}
 
 	placeOrder() {
-		let payload = {
-			tradingsymbol: this.tradingsymbol,
-			instrument_token: this.instrumentToken,
-			exchange: 'NSE',
-			segment: 'equity',
-			transaction_type: this.transactionType,
-			price: this.price,
-			squareoff_value: Math.abs(this.price - this.squareoffValue).toFixed(2),
-			stoploss_value: Math.abs(this.price - this.stoplossValue).toFixed(2),
-			quantity: this.quantity,
-			order_type: this.isLimitOrder ? 'LIMIT' : 'MARKET',
-			product: 'MIS',
-			validity: 'DAY',
-			variety: this.orderType
+		let squareoff = 0;
+		let stoploss = 0;
+
+		if((this.isBracketOrder || this.isCoverOrder) && this.segment != 'MCX' ) {
+			squareoff = parseFloat(Math.abs(this.price - this.squareoffValue).toFixed(2));
+			stoploss  = parseFloat(Math.abs(this.price - this.stoplossValue).toFixed(2));	
+		}
+		
+		let product = '';
+		if(this.segment == 'MCX' && !this.isIntraday) {
+			product = 'NRML'
 		}
 
-		this.http.post(config.API_ROOT + 'order', payload)
+		if(this.isIntraday) {
+			product = 'MIS'
+		}
+
+		if(this.segment != 'MCX' && !this.isIntraday) {
+			product = 'CNC'
+		}
+
+		let order_type = 'LIMIT';
+		if(!this.isLimitOrder) {
+			order_type = 'MARKET'
+		}
+		if(this.isStoplossOrder && this.isLimitOrder) {
+			order_type = 'SL'
+		}
+
+		if(this.isStoplossOrder && !this.isLimitOrder) {
+			order_type = 'SL-M'
+		}
+
+
+
+		let payload = {
+			exchange: this.segment,
+			tradingsymbol: this.tradingsymbol,
+			transaction_type: this.transactionType,
+			order_type: order_type,
+			quantity: this.quantity / this.multiplier,
+			price: this.isLimitOrder ? this.price : 0,
+			product: product,
+			validity: 'DAY',
+			disclosed_quantity: 0,
+			trigger_price: this.isStoplossOrder || this.isCoverOrder ? this.stoplossValue : 0,
+			squareoff: squareoff,
+			stoploss: stoploss,
+			trailing_stoploss: 0,
+			variety: this.orderType,
+		}
+
+		console.log(payload);
+
+		/*this.http.post(config.API_ROOT + 'order', payload)
 		.subscribe(data => {
 			var result = JSON.parse(data.json().body);
 			console.log(result);
-		})
+		})*/
 	}
 	
 }
