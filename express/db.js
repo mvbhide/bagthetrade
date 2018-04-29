@@ -136,7 +136,7 @@ db.clearInstrumentsTable = function() {
 		console.log("Clearing Instruments table")
 		var conn = connect();
 		console.log("connection", conn)
-		var query = "DELETE FROM instruments";
+		var query = "TRUNCATE TABLE instruments";
 
 		conn.query(query, {}, function(err, results) {
 			console.log("Error: ", err)

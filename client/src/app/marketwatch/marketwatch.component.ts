@@ -22,15 +22,15 @@ import * as config from '../shared/services/config.service'
 					<div class='stock-name col-md-6'>{{stock.tradingsymbol}}</div>
 					<div class='ltp col-md-6 text-right'>{{stock.ltp}}</div>
 				</div>
-				<div class="row">
+				<!-- <div class="row">
 					<div class='segment col-md-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
 					<div class='segment col-md-6' *ngIf="stock.segment!=='MCX'">{{stock.segment}}</div>
-				</div>
+				</div> -->
 				<div class="stock-details" id="{{stock.instrument_token}}">
 					<div class="stock-actions">
-						<button (click)="buyThis(stock)" class="btn buy-colored">B</button>
-						<button (click)="sellThis(stock)" class="btn sell-colored">S</button>
-						<button (click)="showHideDepth(stock)" class="btn">D</button>
+						<button (click)="buyThis(stock)" class="action-button buy-colored">B</button>
+						<button (click)="sellThis(stock)" class="action-button  sell-colored">S</button>
+						<button (click)="showHideDepth(stock)" class="action-button ">D</button>
 						<button (click)="removeFromMarketwatch(stock.instrument_token)" type="button" class="btn close" aria-label="Close" title="Remove from watchlist">&times;</button>
 					</div>
 				</div>
@@ -75,7 +75,11 @@ import * as config from '../shared/services/config.service'
 		.hide-watchlist {
 			display: none;
 		}
-
+		.action-button {
+			padding: 2px 8px;
+			border: 1px solid;
+			cursor: pointer;
+		}
 		.div-watchlist {
 			margin-top: 30px;
 			border-bottom: 1px solid #CCC;
@@ -124,7 +128,9 @@ import * as config from '../shared/services/config.service'
 		.input-auto-complete {
 			width: 100%;
 			display: inline-block;
-			padding: 2px;
+			padding: 5px 10px;
+			border: none;
+			border-bottom: 1px solid #CCC;
 		}
 	`],
 	animations: [
