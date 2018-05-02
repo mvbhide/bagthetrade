@@ -1,4 +1,4 @@
-var mysql = require('mysql-wrapper');
+var mysql = require('mysql');
 var config = require('./config')
 var Promise = require('promise');
 var db = {};
@@ -6,10 +6,10 @@ var _ = require('lodash');
 var fs = require('fs');
 
 connect = function(){
-	var conn = mysql({
+	var conn = mysql.createConnection({
 		host: config.DB.host,
 		user: config.DB.username,
-		password: '',//'YP]XMpV1xGyJ',
+		password: 'YP]XMpV1xGyJ',
 		database: config.DB.database,
 		multipleStatements: true
 	})
