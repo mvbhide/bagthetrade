@@ -22,7 +22,7 @@ import * as config from '../shared/services/config.service'
 			<div class="order-details col-lg-10">
 				{{transactionType}} {{quantity}} of {{tradingsymbol}} @ {{price | currency : 'INR' : true}}
 			</div>
-			<div class="col-lg-2 change-transaction-type text-right" (click)="toggleTransactionType();">B <i class="glyphicon glyphicon-transfer"></i> S</div>
+			<div class="col-lg-2 change-transaction-type text-right" (click)="toggleTransactionType();">B <span class="oi oi-loop"></span> S</div>
 		</div>
 		<div class='order-form' >
 			<form>
@@ -63,7 +63,7 @@ import * as config from '../shared/services/config.service'
 						</div>
 						<div class="metadata col-lg-6" *ngIf='isIntraday'>
 							<label>Leverage: {{leverage | number:'2.1-1'}}x</label>
-							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : marginRequired > ds.equityNet}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
+							<label>Required Margin: </label><span class="margin-required" [ngClass]="{'loss' : segment == 'MCX' ? marginRequired > ds.commodityNet : marginRequired > ds.equityNet}">{{marginRequired | currency: 'INR' : true : '2.0-2'}}</span>
 						</div>
 					</div>
 				</div>
@@ -417,11 +417,14 @@ export class OrderFormComponent {
 
 		console.log(payload);
 
-		/*this.http.post(config.API_ROOT + 'order', payload)
+		var headers = new Headers();
+		headers.append("content-type", "application/x-www-form-urlencoded")
+
+		this.http.post(config.API_ROOT + 'placeorder', payload)
 		.subscribe(data => {
 			var result = JSON.parse(data.json().body);
 			console.log(result);
-		})*/
+		})
 	}
 	
 }

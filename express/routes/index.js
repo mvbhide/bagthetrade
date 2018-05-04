@@ -243,6 +243,44 @@ router.get('/margins', function(req, res, next) {
 	
 })
 
+router.post('/placeorder', function(req, res, next) {
+	var kitecookie;
+	var csrftoken;
+
+	redis.hget("u1", "kitecookie", function(err, val) {
+		kitecookie = val;
+	});
+
+	redis.hget("u1", "csrftoken", function(err, val) {
+		csrftoken = val;
+	});
+	var variety = req.body.variety
+	setTimeout(function() {
+		var options = {
+			url: "https://kite.zerodha.com/api/orders/" + variety,
+			form: req.body,
+			headers: {
+				"pragma": "no-cache",
+				"method": "POST",
+				"content-type": "application/x-www-form-urlencoded",
+				"cookie": kitecookie,
+				"accept-language": "en-US,en;q=0.9",
+				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+				"x-kite-version": "1.1.16",
+				"accept": "application/json, text/plain, */*",
+				"cache-control": "no-cache",
+				"authority": "kite.zerodha.com",
+				"referer": "https://kite.zerodha.com/dashboard",
+				"x-csrftoken": csrftoken
+			}
+		}
+		request.post(options, function(err, response, body) {
+			res.json(response)
+		})	
+	}, 1000)
+	
+})
+
 router.get('/session', function(req, res, next) {
 	var a;
 	redis.hget("u1", "kitecookie", function(err, val) {

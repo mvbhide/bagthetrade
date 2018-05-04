@@ -7,6 +7,8 @@ export class DataService {
 	availableFunds: number = 0;
 	equityNet: number = 0;
 	commodityNet: number = 0;
+	equityCash: number = 0;
+	commodityCash: number = 0;
 	pnl: number = 0;
 	brotax: number = 0;
 	marginData: any;
@@ -55,6 +57,8 @@ export class DataService {
 	setFunds(marginData) {
 		this.equityNet = marginData.equity.net;
 		this.commodityNet = marginData.commodity.net;
+		this.equityCash = marginData.equity.available.cash;
+		this.commodityCash = marginData.commodity.available.cash + marginData.commodity.available.intraday_payin;
 		this.totalFunds = marginData.equity.available.cash;
 		this.fundsUpdated.emit({total: this.totalFunds, available: this.availableFunds, equityNet: this.equityNet, commodityNet: this.commodityNet});	
 	}

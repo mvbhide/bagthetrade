@@ -11,15 +11,15 @@ import * as config from '../shared/services/config.service';
 		<div class='fund-summary-container row'>
 			<div class='total-funds col-lg-2'>
 				<label>Equity : </label>
-				<h3 [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{equityNet | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
+				<h3 [ngClass]="{'profit' : totalFunds >= 0 , 'loss' : totalFunds < 0}">{{ds.equityCash | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
 			</div>
 			<div class='available-funds col-lg-2'>
 				<label>Commodity : </label>
-				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{commodityNet | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
+				<h3 [ngClass]="{'profit' : availableFunds >= 0, 'loss' : availableFunds < 0}">{{ds.commodityCash | currency : 'INR' : 'symbol': '1.2-2'}}</h3>
 			</div>
 			<div class='profit-loss col-lg-4'>
-				<label>Intraday P/L</label><span class="lbl-small"> (including brokerage & Taxes) </span>
-				<h3 [ngClass]="{'profit' : ds.pnl >= 0, 'loss' : ds.pnl < 0}">{{ds.pnl | currency : 'INR' : 'true': '1.2-2'}}</h3> <h5>{{ds.pnl / ds.totalFunds | percent : '1.2-2'}}</h5><span class="small"> of your account value</span>
+				<label>Intraday P/L</label>
+				<h3 [ngClass]="{'profit' : ds.pnl >= 0, 'loss' : ds.pnl < 0}">{{ds.pnl | currency : 'INR' : 'true': '1.2-2'}}</h3> <h5>{{ds.pnl / (ds.equityCash + ds.commodityCash) | percent : '1.2-2'}}</h5><span class="small"> of your account value</span>
 
 			</div>
 		</div>

@@ -21,7 +21,7 @@ import * as config from '../../shared/services/config.service';
 							<div class="pnl-block">
 								<label class="pnl-label">Profit/Loss at LTP</label>
 								<label class="pnl-value"  [ngClass]="{'profit' : pOrders.pnl >= 0 , 'loss' : pOrders.pnl < 0}">{{pOrders.pnl | currency : 'INR' : true : '1.2-2'}}</label>
-								<label class="pnl-percent">({{(pOrders.pnl / ds.totalFunds) | percent : '1.2-2'}} of your funds)</label>
+								<label class="pnl-percent">({{(pOrders.pnl / (ds.totalFunds) | percent : '1.2-2'}} of your funds)</label>
 							</div>
 						</div>
 						<div class="col-lg-2">
@@ -110,12 +110,13 @@ import * as config from '../../shared/services/config.service';
 							<td>{{i}}</td>
 							<td>{{positions[i].quantity}}</td>
 							<td>{{positions[i].ltp}}</td>
-							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{(positions[i].quantity > 0 ? positions[i].projectedpnl : positions[i].pnl) | number : '1.2-2' }}</td>
-							<td>{{(positions[i].projectedpnl / ds.totalFunds) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl | number : '1.2-2' }}</td>
+							<td *ngIf="positions[i].exchange!='MCX'">{{(positions[i].projectedpnl / ds.equityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td *ngIf="positions[i].exchange=='MCX'">{{(positions[i].projectedpnl / ds.commodityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
 							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
 							<td>
 								<div class="btn-group dropup">
-									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Show Actions</button>
+									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
 									<div class="dropdown-menu">
 										<a class="dropdown-item" href="#">Exit</a>
 										<a class="dropdown-item" href="#">Move Stop loss to breakeven</a>
@@ -153,7 +154,7 @@ import * as config from '../../shared/services/config.service';
 					<td>{{order.status}}</td>
 					<td>{{order.order_id}}</td>
 					<td>{{order.parent_order_id}}</td>
-					<td>{{order.broTax}}</td>
+					<td>{{order.broTax | number : '1.2-2'}}</td>
 				</tr>
 			</table>
 		</div>
@@ -235,7 +236,7 @@ export class CurrentOrdersComponent implements OnInit {
 			this.orders = JSON.parse(res.body).data
 			this.clubOrders()
 		})
-		
+		console.log(ds)
 		this.cPort = cPort;
 		this.ds = ds;
 	}
@@ -293,6 +294,11 @@ export class CurrentOrdersComponent implements OnInit {
 					case 'NICKEL' :
 						orders[i].multiplier = 250;
 						break;
+					case 'NICKELM' :
+						orders[i].multiplier = 100;
+						break;
+					case 'SILVERMIC' :
+						orders[i].multiplier = 1;
 				}
 			} else {
 				orders[i].multiplier = 1;
@@ -303,6 +309,7 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol]['instrument_token'] = orders[i].instrument_token;
 				this.positions[orders[i].tradingsymbol]['multiplier'] = orders[i].multiplier;
 				this.positions[orders[i].tradingsymbol]['quantity'] = 0;
+				this.positions[orders[i].tradingsymbol]['exchange'] = orders[i].exchange;
 				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
@@ -315,42 +322,70 @@ export class CurrentOrdersComponent implements OnInit {
 			
 			if(orders[i]['status'] != 'REJECTED' && orders[i]['status'] != 'CANCELLED' && orders[i].status !== 'OPEN' && orders[i].status !== 'TRIGGER PENDING'){
 			
-				if(orders[i].transaction_type == 'SELL') {
+				if(orders[i].transaction_type == 'SELL' || orders[i].transaction_type == 'SOLD') {
 					try {
-						this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
+						this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
 						this.positions[orders[i].tradingsymbol]['pnl'] += (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 					} catch (e) {
 						console.log(orders[i]);
 					}
 					
 				}
-				if(orders[i].transaction_type == 'BUY') {
-					this.positions[orders[i].tradingsymbol].quantity -= orders[i].quantity;
+				if(orders[i].transaction_type == 'BUY' || orders[i].transaction_type == 'BOUGHT') {
+					this.positions[orders[i].tradingsymbol].quantity += orders[i].quantity;
 					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 				}	
 			}
 
 			if( orders[i].status != 'REJECTED'){
 				let o = orders[i];
-				
+
 				o.quantity = o.quantity * o.multiplier;
 
-				let turnover = o.price == 0 ? o.average_price * o.quantity : o.price * o.quantity;
+				let nonzeroPrice = "";
+				if(o.price != 0) {
+					nonzeroPrice = 'price';
+				} else if (o.average_price != 0) {
+					nonzeroPrice = 'average_price';
+				} else {
+					nonzeroPrice = 'trigger_price';
+				}
+
+				let turnover = o[nonzeroPrice] * o.quantity;
+
 				let brokerage = parseFloat(Math.min(turnover*0.0001, 20).toFixed(2));
 
-				let transactionCharges = parseFloat((turnover * 0.0000325).toFixed(2));
+				let transactionCharges = 0;
+				let clearingCharges = 0;
+				if(o.exchange =='MCX') {
+					transactionCharges = parseFloat((turnover * 0.000026).toFixed(2));
+					clearingCharges += parseFloat((turnover * 0.00001).toFixed(2));
+				} else {
+					transactionCharges = parseFloat((turnover * 0.0000325).toFixed(2));	
+				}
+				
 
 				// Transaction tax is levied on the sell side of the order
 				let transactionTax = 0;
 				if( o.transaction_type == 'SELL') {
-					transactionTax = Math.round(parseFloat(((o.price * o.quantity) * 0.00025).toFixed(2)));
+					if(o.exchange == 'MCX') {
+						transactionTax = parseFloat(((o[nonzeroPrice] * o.quantity) * 0.0001).toFixed(2));
+					} else {
+						transactionTax = parseFloat(((o[nonzeroPrice] * o.quantity) * 0.00025).toFixed(2));	
+					}
+					
 				}
 			
-				let gst = parseFloat(((brokerage + transactionCharges) * 0.18).toFixed(2));
-				let stampDuty = parseFloat((turnover * 0.00002).toFixed(2));
+				let gst = parseFloat(((brokerage + transactionCharges + clearingCharges) * 0.18).toFixed(2));
+				let stampDuty = 0;
+				if(o.exchange == 'MCX') {
+					stampDuty = parseFloat((turnover * 0.00001).toFixed(2));
+				} else {
+					stampDuty = parseFloat((turnover * 0.00002).toFixed(2));
+				}
 				let sebiCharges = parseFloat((turnover * 0.0000015).toFixed(2));
 
-				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;	
+				o.broTax = brokerage + transactionCharges + transactionTax + clearingCharges + gst + stampDuty + sebiCharges;	
 			}
 			
 			
@@ -440,7 +475,6 @@ export class CurrentOrdersComponent implements OnInit {
 
 
 	toggleIncludeBroTax() {
-		console.log(this.latestTicks);
 		this.includeBroTax = !this.includeBroTax;
 		this.calculatePositions(this.latestTicks)
 	}
@@ -465,14 +499,13 @@ export class CurrentOrdersComponent implements OnInit {
 						}
 					}
 				}	
-			
-			
-			
+
 				for(let j=0; j<tickdata.length;j++) {
 					if(tickdata[j].Token == o.instrument_token){
 						o.ltp = tickdata[j].LastTradedPrice;
-						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)
-
+						
+						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
+						
 						if(this.includeBroTax == true) {
 							o.projectedpnl -= o.brotax
 						}
