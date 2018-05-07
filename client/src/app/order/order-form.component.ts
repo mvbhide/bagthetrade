@@ -420,10 +420,15 @@ export class OrderFormComponent {
 		var headers = new Headers();
 		headers.append("content-type", "application/x-www-form-urlencoded")
 
+		var self = this;
+
 		this.http.post(config.API_ROOT + 'placeorder', payload)
 		.subscribe(data => {
 			var result = JSON.parse(data.json().body);
-			console.log(result);
+			if(result.status == 'success') {
+				self.ds.showOverlay = false;
+				self.ds.showOrderForm = false;
+			}
 		})
 	}
 	

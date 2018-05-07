@@ -101,6 +101,26 @@ db.getInstrumentToken = function(tradingsymbol) {
 }
 
 
+db.getInstrument = function(instrument_token) {
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		
+		var query = "SELECT * from instruments WHERE `instrument_token`='" + instrument_token + "'";
+		console.log(query)
+		conn.query(query, function(err, results) {
+			if(results && results.length == 1) {
+				objResults.success = true;
+				objResults.data = results[0];
+				resolve(objResults);
+			} else {
+				objResults.success = false;
+				objResults.data = err;
+				reject(objResults)
+			}
+		})
+	})	
+}
+
 db.setInstrumentData = function(objInstrument) {
 	var query = "INSERT INTO instruments (tradingsymbol, instrument_token, tick_size, instrument_type, segment, lot_size, strike, expiry ) VALUES ('" + objInstrument.tradingsymbol + "', " + objInstrument.instrument_token + ", " + objInstrument.tick_size + ", '" + objInstrument.instrument_type + "', '" + objInstrument.segment + "', " + objInstrument.lot_size + ", " + objInstrument.strike + ", '" + objInstrument.expiry + "')";
 	conn.query(query, objInstrument, function(err, results) {

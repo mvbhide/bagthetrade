@@ -104,6 +104,7 @@ import * as config from '../../shared/services/config.service';
 						<th>% change</th>
 						<th>Brokerage</th>
 						<th>Action</th>
+
 					</thead>
 					<tbody>
 						<tr *ngFor="let i of objectkeys(positions)">
@@ -118,9 +119,10 @@ import * as config from '../../shared/services/config.service';
 								<div class="btn-group dropup">
 									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
 									<div class="dropdown-menu">
-										<a class="dropdown-item" href="#">Exit</a>
-										<a class="dropdown-item" href="#">Move Stop loss to breakeven</a>
-										<a class="dropdown-item" href="#">Modify</a>
+										<a class="dropdown-item" href="javascript:void(0)">Exit</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, positions[i])">Move Stoploss to breakeven</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders)">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
+										<a class="dropdown-item" href="javascript:void(0)">Modify</a>
 									</div>
 								</div>
 							</td>
@@ -257,6 +259,124 @@ export class CurrentOrdersComponent implements OnInit {
 		})
 	}
 
+	moveSlToBreakeven(orders, position) {
+
+		var initialOrder = _.filter(this.orders, function(o) {
+			return o.order_id == orders[0].parent_order_id
+		})[0]
+
+		var buyPrice = initialOrder.price;
+		
+		var brotax = initialOrder.broTax + orders[0].broTax;
+		var margin = initialOrder.price * initialOrder.quantity;
+		var breakevenMargin = margin - brotax;
+		var breakeven = breakevenMargin - buyPrice;
+
+		var self = this;
+
+		this.http.get(config.API_ROOT + 'getinstrument/' + initialOrder.instrument_token)
+		.subscribe(result => {
+			var data = result.json();
+			if(data.success == true) {
+				var instrument = data.data;
+				let i=0;
+				let sum = 0;
+				let testPrice = 0;
+				do {
+					if(initialOrder.transaction_type == 'BOUGHT') {
+						testPrice = buyPrice + i;
+					} else {
+						testPrice = buyPrice - i;
+					}
+					sum = breakevenMargin - (testPrice * initialOrder.quantity)
+					i += instrument.tick_size;
+				} while(sum < 0)
+				
+
+				_.map(orders, function(order) {
+					let payload = {
+						orderid: order.order_id,
+						exchange: order.exchange,
+						tradingsymbol: order.tradingsymbol,
+						transaction_type: order.transaction_type,
+						order_type: order.order_type,
+						quantity: order.quantity / order.multiplier,
+						price: 0,
+						product: order.product,
+						validity: 'DAY',
+						disclosed_quantity: 0,
+						trigger_price: testPrice,
+						variety: order.variety,
+					}
+
+					console.log(payload);
+
+					var headers = new Headers();
+					headers.append("content-type", "application/x-www-form-urlencoded")
+
+					self.http.post(config.API_ROOT + 'modifyorder', payload)
+					.subscribe(data => {
+						var result = JSON.parse(data.json().body);
+						console.log(result);
+					})
+				})		
+			}
+		})
+
+		
+
+		
+
+		
+	}
+	
+
+	moveTargetToBidOffer(orders, auctionSide = 'bid') {
+		var tick = _.filter(this.latestTicks.ticks, function(i) {
+			return i.Token == orders[0].instrument_token;
+		})
+
+		var targetPrice = 0;
+
+		if(auctionSide.toLowerCase() == 'bid') {
+			targetPrice = tick[0].Depth.buy[0].Price;
+		}
+
+		if(auctionSide.toLowerCase() == 'offer') {
+			targetPrice = tick[0].Depth.sell[0].Price;
+		}
+		
+		var self = this;
+
+		_.map(orders, function(order) {
+			let payload = {
+				orderid: order.order_id,
+				exchange: order.exchange,
+				tradingsymbol: order.tradingsymbol,
+				transaction_type: order.transaction_type,
+				order_type: order.order_type,
+				quantity: order.quantity / order.multiplier,
+				price: targetPrice,
+				product: order.product,
+				validity: 'DAY',
+				disclosed_quantity: 0,
+				trigger_price: order.trigger_price,
+				variety: order.variety,
+			}
+
+			console.log(payload);
+
+			var headers = new Headers();
+			headers.append("content-type", "application/x-www-form-urlencoded")
+
+			self.http.post(config.API_ROOT + 'modifyorder', payload)
+			.subscribe(data => {
+				var result = JSON.parse(data.json().body);
+				console.log(result);
+			})
+		})
+	}
+
 	moveTarget(order) {
 		let targetOrders = order.targetOrders;
 		let price = order.topAsk;
@@ -314,6 +434,16 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
 				this.positions[orders[i].tradingsymbol]['brotax'] = 0;
+				this.positions[orders[i].tradingsymbol]['sl_orders'] = [];
+				this.positions[orders[i].tradingsymbol]['target_orders'] = [];
+			}
+
+			if(orders[i].status == 'TRIGGER PENDING') {
+				this.positions[orders[i].tradingsymbol].sl_orders.push(orders[i]);
+			}
+
+			if(orders[i].status == 'OPEN') {
+				this.positions[orders[i].tradingsymbol].target_orders.push(orders[i]);
 			}
 
 			if(orders[i].broTax) {
@@ -498,13 +628,17 @@ export class CurrentOrdersComponent implements OnInit {
 							this.ds.brotax += o.brotax;
 						}
 					}
-				}	
+				}	;
 
 				for(let j=0; j<tickdata.length;j++) {
 					if(tickdata[j].Token == o.instrument_token){
 						o.ltp = tickdata[j].LastTradedPrice;
+						if(o.quantity > 0) {
+							o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)		
+						} else {
+							o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
+						}
 						
-						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
 						
 						if(this.includeBroTax == true) {
 							o.projectedpnl -= o.brotax

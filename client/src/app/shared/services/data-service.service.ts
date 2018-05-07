@@ -80,7 +80,6 @@ export class DataService {
 			quote.topAsk = insData.Depth.buy.length > 0 ? insData.Depth.buy[0].Price : 0;	
 			return quote;
 		}
-		
 	}
 
 	getFullQuote(instrumentToken) {
