@@ -9,6 +9,7 @@ var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
 var request = require('request');
+var querystring = require('querystring');
 var Promise = require('promise');
 var redis = require('redis').createClient('redis://kitetest:RedisTest@redis-19229.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:19229');
 var _ = require('lodash');
@@ -213,6 +214,7 @@ router.get('/getinstrument/:token', function(req, res, next) {
 	console.log(token);
 	db.getInstrument(token)
 	.then(function(response) {
+		console.log(response);
 		res.json(response);
 	})
 })
@@ -325,9 +327,48 @@ router.post('/modifyorder', function(req, res, next) {
 		request.put(options, function(err, response, body) {
 			res.json(response)
 		})	
-	}, 1000)
-	
+	}, 1000)	
 })
+
+router.post('/exit', function(req, res, next) {
+	var kitecookie;
+	var csrftoken;
+
+	redis.hget("u1", "kitecookie", function(err, val) {
+		kitecookie = val;
+	});
+
+	redis.hget("u1", "csrftoken", function(err, val) {
+		csrftoken = val;
+	});
+	var order_id = req.body.order_id;
+	var variety = req.body.variety
+	var qryStr = querystring.stringify(req.body);
+
+	setTimeout(function() {
+		var options = {
+			url: "https://kite.zerodha.com/api/orders/" + variety + "/" + order_id + "?" + qryStr,
+			method: 'DELETE',
+			headers: {
+				"pragma": "no-cache",
+				"method": "PUT",
+				"content-type": "application/x-www-form-urlencoded",
+				"cookie": kitecookie,
+				"accept-language": "en-US,en;q=0.9",
+				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+				"x-kite-version": "1.1.16",
+				"accept": "application/json, text/plain, */*",
+				"cache-control": "no-cache",
+				"authority": "kite.zerodha.com",
+				"referer": "https://kite.zerodha.com/orders",
+				"x-csrftoken": csrftoken
+			}
+		}
+		request.delete(options, function(err, response, body) {
+			res.json(response)
+		})	
+	}, 1000)	
+});
 
 router.get('/session', function(req, res, next) {
 	var a;

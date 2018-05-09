@@ -108,15 +108,16 @@ db.getInstrument = function(instrument_token) {
 		var query = "SELECT * from instruments WHERE `instrument_token`='" + instrument_token + "'";
 		console.log(query)
 		conn.query(query, function(err, results) {
-			if(results && results.length == 1) {
+			console.log(err, results)
+			//if(results && results.length == 1) {
 				objResults.success = true;
 				objResults.data = results[0];
 				resolve(objResults);
-			} else {
+			/*} else {
 				objResults.success = false;
 				objResults.data = err;
 				reject(objResults)
-			}
+			}*/
 		})
 	})	
 }

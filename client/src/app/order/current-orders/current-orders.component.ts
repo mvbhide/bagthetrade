@@ -99,33 +99,35 @@ import * as config from '../../shared/services/config.service';
 					<thead>
 						<th>Instrument</th>
 						<th>Quantity</th>
+						<th>Avg. Price</th>
 						<th>LTP</th>
 						<th>Profit / Loss <input type="checkbox" (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
+						<th>Action</th>
 						<th>% change</th>
 						<th>Brokerage</th>
-						<th>Action</th>
-
 					</thead>
 					<tbody>
-						<tr *ngFor="let i of objectkeys(positions)">
+						<tr *ngFor="let i of objectkeys(positions)" [ngClass]="{'active' : positions[i].quantity != 0, 'inactive' : positions[i].quantity == 0}">
 							<td>{{i}}</td>
 							<td>{{positions[i].quantity}}</td>
+							<td>{{positions[i].average_price}}</td>
 							<td>{{positions[i].ltp}}</td>
 							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl | number : '1.2-2' }}</td>
-							<td *ngIf="positions[i].exchange!='MCX'">{{(positions[i].projectedpnl / ds.equityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
-							<td *ngIf="positions[i].exchange=='MCX'">{{(positions[i].projectedpnl / ds.commodityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
-							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
-							<td>
+							<td *ngIf="positions[i].quantity != 0">
 								<div class="btn-group dropup">
 									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
 									<div class="dropdown-menu">
-										<a class="dropdown-item" href="javascript:void(0)">Exit</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="exit(positions[i].sl_orders)">Exit</a>
 										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, positions[i])">Move Stoploss to breakeven</a>
-										<a class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders)">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
 										<a class="dropdown-item" href="javascript:void(0)">Modify</a>
 									</div>
 								</div>
 							</td>
+							<td *ngIf="positions[i].quantity == 0"></td>
+							<td *ngIf="positions[i].exchange!='MCX'">{{(positions[i].projectedpnl / ds.equityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td *ngIf="positions[i].exchange=='MCX'">{{(positions[i].projectedpnl / ds.commodityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -191,7 +193,10 @@ import * as config from '../../shared/services/config.service';
 		.order-type {
 			margin: 10px 0px;
 		}
-
+		.table tr.inactive {
+			opacity: 0.8;
+			background: #F5F5F5;
+		}
 		.change-transaction-type {
 			cursor: pointer;
 		}
@@ -259,6 +264,28 @@ export class CurrentOrdersComponent implements OnInit {
 		})
 	}
 
+	exit(orders) {
+		var self = this;
+		_.map(orders, function(order) {
+			let payload = {
+				order_id: order.order_id,
+				parent_order_id: order.parent_order_id,
+				variety: order.variety,
+			}
+
+			console.log(payload);
+
+			var headers = new Headers();
+			headers.append("content-type", "application/x-www-form-urlencoded")
+
+			self.http.post(config.API_ROOT + 'exit', payload)
+			.subscribe(data => {
+				var result = JSON.parse(data.json().body);
+				console.log(result);
+			})
+		})				
+	}
+
 	moveSlToBreakeven(orders, position) {
 
 		var initialOrder = _.filter(this.orders, function(o) {
@@ -322,12 +349,6 @@ export class CurrentOrdersComponent implements OnInit {
 				})		
 			}
 		})
-
-		
-
-		
-
-		
 	}
 	
 
@@ -345,7 +366,7 @@ export class CurrentOrdersComponent implements OnInit {
 		if(auctionSide.toLowerCase() == 'offer') {
 			targetPrice = tick[0].Depth.sell[0].Price;
 		}
-		
+
 		var self = this;
 
 		_.map(orders, function(order) {
@@ -432,18 +453,26 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol]['exchange'] = orders[i].exchange;
 				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
+				this.positions[orders[i].tradingsymbol]['orders_count'] = 0;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
 				this.positions[orders[i].tradingsymbol]['brotax'] = 0;
 				this.positions[orders[i].tradingsymbol]['sl_orders'] = [];
 				this.positions[orders[i].tradingsymbol]['target_orders'] = [];
 			}
 
+			if(!this.positions[orders[i].tradingsymbol]) continue;
+console.log(orders[i].status)
 			if(orders[i].status == 'TRIGGER PENDING') {
 				this.positions[orders[i].tradingsymbol].sl_orders.push(orders[i]);
 			}
 
 			if(orders[i].status == 'OPEN') {
 				this.positions[orders[i].tradingsymbol].target_orders.push(orders[i]);
+			}
+
+			if(orders[i].status == 'COMPLETE') {
+				this.positions[orders[i].tradingsymbol]['orders_count']++
+				this.positions[orders[i].tradingsymbol].average_price = orders[i].average_price / this.positions[orders[i].tradingsymbol]['orders_count']
 			}
 
 			if(orders[i].broTax) {
@@ -466,7 +495,7 @@ export class CurrentOrdersComponent implements OnInit {
 					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 				}	
 			}
-
+console.log(this.positions)
 			if( orders[i].status != 'REJECTED'){
 				let o = orders[i];
 
@@ -517,8 +546,6 @@ export class CurrentOrdersComponent implements OnInit {
 
 				o.broTax = brokerage + transactionCharges + transactionTax + clearingCharges + gst + stampDuty + sebiCharges;	
 			}
-			
-			
 			//o['pnl'] = (o['price'] - o.ltp)*o['quantity']*o['multiplier'];
 		}
 		console.log(this.orders)

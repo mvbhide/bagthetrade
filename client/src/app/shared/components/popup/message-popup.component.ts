@@ -18,6 +18,7 @@ import { Component, Input } from '@angular/core'
 			background: rgba(39, 174, 96, 0.5);
 			padding: 10px;
 			width: 150px;
+			display: none;
 			box-shadow: 0px 0px 5px 1px #333;
 			top: 100px;
 			right: 25px;
