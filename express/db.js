@@ -9,7 +9,7 @@ connect = function(){
 	var conn = mysql.createConnection({
 		host: config.DB.host,
 		user: config.DB.username,
-		password: 'YP]XMpV1xGyJ',
+		password: config.DB.password,
 		database: config.DB.database,
 		multipleStatements: true
 	})
