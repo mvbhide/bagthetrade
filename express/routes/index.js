@@ -9,7 +9,6 @@ var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
 var request = require('request');
-var querystring = require('querystring');
 var Promise = require('promise');
 var redis = require('redis').createClient('redis://kitetest:RedisTest@redis-19229.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:19229');
 var _ = require('lodash');
@@ -17,21 +16,7 @@ var _ = require('lodash');
 redis.on("error", function(err) {
 	console.log(err);
 })
-var kitecookie;
-var csrftoken;
 
-redis.hget("u1", "kitecookie", function(err, val) {
-	var kitecookie = val;
-});
-
-redis.hget("u1", "csrftoken", function(err, val) {
-	var csrftoken = val;
-});
-
-/* GET home page. */
-router.get('/', function(req, res, next) {
-	res.render('index', { title: 'Express' });
-});
 
 router.get('/ticker', function(req, res, next) {
 	var marketData = [];
@@ -113,19 +98,6 @@ router.get('/ticker', function(req, res, next) {
 
 })
 
-router.get('/timetest', function(req, res, next) {
-	var timer = setInterval(function() {
-		var d = new Date().getTime();
-		if(d%1000 == 0) {
-			console.log('Minute started', d);
-		}
-	}, 1)
-
-	setTimeout(function() {clearInterval(timer)}, 100000);
-
-	res.send("Done");
-})
-
 router.post('/orderhook', function(req, res, next){
 	var objOrder;
 	if(req.body && req.body.status == 'COMPLETE') {
@@ -174,40 +146,7 @@ init();
 	//}
 })
 
-router.get('/orders', function(req, res, next) {
-	var kitecookie;
-	var csrftoken;
 
-	redis.hget("u1", "kitecookie", function(err, val) {
-		kitecookie = val;
-	});
-
-	redis.hget("u1", "csrftoken", function(err, val) {
-		csrftoken = val;
-	});
-	
-	setTimeout(function() {
-		var options = {
-			url: "https://kite.zerodha.com/api/orders",
-			headers: {
-				"pragma": "no-cache",
-				"cookie": kitecookie,
-				"accept-language": "en-US,en;q=0.9",
-				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-				"x-kite-version": "1.1.16",
-				"accept": "application/json, text/plain, */*",
-				"cache-control": "no-cache",
-				"authority": "kite.zerodha.com",
-				"referer": "https://kite.zerodha.com/dashboard",
-				"x-csrftoken": csrftoken
-			}
-		}
-
-		request(options, function(err, response, body) {
-			res.json(response)
-		})
-	},1000);
-})
 
 router.get('/getinstrument/:token', function(req, res, next) {
 	var token = req.params.token;
@@ -220,166 +159,30 @@ router.get('/getinstrument/:token', function(req, res, next) {
 })
 
 router.get('/margins', function(req, res, next) {
-	var kitecookie;
-	var csrftoken;
+	var kitecookie = req.session.kitecookie;
+	var csrftoken = req.session.csrftoken;
 
-	redis.hget("u1", "kitecookie", function(err, val) {
-		kitecookie = val;
-	});
-
-	redis.hget("u1", "csrftoken", function(err, val) {
-		csrftoken = val;
-	});
-	
-	setTimeout(function() {
-		var options = {
-			url: "https://kite.zerodha.com/api/user/margins",
-			headers: {
-				"pragma": "no-cache",
-				"cookie": kitecookie,
-				"accept-language": "en-US,en;q=0.9",
-				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-				"x-kite-version": "1.1.16",
-				"accept": "application/json, text/plain, */*",
-				"cache-control": "no-cache",
-				"authority": "kite.zerodha.com",
-				"referer": "https://kite.zerodha.com/dashboard",
-				"x-csrftoken": csrftoken
-			}
+	var options = {
+		url: "https://kite.zerodha.com/api/user/margins",
+		headers: {
+			"pragma": "no-cache",
+			"cookie": kitecookie,
+			"accept-language": "en-US,en;q=0.9",
+			"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+			"x-kite-version": "1.1.16",
+			"accept": "application/json, text/plain, */*",
+			"cache-control": "no-cache",
+			"authority": "kite.zerodha.com",
+			"referer": "https://kite.zerodha.com/dashboard",
+			"x-csrftoken": csrftoken
 		}
-		request(options, function(err, response, body) {
-			res.json(response)
-		})	
-	}, 1000)
+	}
+	request(options, function(err, response, body) {
+		res.json(response)
+	})	
 	
 })
 
-router.post('/placeorder', function(req, res, next) {
-	var kitecookie;
-	var csrftoken;
-
-	redis.hget("u1", "kitecookie", function(err, val) {
-		kitecookie = val;
-	});
-
-	redis.hget("u1", "csrftoken", function(err, val) {
-		csrftoken = val;
-	});
-	var variety = req.body.variety
-	setTimeout(function() {
-		var options = {
-			url: "https://kite.zerodha.com/api/orders/" + variety,
-			form: req.body,
-			headers: {
-				"pragma": "no-cache",
-				"method": "POST",
-				"content-type": "application/x-www-form-urlencoded",
-				"cookie": kitecookie,
-				"accept-language": "en-US,en;q=0.9",
-				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-				"x-kite-version": "1.1.16",
-				"accept": "application/json, text/plain, */*",
-				"cache-control": "no-cache",
-				"authority": "kite.zerodha.com",
-				"referer": "https://kite.zerodha.com/dashboard",
-				"x-csrftoken": csrftoken
-			}
-		}
-		request.post(options, function(err, response, body) {
-			res.json(response)
-		})	
-	}, 1000)
-	
-})
-
-router.post('/modifyorder', function(req, res, next) {
-	var kitecookie;
-	var csrftoken;
-
-	redis.hget("u1", "kitecookie", function(err, val) {
-		kitecookie = val;
-	});
-
-	redis.hget("u1", "csrftoken", function(err, val) {
-		csrftoken = val;
-	});
-	var orderid	= req.body.orderid;
-	var variety = req.body.variety
-	setTimeout(function() {
-		var options = {
-			url: "https://kite.zerodha.com/api/orders/" + variety + "/" + orderid,
-			form: req.body,
-			headers: {
-				"pragma": "no-cache",
-				"method": "PUT",
-				"content-type": "application/x-www-form-urlencoded",
-				"cookie": kitecookie,
-				"accept-language": "en-US,en;q=0.9",
-				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-				"x-kite-version": "1.1.16",
-				"accept": "application/json, text/plain, */*",
-				"cache-control": "no-cache",
-				"authority": "kite.zerodha.com",
-				"referer": "https://kite.zerodha.com/orders",
-				"x-csrftoken": csrftoken
-			}
-		}
-		request.put(options, function(err, response, body) {
-			res.json(response)
-		})	
-	}, 1000)	
-})
-
-router.post('/exit', function(req, res, next) {
-	var kitecookie;
-	var csrftoken;
-
-	redis.hget("u1", "kitecookie", function(err, val) {
-		kitecookie = val;
-	});
-
-	redis.hget("u1", "csrftoken", function(err, val) {
-		csrftoken = val;
-	});
-	var order_id = req.body.order_id;
-	var variety = req.body.variety
-	var qryStr = querystring.stringify(req.body);
-
-	setTimeout(function() {
-		var options = {
-			url: "https://kite.zerodha.com/api/orders/" + variety + "/" + order_id + "?" + qryStr,
-			method: 'DELETE',
-			headers: {
-				"pragma": "no-cache",
-				"method": "PUT",
-				"content-type": "application/x-www-form-urlencoded",
-				"cookie": kitecookie,
-				"accept-language": "en-US,en;q=0.9",
-				"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-				"x-kite-version": "1.1.16",
-				"accept": "application/json, text/plain, */*",
-				"cache-control": "no-cache",
-				"authority": "kite.zerodha.com",
-				"referer": "https://kite.zerodha.com/orders",
-				"x-csrftoken": csrftoken
-			}
-		}
-		request.delete(options, function(err, response, body) {
-			res.json(response)
-		})	
-	}, 1000)	
-});
-
-router.get('/session', function(req, res, next) {
-	var a;
-	redis.hget("u1", "kitecookie", function(err, val) {
-		console.log(err, val);
-		a = val;
-		console.log(a)
-		res.send(a);
-	});
-	
-})
 
 router.post('/login', function(req, res, next) {
 	if(req.body) {
@@ -393,19 +196,27 @@ router.post('/login', function(req, res, next) {
 			if(kitecookie != '' && csrftoken != '') {
 				redis.hset("u" + response.data[0].id, "kitecookie", kitecookie, redis.print);
 				redis.hset("u" + response.data[0].id , "csrftoken", csrftoken, redis.print);
+				req.session.kitecookie = kitecookie;
+				req.session.csrftoken = csrftoken
+				req.session.save();
+			} else {
+				redis.hget("u" + response.data[0].id, "kitecookie", function(err, val) {
+					req.session.kitecookie = val;
+					req.session.save();
+					console.log(req.session)
+				});
+
+				redis.hget("u" + response.data[0].id, "csrftoken", function(err, val) {
+					req.session.csrftoken = val;
+					req.session.save();
+				});		
 			}
 				
 			res.json(response);
-
 		})
 	} else {
 		res.json("Error");
 	}
-})
-
-router.post('/order', function(req, res, next) {
-	var payload = req.body;
-	console.log(payload);
 })
 
 router.get('/getquote', function(req, res, next) {
@@ -574,18 +385,6 @@ function updateOrders() {
 	})
 }
 
-router.get('/tickertest', function(req, res, next) {
-	startTicker();
-	next();
-})
-
-router.post('/order', function(req, res, next) {
-	console.log("Hi")
-})
-
-function startTicker() {
-	ticker.subscribe(325121);
-}
 
 function requestAsync(url) {
 	return new Promise(function(resolve, reject) {
@@ -595,30 +394,5 @@ function requestAsync(url) {
         });
     });
 }
-
-
-
-router.get('/test', function(req, res, next) {
-	
-	var instruments = [{name: "Milind", tradingsymbol: "ACC18APR1000CE"},{name: "Pawan", tradingsymbol: "ACC18APR1100CE"},{name: "Sarita", tradingsymbol: "ABB18APR1000PE"},{name: "Swapnil", tradingsymbol: "ACC18APRFUT"}];
-	
-	var margins = [{a:1.5, tradingsymbol: "ACC18APRFUT", u:4}, {a:3.5, tradingsymbol: "ABB18APRFUT", u:3}];
-
-	var opt = _.map(instruments, function(i){
-	    if(i && i.tradingsymbol) {
-	        if(_.endsWith(i.tradingsymbol, 'CE') || _.endsWith(i.tradingsymbol, 'PE')) {
-	            return _.extend({}, _.find(margins, function (m) {
-	                let symbol = i.tradingsymbol.replace(/(\w+)(\d{2})(\w{3})(\d+)(\w+)/, "$1$2$3FUT")
-	                return m.tradingsymbol == symbol
-	            }),i);	
-	        } else {
-	            return _.extend(_.find(margins, function (m) {
-	                return _.includes(i.tradingsymbol, m.tradingsymbol)	
-	            }),i);	
-	        }
-	    }
-	})
-	res.json(opt);
-})
 
 module.exports = router;

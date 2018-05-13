@@ -147,17 +147,6 @@ export class MarketwatchComponent implements OnInit{
 	depthRange: Array<number> = _.range(5);
 
 	constructor(private cs: CommunicatorService, private http: Http, private ds: DataService, private ticker: TickerService) {
-	}
-
-	ngOnInit(): void {
-		this.ds.ticksUpdated.subscribe(ticks => {
-			this.stocks.map(stock => {
-				let quote = this.ds.getFullQuote(stock.instrument_token);
-				stock.ltp = quote ? quote.ltp : 0;
-				stock.Depth = quote.Depth;
-			})
-		});
-
 		let self = this;
 		this.ticker.on('connect', function() {
 			self.http.get(config.API_ROOT + 'marketwatch/get')
@@ -168,6 +157,16 @@ export class MarketwatchComponent implements OnInit{
 				})
 			})	
 		})
+	}
+
+	ngOnInit(): void {
+		this.ds.ticksUpdated.subscribe(ticks => {
+			this.stocks.map(stock => {
+				let quote = this.ds.getFullQuote(stock.instrument_token);
+				stock.ltp = quote ? quote.ltp : 0;
+				stock.Depth = quote.Depth;
+			})
+		});
 		
 	}
 	

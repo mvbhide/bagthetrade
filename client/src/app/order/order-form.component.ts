@@ -422,12 +422,18 @@ export class OrderFormComponent {
 
 		var self = this;
 
-		this.http.post(config.API_ROOT + 'placeorder', payload)
+		this.http.post(config.API_ROOT + 'orders/placeorder', payload, {withCredentials: true})
 		.subscribe(data => {
 			var result = JSON.parse(data.json().body);
 			if(result.status == 'success') {
 				self.ds.showOverlay = false;
 				self.ds.showOrderForm = false;
+
+				self.http.get(config.API_ROOT + 'orders', {withCredentials: true})
+				.subscribe(data => {
+					var result = JSON.parse(data.json().body);
+					self.ds.setCurrentOrders(result.data);
+				})
 			}
 		})
 	}

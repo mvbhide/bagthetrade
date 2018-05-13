@@ -1,8 +1,8 @@
-import {Component} from '@angular/core';
-import {Router} from '@angular/router';
-import {NgForm} from '@angular/forms';
-import {FundSummaryComponent} from '../funds/fund-summary.component';
-import {CommunicatorService} from '../shared/communicator/communicator.service';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { NgForm } from '@angular/forms';
+import * as config from '../shared/services/config.service'
+import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 
@@ -75,7 +75,7 @@ export class LoginComponent {
 			body = {u: email, p: password, csrfToken: csrfToken, kitecookie: kitecookie};
 		}
 		
-		this.http.post('http://localhost:8080/login', body)
+		this.http.post(config.API_ROOT + 'login', body, {withCredentials: true})
 		.subscribe(data => {
 			var res = data.json();
 			if(res.success && res.success == true) {

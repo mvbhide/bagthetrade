@@ -237,7 +237,7 @@ export class CurrentOrdersComponent implements OnInit {
 	latestTicks: any = "";
 
 	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http, private ticker: TickerService) {
-		this.http.get(config.API_ROOT + 'orders')
+		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 		.subscribe(data => {
 			var res = data.json();
 			this.orders = JSON.parse(res.body).data
@@ -278,7 +278,7 @@ export class CurrentOrdersComponent implements OnInit {
 			var headers = new Headers();
 			headers.append("content-type", "application/x-www-form-urlencoded")
 
-			self.http.post(config.API_ROOT + 'exit', payload)
+			self.http.post(config.API_ROOT + 'orders/exit', payload, {withCredentials: true})
 			.subscribe(data => {
 				var result = JSON.parse(data.json().body);
 				console.log(result);
@@ -341,7 +341,7 @@ export class CurrentOrdersComponent implements OnInit {
 					var headers = new Headers();
 					headers.append("content-type", "application/x-www-form-urlencoded")
 
-					self.http.post(config.API_ROOT + 'modifyorder', payload)
+					self.http.post(config.API_ROOT + 'orders/modifyorder', payload, {withCredentials: true})
 					.subscribe(data => {
 						var result = JSON.parse(data.json().body);
 						console.log(result);
@@ -390,7 +390,7 @@ export class CurrentOrdersComponent implements OnInit {
 			var headers = new Headers();
 			headers.append("content-type", "application/x-www-form-urlencoded")
 
-			self.http.post(config.API_ROOT + 'modifyorder', payload)
+			self.http.post(config.API_ROOT + 'orders/modifyorder', payload, {withCredentials: true})
 			.subscribe(data => {
 				var result = JSON.parse(data.json().body);
 				console.log(result);

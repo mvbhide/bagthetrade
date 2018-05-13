@@ -54,7 +54,7 @@ export class FundSummaryComponent implements OnInit {
 			this.brotax = this.ds.brotax;
 		})
 
-		this.http.get(config.API_ROOT + 'margins')
+		this.http.get(config.API_ROOT + 'margins', {withCredentials: true})
 		.subscribe(data => {
 			var funds = JSON.parse(data.json().body);
 			this.ds.setFunds(funds.data);
