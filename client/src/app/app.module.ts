@@ -40,6 +40,7 @@ import {InfoTooltipComponent} from './shared/components/info-tooltip/info-toolti
 import {MessagePopupComponent} from './shared/components/popup/message-popup.component';
 
 const appRoutes: Routes = [
+	{ path: '', redirectTo: '/login', pathMatch: 'full' },
 	{ path: 'dashboard', 	component: DashboardComponent },
 	{ path: 'login',      	component: LoginComponent },
 	{ path: '**', 			component: PageNotFoundComponent }
