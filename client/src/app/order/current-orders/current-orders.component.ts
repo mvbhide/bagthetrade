@@ -95,7 +95,8 @@ import * as config from '../../shared/services/config.service';
 				</table>
 			</div> -->
 			<div class="orders">
-				<table class="table table-sm">
+				<span class="oi oi-reload" (click)="refreshOrders();"> Refresh Orders </span>
+				<table class="table">
 					<thead>
 						<th>Instrument</th>
 						<th>Quantity</th>
@@ -113,13 +114,13 @@ import * as config from '../../shared/services/config.service';
 							<td>{{positions[i].average_price}}</td>
 							<td>{{positions[i].ltp}}</td>
 							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl | number : '1.2-2' }}</td>
-							<td *ngIf="positions[i].quantity != 0">
+							<td *ngIf="positions[i].quantity != 0" >
 								<div class="btn-group dropup">
 									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
 									<div class="dropdown-menu">
 										<a class="dropdown-item" href="javascript:void(0)" (click)="exit(positions[i].sl_orders)">Exit</a>
 										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, positions[i])">Move Stoploss to breakeven</a>
-										<a class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
+										<a *ngIf="positions[i].variety=='bo'" class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
 										<a class="dropdown-item" href="javascript:void(0)">Modify</a>
 									</div>
 								</div>
@@ -264,6 +265,15 @@ export class CurrentOrdersComponent implements OnInit {
 		})
 	}
 
+	refreshOrders() {
+		var self = this;
+		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
+		.subscribe(data => {
+			var result = JSON.parse(data.json().body);
+			self.ds.setCurrentOrders(result.data);
+		})
+	}
+
 	exit(orders) {
 		var self = this;
 		_.map(orders, function(order) {
@@ -287,16 +297,19 @@ export class CurrentOrdersComponent implements OnInit {
 	}
 
 	moveSlToBreakeven(orders, position) {
-
 		var initialOrder = _.filter(this.orders, function(o) {
 			return o.order_id == orders[0].parent_order_id
 		})[0]
 
 		var buyPrice = initialOrder.price;
-		
-		var brotax = initialOrder.broTax + orders[0].broTax;
+		var brotax = parseFloat(initialOrder.broTax) + _.sumBy(orders, function(o) {return o.broTax});
 		var margin = initialOrder.price * initialOrder.quantity;
-		var breakevenMargin = margin - brotax;
+		var breakevenMargin;
+		if(initialOrder.transaction_type == 'BOUGHT') {
+			breakevenMargin = margin + brotax;
+		} else {
+			breakevenMargin = margin - brotax;
+		}
 		var breakeven = breakevenMargin - buyPrice;
 
 		var self = this;
@@ -304,21 +317,28 @@ export class CurrentOrdersComponent implements OnInit {
 		this.http.get(config.API_ROOT + 'getinstrument/' + initialOrder.instrument_token)
 		.subscribe(result => {
 			var data = result.json();
+
 			if(data.success == true) {
 				var instrument = data.data;
 				let i=0;
 				let sum = 0;
 				let testPrice = 0;
+				console.log(buyPrice)
+				console.log(breakevenMargin)
+
 				do {
 					if(initialOrder.transaction_type == 'BOUGHT') {
 						testPrice = buyPrice + i;
+						sum = breakevenMargin - (testPrice * initialOrder.quantity)
 					} else {
 						testPrice = buyPrice - i;
+						sum = (testPrice * initialOrder.quantity) - breakevenMargin;
 					}
-					sum = breakevenMargin - (testPrice * initialOrder.quantity)
+					
+					console.log(testPrice,initialOrder.quantity, sum, (testPrice * initialOrder.quantity))
+
 					i += instrument.tick_size;
-				} while(sum < 0)
-				
+				} while(sum > 0)
 
 				_.map(orders, function(order) {
 					let payload = {
@@ -456,14 +476,16 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol]['orders_count'] = 0;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
 				this.positions[orders[i].tradingsymbol]['brotax'] = 0;
-				this.positions[orders[i].tradingsymbol]['sl_orders'] = [];
+				this.positions[orders[i].tradingsymbol]['sl_orders'] = new Array();
 				this.positions[orders[i].tradingsymbol]['target_orders'] = [];
+				this.positions[orders[i].tradingsymbol]['completed_orders'] = [];
 			}
 
 			if(!this.positions[orders[i].tradingsymbol]) continue;
-console.log(orders[i].status)
+
 			if(orders[i].status == 'TRIGGER PENDING') {
 				this.positions[orders[i].tradingsymbol].sl_orders.push(orders[i]);
+				console.log(this.positions[orders[i].tradingsymbol].sl_orders)
 			}
 
 			if(orders[i].status == 'OPEN') {
@@ -473,6 +495,7 @@ console.log(orders[i].status)
 			if(orders[i].status == 'COMPLETE') {
 				this.positions[orders[i].tradingsymbol]['orders_count']++
 				this.positions[orders[i].tradingsymbol].average_price = orders[i].average_price / this.positions[orders[i].tradingsymbol]['orders_count']
+				this.positions[orders[i].tradingsymbol].completed_orders.push(orders[i]);
 			}
 
 			if(orders[i].broTax) {
@@ -495,7 +518,7 @@ console.log(orders[i].status)
 					this.positions[orders[i].tradingsymbol]['pnl'] -= (orders[i].quantity * orders[i].average_price * orders[i].multiplier);
 				}	
 			}
-console.log(this.positions)
+
 			if( orders[i].status != 'REJECTED'){
 				let o = orders[i];
 
@@ -548,7 +571,6 @@ console.log(this.positions)
 			}
 			//o['pnl'] = (o['price'] - o.ltp)*o['quantity']*o['multiplier'];
 		}
-		console.log(this.orders)
 
 		if(orders.length == 0) return;
 		let clubbedOrders = [];
@@ -574,24 +596,6 @@ console.log(this.positions)
 			if((clubbedOrders['primaryOrders'][i]['variety'] == 'bo' || clubbedOrders['primaryOrders'][i]['variety'] == 'co' || clubbedOrders['primaryOrders'][i]['product'] == 'MIS') && clubbedOrders['primaryOrders'][i]['status'] != 'REJECTED') {
 				let o = clubbedOrders['primaryOrders'][i];
 				
-				/*o.quantity = o.quantity * o.multiplier;
-
-				let turnover = o.price * o.quantity;
-				let brokerage = Math.min(turnover*0.0001, 20);
-
-				let transactionCharges = turnover * 0.0000325;
-
-				// Transaction tax is levied on the sell side of the order
-				let transactionTax = 0;
-				if( o.trasaction_type == 'SOLD') {
-					transactionTax = (o.price * o.quantity) * 0.00025;
-				}
-			
-				let gst = (brokerage + transactionCharges) * 0.18;
-				let stampDuty = turnover * 0.00002;
-				let sebiCharges = turnover * 0.0000015;
-
-				o.broTax = brokerage + transactionCharges + transactionTax + gst + stampDuty + sebiCharges;*/
 				o.targetOrders = [];
 				o.stopLossOrders = [];
 				o.completedOrders = [];
@@ -636,7 +640,6 @@ console.log(this.positions)
 		this.calculatePositions(this.latestTicks)
 	}
 
-
 	calculatePositions(ticks) {
 		if(ticks == "" || ticks == null) return;
 		this.ds.pnl = 0;
@@ -647,57 +650,34 @@ console.log(this.positions)
 			let tickdata = ticks.ticks;
 
 			// Add Brokerage to positions
-			
-				for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
-					if(this.orders[ord_count].instrument_token == o.instrument_token) {
-						if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED' && this.orders[ord_count].status != 'CANCELLED') {
-							o.brotax += this.orders[ord_count].broTax;
-							this.ds.brotax += o.brotax;
-						}
-					}
-				}	;
-
-				for(let j=0; j<tickdata.length;j++) {
-					if(tickdata[j].Token == o.instrument_token){
-						o.ltp = tickdata[j].LastTradedPrice;
-						if(o.quantity > 0) {
-							o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)		
-						} else {
-							o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
-						}
-						
-						
-						if(this.includeBroTax == true) {
-							o.projectedpnl -= o.brotax
-						}
-
-						this.ds.pnl += o.projectedpnl
+		
+			for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
+				if(this.orders[ord_count].instrument_token == o.instrument_token) {
+					if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED' && this.orders[ord_count].status != 'CANCELLED') {
+						o.brotax += this.orders[ord_count].broTax;
+						this.ds.brotax += o.brotax;
 					}
 				}
-			
-		}
+			}	;
 
-
-		/*if(typeof this.clubbedOrders["primaryOrders"] == 'undefined') return;
-		for(let i=0; i<this.clubbedOrders['primaryOrders'].length; i++) {
-			let tickdata = ticks.ticks;
 			for(let j=0; j<tickdata.length;j++) {
-				if(this.clubbedOrders['primaryOrders'][i]['instrument_token'] == tickdata[j]['Token']) {
-					this.clubbedOrders['primaryOrders'][i]['ltp'] = tickdata[j]['LastTradedPrice'];
-					if(this.clubbedOrders['primaryOrders'][i]['transaction_type'] == 'BOUGHT') {
-						this.clubbedOrders['primaryOrders'][i]['pnl'] = (tickdata[j]['LastTradedPrice'] - this.clubbedOrders['primaryOrders'][i]['price']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);
+				if(tickdata[j].Token == o.instrument_token){
+					o.ltp = tickdata[j].LastTradedPrice;
+					if(o.quantity > 0) {
+						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)		
 					} else {
-						this.clubbedOrders['primaryOrders'][i]['pnl'] = (this.clubbedOrders['primaryOrders'][i]['price'] - tickdata[j]['LastTradedPrice']) * (this.clubbedOrders['primaryOrders'][i]['quantity']);	
+						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
 					}
 					
-					if(tickdata[j]['mode'] == 'full') {
-						this.clubbedOrders['primaryOrders'][i]['topAsk'] = tickdata[j]['Depth'].buy[0].Price;
-						this.clubbedOrders['primaryOrders'][i]['topBid'] = tickdata[j]['Depth'].sell[0].Price;
+					
+					if(this.includeBroTax == true) {
+						o.projectedpnl -= o.brotax
 					}
-				}	
+
+					this.ds.pnl += o.projectedpnl
+				}
 			}
-			
-		}*/
+		}
 	}
 
 	//orders: Array<object> = [];
