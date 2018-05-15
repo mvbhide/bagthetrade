@@ -64,6 +64,14 @@ if(!sPort.dataServer) {
 					})
 				break;
 
+				case "subscribe":
+					tckr.subscribe([request.payload]);
+					break;
+
+				case "unsubscribe":
+					tckr.unsubscribe([request.payload]);
+					break;
+
 			}
 			
 		})
