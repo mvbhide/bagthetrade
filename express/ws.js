@@ -14,10 +14,12 @@ var sPort = {}; // Communication object used by the server
 var KiteTicker = require("kiteconnect").KiteTicker;
 var tckr = new KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
 
-tckr.on("tick", function(ticks) {
-	console.log(ticks)
-	sPort.send("ticks", ticks);
-})
+tckr.connect();
+tckr.on("connect", function() {
+	tckr.on("tick", function(ticks) {
+		sPort.send("ticks", ticks);
+	})
+});
 
 
 if(!sPort.dataServer) {
@@ -65,11 +67,12 @@ if(!sPort.dataServer) {
 				break;
 
 				case "subscribe":
-					tckr.subscribe([request.payload]);
+					console.log(request.payload.instrument_token)
+					tckr.setMode('full',[request.payload.instrument_token]);
 					break;
 
 				case "unsubscribe":
-					tckr.unsubscribe([request.payload]);
+					tckr.unsubscribe([request.payload.instrument_token]);
 					break;
 
 			}
@@ -89,7 +92,6 @@ if(!sPort.dataServer) {
 
 // 4. Send the payload to client
 sPort.send = function(method, payload) {
-	console.log(method, payload)
 	// Only emit numbers if there are active connections
 	if (sPort.dataServer.connections.length > 0) {
 		try {
