@@ -6,7 +6,7 @@ import {AuthService} from '../services/auth-service.service';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/filter';
 
-const DATA_URL = 'ws://localhost:3006/';
+const DATA_URL = 'ws://trade.bookprofits.in:3006/';
 
 export interface api_call {
 	url: string,
@@ -27,15 +27,14 @@ export class CommunicatorService {
 			})
 
 		this.instream.subscribe(message => {
-			console.log(message);
 
-			//message = JSON.parse(message);
+			message = JSON.parse(message);
 			// Client side Incoming data
 			// Possible values
 			/*  1. Potential trades
 				2. Currently traded ltp and bid/ asks
 				3. Trade confirmations along with child trade ids */
-/*			try {
+			try {
 				let method = message.method;
 
 				switch(method) {
@@ -60,7 +59,7 @@ export class CommunicatorService {
 				
 			} catch (e) {
 				console.log(e)
-			}*/
+			}
 			
 
 		})

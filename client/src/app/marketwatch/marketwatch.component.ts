@@ -255,6 +255,7 @@ export class MarketwatchComponent implements OnInit{
 		if(!$event.tradingsymbol) return;
 
 		this.ticker.subscribe([$event.instrument_token]);
+		this.cs.send({'method': 'subscribe', 'payload': {instrument_token: $event.instrument_token}})
 
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
 		let exchange = $event.segment.split("-")[0];

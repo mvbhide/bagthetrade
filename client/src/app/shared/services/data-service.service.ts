@@ -1,4 +1,5 @@
 import {Injectable, EventEmitter} from '@angular/core';
+import _ from 'lodash'
 
 @Injectable()
 export class DataService {
@@ -65,6 +66,9 @@ export class DataService {
 
 	updateTicks(ticks) {
 		this.currentTicks = ticks;
+		ticks = _.unionBy(ticks, JSON.parse(window.localStorage.ticks), 'Token');
+		window.localStorage.ticks = JSON.stringify(ticks);
+
 		for(let i=0; i < ticks.length; i++) {
 			this.marketData[ticks[i].Token] = ticks[i];
 		}

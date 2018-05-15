@@ -6,8 +6,8 @@ import _ from 'lodash';
 @Injectable()
 export class TickerService {
 
-	api_key : string = '2ii3pn7061sv4cmf';
-	user_id : string = 'RP6292';
+	api_key : string = '';//2ii3pn7061sv4cmf';
+	user_id : string = 'XY3974';
 	public_token : string = '4d3d5784e80affaa3c15b9e37fd2f690';
 	address : string = 'wss:\/\/ws.zerodha.com/';
 
