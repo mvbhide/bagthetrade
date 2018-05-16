@@ -29,7 +29,13 @@ app.use(session({secret: "Shh, its a secret!"}));
 app.use(function (req, res, next) {
 
     // Website you wish to allow to connect
-    res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in/');
+	var allowedOrigins = ['https://trade.bookprofits.in', 'http://localhost:4200'];
+	var origin = req.headers.origin;
+	if(allowedOrigins.indexOf(origin) > -1){
+ 		res.setHeader('Access-Control-Allow-Origin', origin);
+	}
+
+//    res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in, https://localhost:4200');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
