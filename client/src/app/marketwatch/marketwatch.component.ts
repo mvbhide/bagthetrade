@@ -148,15 +148,16 @@ export class MarketwatchComponent implements OnInit{
 
 	constructor(private cs: CommunicatorService, private http: Http, private ds: DataService, private ticker: TickerService) {
 		let self = this;
-		this.ticker.on('connect', function() {
+		//this.ticker.on('connect', function() {
 			self.http.get(config.API_ROOT + 'marketwatch/get')
 			.subscribe(results => {
 				let watchlist = (results.json())
 				_.map(watchlist, function(item) {
 					self.stockSelected(item, false);
+					self.cs.send({'method': 'subscribe', 'payload': {instrument_token: item.instrument_token}})
 				})
 			})	
-		})
+		//})
 	}
 
 	ngOnInit(): void {

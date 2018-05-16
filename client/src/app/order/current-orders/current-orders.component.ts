@@ -100,9 +100,8 @@ import * as config from '../../shared/services/config.service';
 					<thead>
 						<th>Instrument</th>
 						<th>Quantity</th>
-						<th>Avg. Price</th>
 						<th>LTP</th>
-						<th>Profit / Loss <input type="checkbox" (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
+						<th>Profit / Loss <input type="checkbox" [(ngModel)]="includeBroTax"  (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
 						<th>Action</th>
 						<th>% change</th>
 						<th>Brokerage</th>
@@ -111,8 +110,7 @@ import * as config from '../../shared/services/config.service';
 						<tr *ngFor="let i of objectkeys(positions)" [ngClass]="{'active' : positions[i].quantity != 0, 'inactive' : positions[i].quantity == 0}">
 							<td>{{i}}</td>
 							<td>{{positions[i].quantity}}</td>
-							<td>{{positions[i].average_price}}</td>
-							<td>{{positions[i].ltp}}</td>
+							<td>{{positions[i].ltp| number : '1.2-2'}}</td>
 							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl | number : '1.2-2' }}</td>
 							<td *ngIf="positions[i].quantity != 0" >
 								<div class="btn-group dropup">
@@ -120,14 +118,14 @@ import * as config from '../../shared/services/config.service';
 									<div class="dropdown-menu">
 										<a class="dropdown-item" href="javascript:void(0)" (click)="exit(positions[i].sl_orders)">Exit</a>
 										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, positions[i])">Move Stoploss to breakeven</a>
-										<a *ngIf="positions[i].variety=='bo'" class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
+										<a *ngIf="positions[i].variety == 'bo'" class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
 										<a class="dropdown-item" href="javascript:void(0)">Modify</a>
 									</div>
 								</div>
 							</td>
 							<td *ngIf="positions[i].quantity == 0"></td>
-							<td *ngIf="positions[i].exchange!='MCX'">{{(positions[i].projectedpnl / ds.equityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
-							<td *ngIf="positions[i].exchange=='MCX'">{{(positions[i].projectedpnl / ds.commodityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of your funds</span></td>
+							<td *ngIf="positions[i].exchange!='MCX'">{{(positions[i].projectedpnl / ds.equityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of equity funds</span></td>
+							<td *ngIf="positions[i].exchange=='MCX'">{{(positions[i].projectedpnl / ds.commodityCash) | percent : '1.2-2'}} <span class="lbl-of-your-funds"> of commodity funds</span></td>
 							<td>{{positions[i].brotax | number : '1.2-2'}}</td>
 						</tr>
 					</tbody>
@@ -234,7 +232,7 @@ import * as config from '../../shared/services/config.service';
 })
 export class CurrentOrdersComponent implements OnInit {
 	clubbedOrders: Array<object> = [];
-	includeBroTax: boolean = false;
+	includeBroTax: boolean = true;
 	latestTicks: any = "";
 
 	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http, private ticker: TickerService) {
@@ -244,7 +242,7 @@ export class CurrentOrdersComponent implements OnInit {
 			this.orders = JSON.parse(res.body).data
 			this.clubOrders()
 		})
-		console.log(ds)
+
 		this.cPort = cPort;
 		this.ds = ds;
 	}
@@ -654,12 +652,12 @@ export class CurrentOrdersComponent implements OnInit {
 		
 			for(let ord_count=0; ord_count<this.orders.length; ord_count++) {
 				if(this.orders[ord_count].instrument_token == o.instrument_token) {
-					if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED' && this.orders[ord_count].status != 'CANCELLED') {
+					if(this.orders[ord_count].broTax && this.orders[ord_count].status != 'REJECTED' && this.orders[ord_count].status != 'CANCELLED' && this.orders[ord_count].status != "OPEN") {
 						o.brotax += this.orders[ord_count].broTax;
 						this.ds.brotax += o.brotax;
 					}
 				}
-			}	;
+			};
 
 			for(let j=0; j<tickdata.length;j++) {
 				if(tickdata[j].Token == o.instrument_token){
