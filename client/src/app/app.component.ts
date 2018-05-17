@@ -52,7 +52,7 @@ import {TickerService} from './shared/services/ticker-service.service';
 	`]
 })
 export class AppComponent {
-	constructor(private ds: DataService, private ts: TickerService, private route: Router){}
+	constructor(public ds: DataService, private ts: TickerService, private route: Router){}
 
 	logout() {
 		window.localStorage.clear();

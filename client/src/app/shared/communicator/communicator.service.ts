@@ -2,11 +2,10 @@ import {Injectable} from '@angular/core';
 import {Subject} from 'rxjs/Subject';
 import {WebSocketService} from '../services/websocket.service';
 import {DataService} from '../services/data-service.service';
-import {AuthService} from '../services/auth-service.service';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/filter';
 
-const DATA_URL = 'ws://trade.bookprofits.in:3006/';
+const DATA_URL = 'ws://bookprofits.in:3006/';
 
 export interface api_call {
 	url: string,
@@ -20,7 +19,7 @@ export class CommunicatorService {
 	private comm: any;
 	
 	public instream: Subject<any> = new Subject<any>();
-	constructor(private wsService: WebSocketService, private ds: DataService, private as: AuthService) {
+	constructor(private wsService: WebSocketService, private ds: DataService) {
 		this.comm = wsService.connectData(DATA_URL)
 		this.instream = this.comm.map((response: any): any => {
 				return response.data;
@@ -43,10 +42,6 @@ export class CommunicatorService {
 						break;
 					case "setMarginData":
 						ds.setMarginData(message.data);
-						break;
-
-					case "user-authentication-results":
-						as.authentication(message.data);
 						break;
 
 					case "set-available-margin":

@@ -2,10 +2,7 @@ import { Component, Input } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
 import { TickerService } from '../shared/services/ticker-service.service';
-import { OrderService } from '../shared/services/orders/orders.service';
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { AppConfig } from '../config/app.config';
-import { CommConfig } from '../config/comm.config';
 
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
@@ -192,7 +189,7 @@ export class OrderFormComponent {
 
 	margins 			: Array<any>;
 
-	constructor(private http: Http,private cPort: CommunicatorService, private ds: DataService, private os: OrderService, private doms: DomSanitizer, private ticker: TickerService) {
+	constructor(private http: Http,private cPort: CommunicatorService,public ds: DataService, private ticker: TickerService) {
 		this.margins 		 = this.ds.getEquityMargins();
 		this.transactionType = this.ds.orderFormOptions.transactionType;
 		this.tradingsymbol 	 = this.ds.orderFormOptions.tradingsymbol;

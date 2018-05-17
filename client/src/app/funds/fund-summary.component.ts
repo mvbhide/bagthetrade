@@ -37,7 +37,7 @@ export class FundSummaryComponent implements OnInit {
 	commodityNet: number = 0;
 	pnl: number = 0;
 	brotax: number = 0;
-	constructor(private ds: DataService, private http: Http) {
+	constructor(public ds: DataService, private http: Http) {
 		this.totalFunds = this.ds.totalFunds;
 		this.availableFunds = this.ds.availableFunds;
 		this.pnl = this.ds.pnl;

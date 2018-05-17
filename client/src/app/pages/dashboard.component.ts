@@ -68,7 +68,7 @@ import {DataService} from '../shared/services/data-service.service'
 })
 export class DashboardComponent {
 
-	constructor(private route: Router, private ds: DataService){
+	constructor(private route: Router,public ds: DataService){
 		if(!window.localStorage.pid) {
 			this.route.navigate(['/login'])
 		}

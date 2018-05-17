@@ -5,15 +5,12 @@ import {FormsModule} from '@angular/forms';
 import {HttpModule} from '@angular/http';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {RouterModule, Routes} from '@angular/router';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 // services
-import {ChatService} from './shared/services/chat.service';
 import {WebSocketService} from './shared/services/websocket.service';
 import {CommunicatorService} from './shared/communicator/communicator.service';
 import {DataService} from './shared/services/data-service.service';
-import {OrderService} from './shared/services/orders/orders.service';
-import {AuthService} from './shared/services/auth-service.service';
 import {TickerService} from './shared/services/ticker-service.service';
 
 //Pipes
@@ -26,10 +23,6 @@ import {PageNotFoundComponent} from './pages/page-not-found.component';
 
 // components
 import {AppComponent} from './app.component';
-import {CreateMessage} from './create-message/create-message.component';
-import {ChatComponent} from './chat/chat.component';
-import {DataComponent} from "./random-data/data.component";
-import {StockListComponent} from "./stock-list/stock-list.component"
 import {MarketwatchComponent} from "./marketwatch/marketwatch.component"
 import {OrderFormComponent} from "./order/order-form.component";
 import {FundSummaryComponent} from "./funds/fund-summary.component";
@@ -56,11 +49,7 @@ const appRoutes: Routes = [
 		DashboardComponent,
 		LoginComponent,
 		PageNotFoundComponent,
-		ChatComponent,
-		CreateMessage,
 		KeysPipe,
-		DataComponent,
-		StockListComponent,
 		MarketwatchComponent,
 		OrderFormComponent,
 		FundSummaryComponent,
@@ -68,7 +57,7 @@ const appRoutes: Routes = [
 		InfoTooltipComponent,
 		MessagePopupComponent
 	],
-	providers   : [ChatService, WebSocketService,AuthService, CommunicatorService, DataService, OrderService, AuthService, TickerService],
+	providers   : [WebSocketService,CommunicatorService, DataService, TickerService],
 	bootstrap   : [AppComponent]
 })
 export class AppModule {

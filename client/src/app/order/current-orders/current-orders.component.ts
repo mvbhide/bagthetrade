@@ -98,13 +98,13 @@ import * as config from '../../shared/services/config.service';
 				<span class="oi oi-reload" (click)="refreshOrders();"> Refresh Orders </span>
 				<table class="table">
 					<thead>
-						<th>Instrument</th>
-						<th>Quantity</th>
-						<th>LTP</th>
-						<th>Profit / Loss <input type="checkbox" [(ngModel)]="includeBroTax"  (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
-						<th>Action</th>
-						<th>% change</th>
-						<th>Brokerage</th>
+						<th width="20%">Instrument</th>
+						<th width="8%">Quantity</th>
+						<th width="15%">LTP</th>
+						<th width="12%">Profit / Loss <input type="checkbox" [(ngModel)]="includeBroTax"  (click)="toggleIncludeBroTax()" id="incbt" /><label for="incbt"> Include B&T</label></th>
+						<th width="20%">Action</th>
+						<th width="10%">% change</th>
+						<th width="15%">Brokerage</th>
 					</thead>
 					<tbody>
 						<tr *ngFor="let i of objectkeys(positions)" [ngClass]="{'active' : positions[i].quantity != 0, 'inactive' : positions[i].quantity == 0}">
@@ -235,7 +235,7 @@ export class CurrentOrdersComponent implements OnInit {
 	includeBroTax: boolean = true;
 	latestTicks: any = "";
 
-	constructor(private cPort: CommunicatorService, private ds: DataService, private http: Http, private ticker: TickerService) {
+	constructor(private cPort: CommunicatorService, public ds: DataService, private http: Http, private ticker: TickerService) {
 		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 		.subscribe(data => {
 			var res = data.json();
@@ -259,6 +259,7 @@ export class CurrentOrdersComponent implements OnInit {
 
 		this.ds.ordersUpdated.subscribe(orders=> {
 			this.orders = orders.data;
+			console.log(this.orders)
 			this.clubOrders();
 		})
 	}
@@ -437,6 +438,9 @@ export class CurrentOrdersComponent implements OnInit {
 
 	clubOrders() {
 		let orders = this.orders;
+
+		//Clear existing position to avoid adding up
+		this.positions = [];
 
 		// Calculate positions
 		for(let i=0; i<orders.length; i++) {

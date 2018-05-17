@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgForm } from '@angular/forms';
 import * as config from '../shared/services/config.service'
-import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 
@@ -64,7 +63,7 @@ export class LoginComponent {
 	errorMsg: string = "";
 	skiptokens: boolean;
 
-	constructor(private route: Router, private http: Http, private cs: CommunicatorService) {}
+	constructor(private route: Router, private http: Http) {}
 	authenticate(email, password, kitecookie, csrfToken) {
 		this.isError = false;
 		this.errorMsg = "";
