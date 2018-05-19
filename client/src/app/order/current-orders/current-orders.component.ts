@@ -629,7 +629,7 @@ export class CurrentOrdersComponent implements OnInit {
 
 		// Subscribe ticker for the orders
 		for(let i=0; i<clubbedOrders['primaryOrders'].length; i++) {
-			this.ticker.subscribe([clubbedOrders['primaryOrders'][i].instrument_token])
+			//this.ticker.subscribe([clubbedOrders['primaryOrders'][i].instrument_token])
 			this.cPort.send({'method': 'subscribe', 'payload': {instrument_token: clubbedOrders['primaryOrders'][i].instrument_token}})
 		}
 

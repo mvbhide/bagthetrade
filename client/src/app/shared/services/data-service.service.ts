@@ -72,6 +72,7 @@ export class DataService {
 		for(let i=0; i < ticks.length; i++) {
 			this.marketData[ticks[i].Token] = ticks[i];
 		}
+
 		this.ticksUpdated.emit({ticks: ticks});
 	}
 

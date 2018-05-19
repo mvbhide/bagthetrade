@@ -255,7 +255,7 @@ export class MarketwatchComponent implements OnInit{
 	stockSelected($event, persist = true) {
 		if(!$event.tradingsymbol) return;
 
-		this.ticker.subscribe([$event.instrument_token]);
+		//this.ticker.subscribe([$event.instrument_token]);
 		this.cs.send({'method': 'subscribe', 'payload': {instrument_token: $event.instrument_token}})
 
 		// Segment for FO comes as NFO-FU. Hence removing FU in such cases
@@ -277,7 +277,7 @@ export class MarketwatchComponent implements OnInit{
 	}
 
 	removeFromMarketwatch(instrument_token) {
-		this.ticker.unsubscribe([instrument_token]);
+		//this.ticker.unsubscribe([instrument_token]);
 
 		_.remove(this.stocks, function(stock) {
 			return stock.instrument_token == instrument_token
