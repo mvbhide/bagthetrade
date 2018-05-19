@@ -3,7 +3,6 @@ var checksum = require('checksum');
 var db = require('../db');
 var sha = require('sha256');
 var router = express.Router();
-var sPort = require('../ws');
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
