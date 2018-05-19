@@ -31,6 +31,16 @@ app.set('port', port);
 
 var server = http.createServer(credentials, app);
 
+
+var createServerFrom = require('wss')
+ 
+createServerFrom(server, function connectionListener (ws) {
+  ws.send('welcome!')
+  ws.on('message', (data) => {
+    ws.send(data.toString()) // echo-server
+  })
+})
+
 /**
  * Listen on provided port, on all network interfaces.
  */

@@ -3,7 +3,6 @@ var checksum = require('checksum');
 var db = require('../db');
 var sha = require('sha256');
 var router = express.Router();
-var sPort = require('../ws');
 var config = require('../config');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var KiteTicker = require("kiteconnect").KiteTicker;
@@ -373,7 +372,7 @@ function updateOrders() {
 		kc.orders()
 		.then(function(response) {
 			console.log(response.status)
-			sPort.send('update-orders', response.data);
+			//sPort.send('update-orders', response.data);
 			res.send(response);
 		})
 		.catch(function(err) {
