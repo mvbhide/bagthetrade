@@ -35,7 +35,7 @@ app.use(function (req, res, next) {
  		res.setHeader('Access-Control-Allow-Origin', origin);
 	}
 
-//    res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in, https://localhost:4200');
+    res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');

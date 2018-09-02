@@ -6,18 +6,18 @@
 
 var app = require('../app');
 var debug = require('debug')('new:server');
-var http = require('https');
+var http = require('http');
 
 var fs = require('fs');
 
 var https = require('https');
 var privateKey  = fs.readFileSync('/home/bookprof/ssl/keys/c4d2e_fe585_1095b1228c41205c7126915738e93fb8.key', 'utf8');
-var certificate = fs.readFileSync('/home/bookprof/ssl/certs/bookprofits_in_c4d2e_fe585_1530144991_32cd34c22c08589d95e9fb6eb76024d8.crt','utf8');
+var certificate = fs.readFileSync('/home/bookprof/ssl/certs/bookprofits_in_c4d2e_fe585_1540189790_7922e3bb2ccf3a009c999ca548444e28.crt','utf8');
 
 var credentials = {key: privateKey, cert: certificate};
 
 
-//var ws = require('../ws')
+var ws = require('../ws')
 /**
  * Get port from environment and store in Express.
  */
@@ -29,7 +29,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(credentials, app);
+var server = https.createServer(credentials, app);
 
 
 /**
@@ -49,13 +49,28 @@ var wss = new WebSocketServer({
 wss.on('connection', function connection(ws) {
 	var KiteTicker = require("kiteconnect").KiteTicker;
 	var tckr = new KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
-
+	tckr.autoReconnect(true);
+console.log(tckr)
 	tckr.connect();
 	tckr.on("connect", function() {
+console.log("connected");
 		tckr.on("tick", function(ticks) {
+			console.log(ticks.length);
 			ws.send(JSON.stringify({"method" : "ticks", "data" : ticks}));
 		})
 	});
+tckr.on("error", function(e) {
+	console.log("error");
+	console.log(e)
+});
+tckr.on("disconnect", function(e) {
+	console.log("disconnected");
+        console.log(e)
+});
+
+tckr.on("close", function() {
+        console.log("connection closed");
+});
 	ws.on('message', function(request) {
 			request = JSON.parse(request);
 			var method = request['method'];
@@ -88,8 +103,10 @@ wss.on('connection', function connection(ws) {
 				break;
 
 				case "subscribe":
-					console.log(request.payload.instrument_token)
-					tckr.setMode('full',[request.payload.instrument_token]);
+					console.log(tckr.connected())
+					tckr.on("connect", function() {
+						tckr.setMode('full',[request.payload.instrument_token]);
+					});
 					break;
 
 				case "unsubscribe":
