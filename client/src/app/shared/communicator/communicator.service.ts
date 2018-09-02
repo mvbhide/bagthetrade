@@ -5,7 +5,7 @@ import {DataService} from '../services/data-service.service';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/filter';
 
-const DATA_URL = 'ws://bookprofits.in:3006/';
+const DATA_URL = 'wss://bookprofits.in:8080/';
 
 export interface api_call {
 	url: string,
