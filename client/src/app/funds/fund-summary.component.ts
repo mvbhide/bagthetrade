@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { CommunicatorService } from '../shared/communicator/communicator.service';
 import { DataService } from '../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import * as config from '../shared/services/config.service';
 
 @Component({
@@ -37,7 +37,7 @@ export class FundSummaryComponent implements OnInit {
 	commodityNet: number = 0;
 	pnl: number = 0;
 	brotax: number = 0;
-	constructor(public ds: DataService, private http: Http) {
+	constructor(public ds: DataService, private http: HttpClient) {
 		this.totalFunds = this.ds.totalFunds;
 		this.availableFunds = this.ds.availableFunds;
 		this.pnl = this.ds.pnl;
@@ -55,9 +55,9 @@ export class FundSummaryComponent implements OnInit {
 		})
 
 		this.http.get(config.API_ROOT + 'margins', {withCredentials: true})
-		.subscribe(data => {
-			var funds = JSON.parse(data.json().body);
-			this.ds.setFunds(funds.data);
+		.subscribe(res => {
+			var funds = res;
+			this.ds.setFunds(funds);
 		})
 	}
 }

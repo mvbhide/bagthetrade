@@ -1,4 +1,4 @@
-var KiteTicker = require("kiteconnect").KiteTicker;
+/* var KiteTicker = require("kiteconnect").KiteTicker;
 var ticker = {}
 
 var tckr = new KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
@@ -38,4 +38,4 @@ ticker.unsubscribe = function(instrument_token) {
 	tckr.unsubscribe([instrument_token]);
 }
 
-module.exports = ticker;
+module.exports = ticker; */

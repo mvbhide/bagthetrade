@@ -24,18 +24,24 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(session({secret: "Shh, its a secret!"}));
+app.use(session({
+  resave: false,
+  saveUninitialized: true,
+  secret: 'sdlfjljrowuroweu',
+  cookie: { secure: false }
+}));
 // Add headers
 app.use(function (req, res, next) {
 
     // Website you wish to allow to connect
 	var allowedOrigins = ['https://trade.bookprofits.in', 'http://localhost:4200'];
-	var origin = req.headers.origin;
+  var origin = req.get('origin');
+  
 	if(allowedOrigins.indexOf(origin) > -1){
  		res.setHeader('Access-Control-Allow-Origin', origin);
 	}
 
-    res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in');
+    //res.setHeader('Access-Control-Allow-Origin', 'https://trade.bookprofits.in');
 
     // Request methods you wish to allow
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');

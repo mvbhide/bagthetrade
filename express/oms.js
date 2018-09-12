@@ -1,4 +1,4 @@
-var objFactory = require('./object-factory/fp');
+/* var objFactory = require('./object-factory/fp');
 var KiteConnect = require("kiteconnect").KiteConnect;
 var _ = require('lodash/fp');
 var db = require('./db');
@@ -33,4 +33,4 @@ oms.placeOrder = function(objOrder) {
 	})
 }
 
-module.exports = oms
+module.exports = oms */

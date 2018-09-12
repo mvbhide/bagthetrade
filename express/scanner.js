@@ -1,4 +1,4 @@
-var KiteTicker = require("kiteconnect").KiteTicker;
+/* var KiteTicker = require("kiteconnect").KiteTicker;
 var ticker = new KiteTicker(api_key, user_id, public_token);
 
 ticker.connect();
@@ -21,4 +21,4 @@ scanner.start = function() {
 	
 }
 
-exports.module = scanner;
+exports.module = scanner; */

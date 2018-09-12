@@ -4,7 +4,7 @@ import { CommunicatorService } from '../../shared/communicator/communicator.serv
 import { DataService } from '../../shared/services/data-service.service';
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Observable } from 'rxjs/Observable';
-import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import _ from 'lodash';
 import * as config from '../../shared/services/config.service';
 
@@ -235,19 +235,20 @@ export class CurrentOrdersComponent implements OnInit {
 	includeBroTax: boolean = true;
 	latestTicks: any = "";
 
-	constructor(private cPort: CommunicatorService, public ds: DataService, private http: Http, private ticker: TickerService) {
-		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
-		.subscribe(data => {
-			var res = data.json();
-			this.orders = JSON.parse(res.body).data
-			this.clubOrders()
-		})
-
+	constructor(private cPort: CommunicatorService, public ds: DataService, private http: HttpClient, private ticker: TickerService) {
 		this.cPort = cPort;
 		this.ds = ds;
 	}
 
 	ngOnInit(): void {
+
+		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
+		.subscribe(res => {
+			console.log(res)
+			this.orders = <any>res;
+			this.clubOrders()
+		})
+
 		let groupedOrders = _.groupBy(this.orders, function(o) { return o.tradingsymbol})
 		let twoLevelGroupedOrders = _.map(groupedOrders, function(stock) { return _.groupBy(stock, function(orders) { return orders.parent_order_id })});
 		
@@ -268,8 +269,8 @@ export class CurrentOrdersComponent implements OnInit {
 		var self = this;
 		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 		.subscribe(data => {
-			var result = JSON.parse(data.json().body);
-			self.ds.setCurrentOrders(result.data);
+			//var result = JSON.parse(data.json().body);
+			//self.ds.setCurrentOrders(result.data);
 		})
 	}
 
@@ -289,8 +290,8 @@ export class CurrentOrdersComponent implements OnInit {
 
 			self.http.post(config.API_ROOT + 'orders/exit', payload, {withCredentials: true})
 			.subscribe(data => {
-				var result = JSON.parse(data.json().body);
-				console.log(result);
+				//var result = JSON.parse(data.json().body);
+				//console.log(result);
 			})
 		})				
 	}
@@ -314,8 +315,8 @@ export class CurrentOrdersComponent implements OnInit {
 		var self = this;
 
 		this.http.get(config.API_ROOT + 'getinstrument/' + initialOrder.instrument_token)
-		.subscribe(result => {
-			var data = result.json();
+		.subscribe((result: HttpResponse<any>) => {
+			var data = result.body;
 
 			if(data.success == true) {
 				var instrument = data.data;
@@ -361,8 +362,8 @@ export class CurrentOrdersComponent implements OnInit {
 					headers.append("content-type", "application/x-www-form-urlencoded")
 
 					self.http.post(config.API_ROOT + 'orders/modifyorder', payload, {withCredentials: true})
-					.subscribe(data => {
-						var result = JSON.parse(data.json().body);
+					.subscribe((data: HttpResponse<any>) => {
+						var result = JSON.parse(data.body);
 						console.log(result);
 					})
 				})		
@@ -410,8 +411,8 @@ export class CurrentOrdersComponent implements OnInit {
 			headers.append("content-type", "application/x-www-form-urlencoded")
 
 			self.http.post(config.API_ROOT + 'orders/modifyorder', payload, {withCredentials: true})
-			.subscribe(data => {
-				var result = JSON.parse(data.json().body);
+			.subscribe((data: HttpResponse<any>) => {
+				var result = JSON.parse(data.body);
 				console.log(result);
 			})
 		})

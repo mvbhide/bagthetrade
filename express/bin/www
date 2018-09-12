@@ -7,17 +7,16 @@
 var app = require('../app');
 var debug = require('debug')('new:server');
 var http = require('http');
+var db = require('../db');
 
 var fs = require('fs');
 
-var https = require('https');
-var privateKey  = fs.readFileSync('/home/bookprof/ssl/keys/c4d2e_fe585_1095b1228c41205c7126915738e93fb8.key', 'utf8');
-var certificate = fs.readFileSync('/home/bookprof/ssl/certs/bookprofits_in_c4d2e_fe585_1540189790_7922e3bb2ccf3a009c999ca548444e28.crt','utf8');
+var https = require('http');
+//var privateKey  = fs.readFileSync('/home/bookprof/ssl/keys/c4d2e_fe585_1095b1228c41205c7126915738e93fb8.key', 'utf8');
+//var certificate = fs.readFileSync('/home/bookprof/ssl/certs/bookprofits_in_c4d2e_fe585_1540189790_7922e3bb2ccf3a009c999ca548444e28.crt','utf8');
 
-var credentials = {key: privateKey, cert: certificate};
+//var credentials = {key: privateKey, cert: certificate};
 
-
-var ws = require('../ws')
 /**
  * Get port from environment and store in Express.
  */
@@ -29,7 +28,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = https.createServer(credentials, app);
+var server = https.createServer(app);
 
 
 /**
@@ -40,83 +39,30 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-
 var WebSocketServer = require('ws').Server;
 var wss = new WebSocketServer({
     server: server
 });
 
+
 wss.on('connection', function connection(ws) {
-	var KiteTicker = require("kiteconnect").KiteTicker;
-	var tckr = new KiteTicker('2ii3pn7061sv4cmf', 'RP6292', '4d3d5784e80affaa3c15b9e37fd2f690');
-	tckr.autoReconnect(true);
-console.log(tckr)
-	tckr.connect();
-	tckr.on("connect", function() {
-console.log("connected");
-		tckr.on("tick", function(ticks) {
-			console.log(ticks.length);
-			ws.send(JSON.stringify({"method" : "ticks", "data" : ticks}));
-		})
-	});
-tckr.on("error", function(e) {
-	console.log("error");
-	console.log(e)
-});
-tckr.on("disconnect", function(e) {
-	console.log("disconnected");
-        console.log(e)
-});
 
-tckr.on("close", function() {
-        console.log("connection closed");
-});
+	app.use(function(req, res, next) {
+		req.session.toClient = ws;
+		next();
+	})
+
 	ws.on('message', function(request) {
-			request = JSON.parse(request);
-			var method = request['method'];
-			console.log('Incoming request on server', request['method'], request.payload)
+		request = JSON.parse(request);
+		var method = request['method'];
+		console.log('Incoming request on server', request['method'], request.payload)
+		switch(method) {
+				
 
-			switch(method) {
-				case 'placeorder':
-					oms.placeOrder(request.payload)
-					.then(function(order_id) {
-						console.log(order_id);
-						sPort.send(order_id + "");
-					})
-					.catch(function(err) {
-						console.log(err);
-						sPort.send(err + "");
-					})
-				break;
+		}
+	});
+})
 
-				case "authenticate":
-					var objUserCred = request.payload;
-					db.authenticateUser(objUserCred.e, objUserCred.p)
-					.then(function(res) {
-						if(res && res.success) {
-							sPort.send('user-authentication-results', res);
-						}	
-					})
-					.catch(function(res) {
-						sPort.send('user-authentication-results', res);
-					})
-				break;
-
-				case "subscribe":
-					console.log(tckr.connected())
-					tckr.on("connect", function() {
-						tckr.setMode('full',[request.payload.instrument_token]);
-					});
-					break;
-
-				case "unsubscribe":
-					tckr.unsubscribe([request.payload.instrument_token]);
-					break;
-
-			}
-			
-		});
-});
 
 
 /**

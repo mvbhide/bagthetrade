@@ -1,4 +1,5 @@
 var express = require('express');
+
 var checksum = require('checksum');
 var db = require('../db');
 var sha = require('sha256');
@@ -11,6 +12,8 @@ var request = require('request');
 var Promise = require('promise');
 var redis = require('redis').createClient('redis://kitetest:RedisTest@redis-19229.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:19229');
 var _ = require('lodash');
+
+var ws;
 
 redis.on("error", function(err) {
 	console.log(err);
@@ -111,41 +114,46 @@ router.post('/orderhook', function(req, res, next){
 })
 
 router.get('/kiteauthred', function(req, res, next) {
-	//if(req.params) {
-		//var requestToken = req.query.request_token;
-		var kc = new KiteConnect(config.API_KEY);
+	if(req.params) {
+		var requestToken = req.query.request_token;
+		var kc = new KiteConnect({api_key: config.API_KEY});
 
-		/*kc.requestAccessToken(requestToken, config.API_SECRET)
+		kc.generateSession(requestToken, config.API_SECRET)
 		.then(function(response) {
-			console.log(response)
-			req.session.kc = kc;
-			db.setAccessToken(config.API_KEY, response.data.access_token);
-			init();
+			
+			db.setAccessToken(config.API_KEY, response.access_token);
+			
+			ws = require('../ws')(response.access_token).then(function(sPort) {
+				sPort.ticker.connect();
+				sPort.ticker.on("connect", function() {
+					sPort.ticker.on("ticks", function(ticks) {
+						console.log(ticks)
+						//sPort.send("ticks", ticks);
+					})
+				});
+
+				req.app.locals.toClient = sPort;
+			})
+			
+			res.json({success: true})
 		})
 		.catch(function(err) {
-			console.log("Error", err);
-		})*/
-init();
+			console.log("Error126", err);
+		})
+		
+		//init();
+		
 		function init() {
 			// Fetch equity margins.
 			fetchMargins(res);
-
-			// Fetch funds
-			/*kc.margins("equity")
-			.then(function(response) {
-				sPort.send('set-available-margin', response.data.net);
-			}).catch(function(err) {
-				console.log(err)
-				sPort.send('set-available-margin', 20000);
-			})
-			.finally(function(){
-				res.status(200).end();
-			});*/
 		}
-	//}
+	}
 })
 
 
+router.get('/setmargins', function(req, res, next) {
+	fetchMargins(res)
+})
 
 router.get('/getinstrument/:token', function(req, res, next) {
 	var token = req.params.token;
@@ -158,28 +166,23 @@ router.get('/getinstrument/:token', function(req, res, next) {
 })
 
 router.get('/margins', function(req, res, next) {
-	var kitecookie = req.session.kitecookie;
-	var csrftoken = req.session.csrftoken;
-
-	var options = {
-		url: "https://kite.zerodha.com/api/user/margins",
-		headers: {
-			"pragma": "no-cache",
-			"cookie": kitecookie,
-			"accept-language": "en-US,en;q=0.9",
-			"user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
-			"x-kite-version": "1.1.16",
-			"accept": "application/json, text/plain, */*",
-			"cache-control": "no-cache",
-			"authority": "kite.zerodha.com",
-			"referer": "https://kite.zerodha.com/dashboard",
-			"x-csrftoken": csrftoken
-		}
-	}
-	request(options, function(err, response, body) {
-		res.json(response)
-	})	
-	
+	db.getAccessToken(config.API_KEY)
+	.then(function(response) {
+		var actk = response.data.access_token;
+		var kc = new KiteConnect({api_key: config.API_KEY, access_token: actk});
+		
+		kc.getMargins()
+		.then(function(response) {
+			res.json(response);
+		})
+		.catch(function(err) {
+			console.log(err)
+			res.json(err.response);
+		})
+	})
+	.catch(function(e) {
+		console.log(e)
+	})		
 })
 
 
@@ -254,7 +257,7 @@ function fetchMargins(res) {
 				requestAsync('https://api.kite.trade/margins/equity'),
 				requestAsync('https://api.kite.trade/margins/futures'),
 				requestAsync('https://api.kite.trade/margins/commodity'),
-				kc.instruments('NSE')
+				kc.getInstruments('NSE')
 				.then(function(instruments){
 					console.log("NSE fetched", instruments.length)
 					return instruments;
@@ -262,7 +265,7 @@ function fetchMargins(res) {
 				.catch(function(err) {
 					console.log('NSE failed: ', err)
 				}),
-				kc.instruments('NFO')
+				kc.getInstruments('NFO')
 				.then(function(instruments){
 					console.log("NFO fetched", instruments.length)
 					return instruments;
@@ -270,7 +273,7 @@ function fetchMargins(res) {
 				.catch(function(err) {
 					console.log('NFO failed: ', err)
 				}),
-				kc.instruments('MCX')
+				kc.getInstruments('MCX')
 				.then(function(instruments){
 					console.log("MCX fetched", instruments.length)
 					return instruments;
@@ -384,10 +387,24 @@ function updateOrders() {
 	})
 }
 
+function initWebSocket(at) {
+	
+	/* ws.on('message', function(request) {
+		request = JSON.parse(request);
+		var method = request['method'];
+		console.log('Incoming request on server', request['method'], request.payload)
+		switch(method) {
+				
+
+		}
+	}); */
+}
 
 function requestAsync(url) {
 	return new Promise(function(resolve, reject) {
+		console.log(url)
         request(url, function(err, res, body) {
+			console.log(body)
             if (err) { return reject(err); }
             return resolve([JSON.parse(body)]);
         });
