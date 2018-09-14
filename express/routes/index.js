@@ -120,22 +120,23 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.generateSession(requestToken, config.API_SECRET)
 		.then(function(response) {
-			
-			db.setAccessToken(config.API_KEY, response.access_token);
-			
-			ws = require('../ws')(response.access_token).then(function(sPort) {
-				sPort.ticker.connect();
-				sPort.ticker.on("connect", function() {
-					sPort.ticker.on("ticks", function(ticks) {
-						console.log(ticks)
-						//sPort.send("ticks", ticks);
-					})
-				});
-
-				req.app.locals.toClient = sPort;
+			console.log("Access Token : ", response.access_token)
+			db.setAccessToken(config.API_KEY, response.access_token)
+			.then(data => {
+				ws = require('../ws')(response.access_token).then(function(sPort) {
+					sPort.ticker.connect();
+					sPort.ticker.on("connect", function() {
+						sPort.ticker.on("ticks", function(ticks) {
+							console.log(ticks)
+							//sPort.send("ticks", ticks);
+						})
+					});
+					
+					req.app.locals.toClient = sPort;
+				})
+				
+				res.json({success: true})	
 			})
-			
-			res.json({success: true})
 		})
 		.catch(function(err) {
 			console.log("Error126", err);
@@ -276,7 +277,10 @@ function fetchMargins(res) {
 				kc.getInstruments('MCX')
 				.then(function(instruments){
 					console.log("MCX fetched", instruments.length)
+					//console.log(_.filter(instruments, function(i) { return i.tradingsymbol.indexOf('CRUDE') > -1 }));
+					console.log(instruments[0].tradingsymbol)
 					return instruments;
+					
 				})
 				.catch(function(err) {
 					console.log('MCX failed: ', err)
@@ -325,16 +329,17 @@ function fetchMargins(res) {
 				console.log("fetched and segregated all margins")
 
 				// Filter rare used commodities like quarterly expiry commodties etc
-				var commodity = _.filter(commodity, function(c){
+				/* var commodity = _.filter(commodity, function(c){
 					return c.name != "";
-				});
-
+				}); */
+console.log(commodity[0], commMargins[0])
 				var mergedCommodityMargins = _.map(commodity, function(item){
 					if(item && item.tradingsymbol) {
 						let ts = item.tradingsymbol;
 				    	return _.extend(item, _.find(commMargins, {tradingsymbol: _.replace(ts, ts.substr(-8), "")}));
 				    }
 				})
+console.log(mergedCommodityMargins[0])
 
 				console.log("Merged commodity margins")
 
@@ -402,9 +407,7 @@ function initWebSocket(at) {
 
 function requestAsync(url) {
 	return new Promise(function(resolve, reject) {
-		console.log(url)
         request(url, function(err, res, body) {
-			console.log(body)
             if (err) { return reject(err); }
             return resolve([JSON.parse(body)]);
         });

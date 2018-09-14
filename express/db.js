@@ -60,20 +60,16 @@ db.getAccessToken = function(api_key) {
 }
 
 db.setAccessToken = function(api_key, at) {
-	var conn = connect();
-	var query = "UPDATE user SET access_token = '" + at + "' WHERE api_key='" + api_key + "'";
-	conn.query(query, {}, function(err, results) {
-		if(err == null) {
-			var objResults = {
-				"success": true
+	return new Promise(function(resolve, reject) {
+		var conn = connect();
+		var query = "UPDATE user SET access_token = '" + at + "' WHERE api_key='" + api_key + "'";
+		conn.query(query, {}, function(err, results) {
+			if(err == null) {
+				resolve(objResults)
+			} else {
+				reject(err)
 			}
-		} else {
-			var objResults = {
-				"success": false,
-				data : err
-			}
-		}		
-		return(objResults)
+		})
 	})
 }
 
@@ -259,9 +255,9 @@ db.insertMargins = function(objMargins) {
 			fullQuery += query;
 		})
 
-		fs.appendFile('query.sql', fullQuery, function(err, res){
+		/* fs.appendFile('query.sql', fullQuery, function(err, res){
 			console.log(err, res);
-		})
+		}) */
 
 		var conn = connect();
 		
