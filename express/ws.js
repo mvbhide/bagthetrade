@@ -20,17 +20,10 @@ module.exports = function(at) {
 	.then(function(res) {
 		var KiteTicker = require("kiteconnect").KiteTicker;
 		tckr = new KiteTicker({api_key: config.API_KEY, access_token: at});
-		tckr.connect();
-		tckr.on("connect", function() {
-			tckr.on("tick", function(ticks) {
-				console.log(ticks)
-				sPort.send("ticks", ticks);
-			})
-		});
 		
 		sPort.ticker = tckr;
 		
-		sPort.send = function(method, payload) {
+		/* sPort.send = function(method, payload) {
 			// Only emit numbers if there are active connections
 			if (sPort.dataServer.connections.length > 0) {
 				try {
@@ -43,7 +36,7 @@ module.exports = function(at) {
 				}
 				
 			}
-		}
+		} */
 
 		resolve(sPort);
 	})

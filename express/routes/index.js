@@ -120,22 +120,29 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.generateSession(requestToken, config.API_SECRET)
 		.then(function(response) {
-			console.log("Access Token : ", response.access_token)
 			db.setAccessToken(config.API_KEY, response.access_token)
 			.then(data => {
 				ws = require('../ws')(response.access_token).then(function(sPort) {
+
+					sPort.toFrontSocket = function(d) {
+						req.app.locals['frontSocket'].sendToClient(d);
+					}
+
 					sPort.ticker.connect();
 					sPort.ticker.on("connect", function() {
 						sPort.ticker.on("ticks", function(ticks) {
-							console.log(ticks)
-							//sPort.send("ticks", ticks);
+							console.log(ticks.length)
+							sPort.toFrontSocket(ticks);
 						})
 					});
-					
-					req.app.locals.toClient = sPort;
+
+					sPort.ticker.on("disconnect", function() {
+						console.log("backsocket disconnected")
+					});
+
+					req.app.locals.backSocket = sPort;
+					res.json({success: true})	
 				})
-				
-				res.json({success: true})	
 			})
 		})
 		.catch(function(err) {
