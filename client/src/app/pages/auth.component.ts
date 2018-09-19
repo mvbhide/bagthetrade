@@ -6,7 +6,7 @@ import * as config from '../shared/services/config.service';
 
 @Component({
 	selector   : 'auth',
-	template : `<p>Auth Works</p>`
+	template : ``
 })
 export class AuthComponent {
 

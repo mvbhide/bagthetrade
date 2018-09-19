@@ -54,12 +54,13 @@ var wss = new WebSocketServer({
         console.log('Incoming request on server', request['method'], request.payload)
         switch(method) {
             
-    
         }
       });
       
       ws.sendToClient = function(d) {
-        ws.send(JSON.stringify(d));
+        if(ws.readyState == 1) {
+          app.locals['frontSocket'].send(JSON.stringify(d));
+        }
       }
     app.locals['frontSocket'] = ws;
   })

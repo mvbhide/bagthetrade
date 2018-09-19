@@ -20,9 +20,9 @@
       "prefix": "app",
       "styles": [
         "styles.css",
+        "assets/css/response.css",
         "assets/css/bootstrap.min.css",
-        "assets/css/open-iconic-bootstrap.min.css",
-        "assets/css/response.css"
+        "assets/css/open-iconic-bootstrap.min.css"
       ],
       "scripts": [
         "assets/js/jquery-3.2.1.min.js",

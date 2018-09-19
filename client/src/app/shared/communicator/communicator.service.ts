@@ -29,6 +29,7 @@ export class CommunicatorService {
 		this.instream.subscribe(message => {
 
 			message = JSON.parse(message);
+			ds.updateTicks(message);
 			// Client side Incoming data
 			// Possible values
 			/*  1. Potential trades

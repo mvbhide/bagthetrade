@@ -13,14 +13,14 @@ import * as config from '../shared/services/config.service'
 	template: `
 	<div class="marketwatch">
 		<div>
-			<input placeholder="Add to watchlist" min-chars="2" ngui-auto-complete [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
+			<input placeholder="Add to watchlist" min-chars="2" ngui-auto-complete [open-on-focus]="false" [list-formatter]="stockListFormatter" [value-formatter]="stockValueFormatter" [source]="observableSource.bind(this)" (valueChanged)="stockSelected($event)" type="text" class="input-auto-complete" />
 		</div>
 
 		<div *ngFor="let stock of stocks" class="div-watchlist">
 			<div class="stock-realtime-info">
 				<div class="row">
 					<div class='stock-name col-md-6'>{{stock.tradingsymbol}}</div>
-					<div class='ltp col-md-6 text-right'>{{stock.ltp}}</div>
+					<div class='ltp col-md-6 text-right'>{{stock.last_price}}</div>
 				</div>
 				<!-- <div class="row">
 					<div class='segment col-md-6' *ngIf="stock.segment=='MCX'">{{stock.expiry | date:'yyMMM' | uppercase}}FUT</div>
@@ -36,27 +36,28 @@ import * as config from '../shared/services/config.service'
 				</div>
 			</div>
 			
-			<div class="" *ngIf="stock.Depth" [@toggleState]="stock.toggleDepth">
+			<div class="" *ngIf="stock.depth" [@toggleState]="stock.toggleDepth">
 				<table class="table-depth">
 					<tr *ngFor="let key of depthRange">
-						<td width="18%" class="text-left buy-text depth-col1" text-align="left">{{stock.Depth.buy[key].Price}}</td>
-						<td width="6%" class="text-left buy-text depth-col2">{{stock.Depth.buy[key].Total}}</td>
-						<td width="26%" class="text-right buy-text depth-col3">{{stock.Depth.buy[key].Quantity}}</td>
-						<td width="18%" class="text-left sell-text depth-col4">{{stock.Depth.sell[key].Price}}</td>
-						<td width="6%" class="text-left sell-text depth-col5">{{stock.Depth.sell[key].Total}}</td>
-						<td width="26%" class="text-right sell-text depth-col6">{{stock.Depth.sell[key].Quantity}}</td>
+						<td width="18%" class="text-left buy-text depth-col1" text-align="left">{{stock.depth.buy[key].price}}</td>
+						<td width="6%" class="text-right buy-text text-small depth-col2"><small>{{stock.depth.buy[key].orders}}</small></td>
+						<td width="26%" class="text-right buy-text depth-col3">{{stock.depth.buy[key].quantity}}</td>
+						<td width="18%" class="text-left sell-text depth-col4">{{stock.depth.sell[key].price}}</td>
+						<td width="6%" class="text-right text-sm-right depth-col5"><small>{{stock.depth.sell[key].orders}}</small></td>
+						<td width="26%" class="text-right sell-text depth-col6">{{stock.depth.sell[key].quantity}}</td>
 					</tr>
 				</table>
+
 				<!-- <div class="" *ngFor="let key of depthRange">
 					<div class="buy-depth col-md-6">
-						<span class="buy-text text-left">{{stock.Depth.buy[key].Price}}</span>
-						<span class="text-right depth-total">{{stock.Depth.buy[key].Total}}</span>
-						<span class="text-right buy-text">{{stock.Depth.buy[key].Quantity}}</span>
+						<span class="buy-text text-left">{{stock.depth.buy[key].price}}</span>
+						<span class="text-right depth-total">{{stock.depth.buy[key].orders}}</span>
+						<span class="text-right buy-text">{{stock.depth.buy[key].quantity}}</span>
 					</div>
 					<div class="sell-depth col-md-6">
-						<span class="sell-text">{{stock.Depth.sell[key].Price}}</span>
-						<span class="text-right depth-total">{{stock.Depth.sell[key].Total}}</span>
-						<span class="text-right sell-text">{{stock.Depth.sell[key].Quantity}}</span>
+						<span class="sell-text">{{stock.depth.sell[key].price}}</span>
+						<span class="text-right depth-total">{{stock.depth.sell[key].orders}}</span>
+						<span class="text-right sell-text">{{stock.depth.sell[key].quantity}}</span>
 					</div>
 				</div> -->
 			</div>
@@ -164,8 +165,8 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.ticksUpdated.subscribe(ticks => {
 			this.stocks.map(stock => {
 				let quote = this.ds.getFullQuote(stock.instrument_token);
-				stock.ltp = quote ? quote.ltp : 0;
-				stock.Depth = quote.Depth;
+				stock.last_price = quote ? quote.last_price : 0;
+				stock.depth = quote.depth;
 			})
 		});
 		
@@ -181,7 +182,7 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
 		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
 		this.ds.orderFormOptions.segment = stock.segment;
-		this.ds.orderFormOptions.price = stock.ltp
+		this.ds.orderFormOptions.price = stock.last_price
 		this.ds.orderFormOptions.lotSize = stock.lot_size
 		this.ds.orderFormOptions.tickSize = stock.tick_size
 		this.ds.orderFormOptions.coUpper = stock.co_upper
@@ -196,7 +197,7 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.orderFormOptions.tradingsymbol = stock.tradingsymbol
 		this.ds.orderFormOptions.instrumentToken = stock.instrument_token
 		this.ds.orderFormOptions.segment = stock.segment;
-		this.ds.orderFormOptions.price = stock.ltp
+		this.ds.orderFormOptions.price = stock.last_price
 		this.ds.orderFormOptions.lotSize = stock.lot_size
 		this.ds.orderFormOptions.tickSize = stock.tick_size
 		this.ds.orderFormOptions.coUpper = stock.co_upper

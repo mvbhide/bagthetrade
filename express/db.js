@@ -255,9 +255,9 @@ db.insertMargins = function(objMargins) {
 			fullQuery += query;
 		})
 
-		/* fs.appendFile('query.sql', fullQuery, function(err, res){
-			console.log(err, res);
-		}) */
+		fs.writeFile('query.sql', fullQuery, function(err, res){
+			console.log(err);
+		})
 
 		var conn = connect();
 		

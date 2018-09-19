@@ -18,6 +18,13 @@
 
 @media all and (max-width: 480px) {
 
+.div-box {
+	border: 2px solid #4A90C2 transparent;
+	border-radius: 2px;
+	padding: 10px;
+}	
+
+
 /**
  * Marketwatch
  * All CSS related to marketwatch here

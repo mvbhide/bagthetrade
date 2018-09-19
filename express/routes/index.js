@@ -10,15 +10,10 @@ var KiteTicker = require("kiteconnect").KiteTicker;
 var objFactory = require('../object-factory/fp');
 var request = require('request');
 var Promise = require('promise');
-var redis = require('redis').createClient('redis://kitetest:RedisTest@redis-19229.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:19229');
+//var redis = require('redis').createClient('redis://kitetest:RedisTest@redis-19229.c1.ap-southeast-1-1.ec2.cloud.redislabs.com:19229');
 var _ = require('lodash');
 
 var ws;
-
-redis.on("error", function(err) {
-	console.log(err);
-})
-
 
 router.get('/ticker', function(req, res, next) {
 	var marketData = [];
@@ -120,8 +115,12 @@ router.get('/kiteauthred', function(req, res, next) {
 
 		kc.generateSession(requestToken, config.API_SECRET)
 		.then(function(response) {
+			
+			req.app.locals.access_token = response.access_token;
+
 			db.setAccessToken(config.API_KEY, response.access_token)
 			.then(data => {
+				console.log(data)
 				ws = require('../ws')(response.access_token).then(function(sPort) {
 
 					sPort.toFrontSocket = function(d) {
@@ -174,23 +173,17 @@ router.get('/getinstrument/:token', function(req, res, next) {
 })
 
 router.get('/margins', function(req, res, next) {
-	db.getAccessToken(config.API_KEY)
+	var actk = req.app.locals.access_token;
+	var kc = new KiteConnect({api_key: config.API_KEY, access_token: actk});
+	
+	kc.getMargins()
 	.then(function(response) {
-		var actk = response.data.access_token;
-		var kc = new KiteConnect({api_key: config.API_KEY, access_token: actk});
-		
-		kc.getMargins()
-		.then(function(response) {
-			res.json(response);
-		})
-		.catch(function(err) {
-			console.log(err)
-			res.json(err.response);
-		})
+		res.json(response);
 	})
-	.catch(function(e) {
-		console.log(e)
-	})		
+	.catch(function(err) {
+		console.log(err)
+		res.json(err.response);
+	})
 })
 
 
@@ -204,13 +197,13 @@ router.post('/login', function(req, res, next) {
 		db.authenticateUser(u,p)
 		.then(function(response) {
 			if(kitecookie != '' && csrftoken != '') {
-				redis.hset("u" + response.data[0].id, "kitecookie", kitecookie, redis.print);
-				redis.hset("u" + response.data[0].id , "csrftoken", csrftoken, redis.print);
+				//redis.hset("u" + response.data[0].id, "kitecookie", kitecookie, redis.print);
+				//redis.hset("u" + response.data[0].id , "csrftoken", csrftoken, redis.print);
 				req.session.kitecookie = kitecookie;
 				req.session.csrftoken = csrftoken
 				req.session.save();
 			} else {
-				redis.hget("u" + response.data[0].id, "kitecookie", function(err, val) {
+				/* redis.hget("u" + response.data[0].id, "kitecookie", function(err, val) {
 					req.session.kitecookie = val;
 					req.session.save();
 					console.log(req.session)
@@ -219,7 +212,7 @@ router.post('/login', function(req, res, next) {
 				redis.hget("u" + response.data[0].id, "csrftoken", function(err, val) {
 					req.session.csrftoken = val;
 					req.session.save();
-				});		
+				}); */		
 			}
 				
 			res.json(response);

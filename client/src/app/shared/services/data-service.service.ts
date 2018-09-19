@@ -66,11 +66,11 @@ export class DataService {
 
 	updateTicks(ticks) {
 		this.currentTicks = ticks;
-		ticks = _.unionBy(ticks, JSON.parse(window.localStorage.ticks), 'Token');
+		ticks = _.unionBy(ticks, JSON.parse(window.localStorage.ticks), 'instrument_token');
 		window.localStorage.ticks = JSON.stringify(ticks);
 
 		for(let i=0; i < ticks.length; i++) {
-			this.marketData[ticks[i].Token] = ticks[i];
+			this.marketData[ticks[i].instrument_token] = ticks[i];
 		}
 
 		this.ticksUpdated.emit({ticks: ticks});
@@ -80,9 +80,9 @@ export class DataService {
 		let quote:any = {};
 		let insData = this.marketData[instrumentToken];
 		if(insData) {
-			quote.ltp = insData.LastTradedPrice;
-			quote.topBid = insData.Depth.sell.length > 0 ? insData.Depth.sell[0].Price : 0;
-			quote.topAsk = insData.Depth.buy.length > 0 ? insData.Depth.buy[0].Price : 0;	
+			quote.ltp = insData.last_price;
+			quote.topBid = insData.depth.sell.length > 0 ? insData.depth.sell[0].price : 0;
+			quote.topAsk = insData.depth.buy.length > 0 ? insData.depth.buy[0].price : 0;	
 			return quote;
 		}
 	}
@@ -91,8 +91,8 @@ export class DataService {
 		let quote:any = {};
 		let insData = this.marketData[instrumentToken];
 		if(insData) {
-			quote.ltp = insData.LastTradedPrice;
-			quote.Depth = insData.Depth;
+			quote.last_price = insData.last_price;
+			quote.depth = insData.depth;
 			return quote;
 		}
 		

@@ -94,7 +94,7 @@ import * as config from '../../shared/services/config.service';
 					</tbody>
 				</table>
 			</div> -->
-			<div class="orders">
+			<div class="orders div-box">
 				<span class="oi oi-reload" (click)="refreshOrders();"> Refresh Orders </span>
 				<table class="table">
 					<thead>
@@ -112,12 +112,13 @@ import * as config from '../../shared/services/config.service';
 							<td>{{positions[i].quantity}}</td>
 							<td>{{positions[i].ltp| number : '1.2-2'}}</td>
 							<td [ngClass]="{'loss' : positions[i].projectedpnl < 0, 'profit' : positions[i].projectedpnl > 0}">{{positions[i].projectedpnl | number : '1.2-2' }}</td>
-							<td *ngIf="positions[i].quantity != 0" >
+							<td *ngIf="positions[i].quantity != 0">
 								<div class="btn-group dropup">
-									<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
+									<button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">...</button>
 									<div class="dropdown-menu">
 										<a class="dropdown-item" href="javascript:void(0)" (click)="exit(positions[i].sl_orders)">Exit</a>
-										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, positions[i])">Move Stoploss to breakeven</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, 0)">Move Stoploss to breakeven</a>
+										<a class="dropdown-item" href="javascript:void(0)" (click)="moveSlToBreakeven(positions[i].sl_orders, 5)">Move Stoploss to 5%</a>
 										<a *ngIf="positions[i].variety == 'bo'" class="dropdown-item" href="javascript:void(0)" (click)="moveTargetToBidOffer(positions[i].target_orders, positions[i].quantity>0 ? 'offer' : 'bid')">Move Target to {{positions[i].quantity > 0 ? 'Offer' : 'Bid'}} price</a>
 										<a class="dropdown-item" href="javascript:void(0)">Modify</a>
 									</div>
@@ -199,6 +200,9 @@ import * as config from '../../shared/services/config.service';
 		.change-transaction-type {
 			cursor: pointer;
 		}
+		.dropup .dropdown-toggle::after {
+			display: none;
+		}
 		.panel-heading {
 			font-size: 16px;
 		}
@@ -269,8 +273,7 @@ export class CurrentOrdersComponent implements OnInit {
 		var self = this;
 		this.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 		.subscribe(data => {
-			//var result = JSON.parse(data.json().body);
-			//self.ds.setCurrentOrders(result.data);
+			self.ds.setCurrentOrders(data);
 		})
 	}
 
@@ -296,19 +299,23 @@ export class CurrentOrdersComponent implements OnInit {
 		})				
 	}
 
-	moveSlToBreakeven(orders, position) {
+	moveSlToBreakeven(orders, percentage) {
 		var initialOrder = _.filter(this.orders, function(o) {
 			return o.order_id == orders[0].parent_order_id
 		})[0]
 
+		var segment = initialOrder.exchange == 'MCX' ? 'commodityCash' : 'equityCash';
+
+		var percentageProfit = this.ds[segment] * (percentage/100)
+
 		var buyPrice = initialOrder.price;
 		var brotax = parseFloat(initialOrder.broTax) + _.sumBy(orders, function(o) {return o.broTax});
-		var margin = initialOrder.price * initialOrder.quantity;
+		var margin = initialOrder.price * initialOrder.quantity
 		var breakevenMargin;
 		if(initialOrder.transaction_type == 'BOUGHT') {
-			breakevenMargin = margin + brotax;
+			breakevenMargin = margin + brotax + percentageProfit;
 		} else {
-			breakevenMargin = margin - brotax;
+			breakevenMargin = margin - brotax - percentageProfit;
 		}
 		var breakeven = breakevenMargin - buyPrice;
 
@@ -316,10 +323,10 @@ export class CurrentOrdersComponent implements OnInit {
 
 		this.http.get(config.API_ROOT + 'getinstrument/' + initialOrder.instrument_token)
 		.subscribe((result: HttpResponse<any>) => {
-			var data = result.body;
+			var data = result;
 
-			if(data.success == true) {
-				var instrument = data.data;
+			if(data['success'] == true) {
+				var instrument = data['data'];
 				let i=0;
 				let sum = 0;
 				let testPrice = 0;
@@ -380,11 +387,11 @@ export class CurrentOrdersComponent implements OnInit {
 		var targetPrice = 0;
 
 		if(auctionSide.toLowerCase() == 'bid') {
-			targetPrice = tick[0].Depth.buy[0].Price;
+			targetPrice = tick[0].depth.buy[0].price;
 		}
 
 		if(auctionSide.toLowerCase() == 'offer') {
-			targetPrice = tick[0].Depth.sell[0].Price;
+			targetPrice = tick[0].depth.sell[0].price;
 		}
 
 		var self = this;
@@ -665,12 +672,12 @@ export class CurrentOrdersComponent implements OnInit {
 			};
 
 			for(let j=0; j<tickdata.length;j++) {
-				if(tickdata[j].Token == o.instrument_token){
-					o.ltp = tickdata[j].LastTradedPrice;
+				if(tickdata[j].instrument_token == o.instrument_token){
+					o.ltp = tickdata[j].last_price;
 					if(o.quantity > 0) {
-						o.projectedpnl = o.pnl + (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)		
+						o.projectedpnl = o.pnl + (tickdata[j].last_price * Math.abs(o.quantity) * o.multiplier)		
 					} else {
-						o.projectedpnl = o.pnl - (tickdata[j].LastTradedPrice * Math.abs(o.quantity) * o.multiplier)	
+						o.projectedpnl = o.pnl - (tickdata[j].last_price * Math.abs(o.quantity) * o.multiplier)	
 					}
 					
 					

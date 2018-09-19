@@ -33,11 +33,9 @@ router.get('/add/:token', function(req, res, next) {
 	var token = parseInt(req.params.token);
 	db.addToMarketwatch(token)
 	.then(function(response) {
-		req.app.locals['backSocket'].ticker.subscribe(token)
-
-		console.log("session : ", req.app.locals['backSocket'])
-		console.log("Is ticker connected ? : ", req.app.locals['backSocket'].ticker.connected())
-
+		console.log(response)
+		req.app.locals['backSocket'].ticker.subscribe([token]);
+		req.app.locals['backSocket'].ticker.setMode("full", [token]);
 		res.json(response)
 	})
 });
@@ -47,11 +45,6 @@ router.get('/remove/:token', function(req, res, next) {
 	db.removeFromMarketwatch(token)
 	.then(function(response) {
 		req.app.locals['backSocket'].ticker.unsubscribe([token])
-
-
-		console.log("session : ", req.app.locals['backSocket'])
-		console.log("Is ticker connected ? : ", req.app.locals['toClient'].ticker.connected())
-
 		res.json(response)
 	})
 });
