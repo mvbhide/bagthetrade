@@ -421,14 +421,16 @@ export class OrderFormComponent {
 
 		this.http.post(config.API_ROOT + 'orders/placeorder', payload, {withCredentials: true})
 		.subscribe(data => {
-			var result = JSON.parse(data.json().body);
-			if(result.status == 'success') {
+			console.log(JSON.parse(data.text()));
+			console.log(data.status);
+			
+			if(data.status == 200 && data.statusText == 'OK') {
 				self.ds.showOverlay = false;
 				self.ds.showOrderForm = false;
 
 				self.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 				.subscribe(data => {
-					var result = JSON.parse(data.json().body);
+					var result = JSON.parse(data.text());
 					self.ds.setCurrentOrders(result.data);
 				})
 			}

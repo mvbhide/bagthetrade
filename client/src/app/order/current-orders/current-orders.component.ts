@@ -470,6 +470,9 @@ export class CurrentOrdersComponent implements OnInit {
 						break;
 					case 'SILVERMIC' :
 						orders[i].multiplier = 1;
+						break;
+					case 'ZINCMINI' :
+						orders[i].multiplier = 1000;
 				}
 			} else {
 				orders[i].multiplier = 1;

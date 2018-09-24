@@ -20,6 +20,7 @@ export class AuthComponent {
                 .subscribe(res => {
                     console.log(res);
                     this.router.navigate(['/dashboard'])
+                    window.localStorage.pid = new Date().getTime();
                 })
             }
         });
