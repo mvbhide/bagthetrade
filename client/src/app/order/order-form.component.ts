@@ -431,7 +431,7 @@ export class OrderFormComponent {
 				self.http.get(config.API_ROOT + 'orders', {withCredentials: true})
 				.subscribe(data => {
 					var result = JSON.parse(data.text());
-					self.ds.setCurrentOrders(result.data);
+					self.ds.setCurrentOrders(result);
 				})
 			}
 		})

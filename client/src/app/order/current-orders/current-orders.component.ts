@@ -380,8 +380,8 @@ export class CurrentOrdersComponent implements OnInit {
 	
 
 	moveTargetToBidOffer(orders, auctionSide = 'bid') {
-		var tick = _.filter(this.latestTicks.ticks, function(i) {
-			return i.Token == orders[0].instrument_token;
+		var tick = _.filter(this.latestTicks.ticks, function(i, index) {
+			return i.instrument_token == orders[0].instrument_token;
 		})
 
 		var targetPrice = 0;
@@ -487,6 +487,7 @@ export class CurrentOrdersComponent implements OnInit {
 				this.positions[orders[i].tradingsymbol]['total_quantity'] = 0;
 				this.positions[orders[i].tradingsymbol]['average_price'] = orders[i].average_price;
 				this.positions[orders[i].tradingsymbol]['orders_count'] = 0;
+				this.positions[orders[i].tradingsymbol]['variety'] = orders[i].variety;
 				this.positions[orders[i].tradingsymbol]['pnl'] = 0;
 				this.positions[orders[i].tradingsymbol]['brotax'] = 0;
 				this.positions[orders[i].tradingsymbol]['sl_orders'] = new Array();

@@ -165,8 +165,10 @@ export class MarketwatchComponent implements OnInit{
 		this.ds.ticksUpdated.subscribe(ticks => {
 			this.stocks.map(stock => {
 				let quote = this.ds.getFullQuote(stock.instrument_token);
-				stock.last_price = quote ? quote.last_price : 0;
-				stock.depth = quote.depth;
+				if(quote != undefined) {
+					stock.last_price = quote ? quote.last_price : 0;
+					stock.depth = quote.depth;
+				}			
 			})
 		});
 		
