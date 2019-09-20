@@ -33,6 +33,7 @@ import {CurrentOrdersComponent} from "./order/current-orders/current-orders.comp
 import {InfoTooltipComponent} from './shared/components/info-tooltip/info-tooltip.component';
 import {MessagePopupComponent} from './shared/components/popup/message-popup.component';
 import { HttpModule } from '@angular/http';
+import { NavTabComponent } from './shared/components/nav-tab/nav-tab.component';
 
 const appRoutes: Routes = [
 	{ path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -59,7 +60,8 @@ const appRoutes: Routes = [
 		FundSummaryComponent,
 		CurrentOrdersComponent,
 		InfoTooltipComponent,
-		MessagePopupComponent
+		MessagePopupComponent,
+		NavTabComponent
 	],
 	providers   : [HttpClientModule, WebSocketService,CommunicatorService, DataService, TickerService],
 	bootstrap   : [AppComponent]

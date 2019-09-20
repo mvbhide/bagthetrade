@@ -10,7 +10,6 @@ import {DataService} from '../shared/services/data-service.service'
 	selector   : 'dashboard',
 	template:`
 		<div class="page-container">
-			
 			<div class="row">
 				<div class="col-sm-3 bd-sidebar">
 					<div class="marketwatch-component">

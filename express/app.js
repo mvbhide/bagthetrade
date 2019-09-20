@@ -11,6 +11,7 @@ var stocks = require('./routes/stocks');
 var orders = require('./routes/orders');
 var marketwatch = require('./routes/marketwatch');
 var users = require('./routes/users');
+var upstox = require('./routes/upstox');
 
 var app = express();
 
@@ -64,6 +65,7 @@ app.use('/orders', orders);
 app.use('/stocks', stocks);
 app.use('/marketwatch', marketwatch);
 app.use('/users', users);
+app.use('/upstox', upstox);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
