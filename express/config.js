@@ -3,6 +3,8 @@ config = {}
 config.API_KEY = 'hfQWSWyAyK5mU5pBAYA6GaWgnOpRhJ307CtRo1RP';
 config.API_SECRET = '2duv6utg3e';
 
+config.loginUri = "http://localhost:8080/upstox/auth/";
+
 config.DB = {
 	username: 'bookprof_admin',
 	host: 'bookprofits.in',
