@@ -22,8 +22,63 @@ var j = schedule.scheduleJob('2 */15 * * * *', function(){
 	if(hour > 8 && hour <16) {
 		getdata();
 	}
-
 });
+
+var opening = schedule.scheduleJob('1 15 16 * * *', function() {
+	scanForOpening();
+})
+
+var scanForOpening = function() {
+	fs.readFile("../token.txt", function(err, data) {
+		upstox.setToken(data);		
+		var count = 0;
+		var resolvedCount = 0;
+		arrCalls = []
+		arrObjResponse = [];
+		var loop = setInterval(function() {
+			for(i = 0; i < 10; count++, i++) {
+				callApi(stocks[count], previousDay, today, "5MINUTE")
+				.then(function(priceData) {
+					resolvedCount++;
+					if(priceData && priceData.data) {
+						let obj = {};
+						obj.result = {};
+						obj.symbol = priceData.symbol;
+						if(priceData.data[0].open == priceData.data[0].high) {
+							obj.result.pattern = "Going down";
+							obj.result.price = priceData.data[0].open;
+						}
+						if(priceData.data[0].open == priceData.data[0].low) {
+							obj.result.pattern = "Going up";
+							obj.result.price = priceData.data[0].open;
+						}
+
+						arrObjResponse.push(obj);
+					}
+				})
+			}
+			if(count >= (stocks.length - 1)) {
+				clearInterval(loop);
+			}
+		}, 1000)
+		var rcLoop = setInterval(function() {
+			if(resolvedCount >= (stocks.length -1)) {
+				clearInterval(rcLoop)
+				let dataToSend = [];
+				arrObjResponse.forEach(element => {
+					if(element && element.result && element.result.pattern !== undefined) {
+						dataToSend.push(element);
+					}
+				});
+				var html = generateHTML(dataToSend);
+
+				sendmail(html);
+
+				return dataToSend;
+			}
+		},1000)
+	})		
+}
 
 router.get("/", function(req, res, next) {
 	var loginUrl = upstox.getLoginUri(config.loginUri);
@@ -73,7 +128,7 @@ router.get("/getdata/:id", function(req, res, next) {
 	var symbol = req.params.id;
 	fs.readFile("../token.txt", function(err, data) {
 		upstox.setToken(data);
-		callApi(symbol)
+		callApi(symbol, previousDay, today, "5MINUTE")
 		.then(function(response) {
 			response.data.reverse();
 			var result = scanner(response)
@@ -85,14 +140,14 @@ router.get("/getdata/:id", function(req, res, next) {
 	})
 })
 
-var callApi = function(symbol) {
+var callApi = function(symbol, start_date, end_date, interval) {
 	return upstox.getOHLC({
 		"exchange": "NSE_EQ",
 		"symbol": symbol,
 		"format": "json",
-		"interval": "15MINUTE",
-		"start_date": previousDay,
-		"end_date": today
+		"interval": interval,
+		"start_date": start_date,
+		"end_date": end_date
 	})
 	.then(function (response) {
 		console.log(symbol + " API successful")
@@ -126,12 +181,12 @@ var getPreviousDay = function() {
 	]
 	do {
 		d.setDate(d.getDate() - 1);
-	} while((d.getDay() == 0 || d.getDay() == 6) && !arrHoliays.includes(getFormattedDate(d)))
+	} while((d.getDay() == 0 || d.getDay() == 6))
 	return d;
 }
 
-var today = "03-10-2019"; //getFormattedDate(new Date());
-var previousDay = "01-10-2019";//getFormattedDate(getPreviousDay());
+var today = getFormattedDate(new Date());
+var previousDay = getFormattedDate(getPreviousDay());
 console.log(today, previousDay)
 var getdata = function(out = "") {
 	fs.readFile("../token.txt", function(err, data) {
@@ -142,7 +197,7 @@ var getdata = function(out = "") {
 		arrObjResponse = [];
 		var loop = setInterval(function() {
 			for(i = 0; i < 10; count++, i++) {
-				callApi(stocks[count])
+				callApi(stocks[count], previousDay, today, "15MINUTE")
 				.then(function(priceData) {
 					resolvedCount++;
 					if(priceData && priceData.data) {
