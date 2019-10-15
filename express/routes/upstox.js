@@ -24,7 +24,7 @@ var j = schedule.scheduleJob('2 */15 * * * *', function(){
 	}
 });
 
-var opening = schedule.scheduleJob('1 15 16 * * *', function() {
+var opening = schedule.scheduleJob('1 20 9 * * *', function() {
 	scanForOpening();
 })
 
